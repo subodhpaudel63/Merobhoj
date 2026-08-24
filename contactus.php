@@ -781,18 +781,7 @@ if (!$user) {
           </div>
         </section>
 
-        <!--
-  CONTACT FEEDBACK FORM — contact-form.html
-  ─────────────────────────────────────────
-  Drop this entire <section> block inside your <main>.
-  Requires:
-    - Bootstrap 5 (grid + utilities)
-    - Font Awesome 6
-    - contact-form.css  (the form styles)
-    - contact-form.js   (the form logic)
-  Optional:
-    - AOS (data-aos attributes below use it for scroll animations)
--->
+ 
 
 <section class="contact-us my-5 py-5">
   <div class="container">
@@ -1009,7 +998,7 @@ if (!$user) {
             </div>
             <div class="contact-info-text">
               <strong>Email</strong>
-              <p>MasukoJhol@gmail.com<br>sample@gmail.com</p>
+              <p>Merobhoj@gmail.com</p>
             </div>
           </div>
 

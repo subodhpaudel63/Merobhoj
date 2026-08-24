@@ -29,12 +29,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
                 
-                $stmt = $conn->prepare("INSERT INTO menu (menu_name, menu_description, menu_price, menu_category, menu_image) VALUES (?, ?, ?, ?, ?)");
-                $stmt->bind_param("ssdss", 
+                $menu_status = in_array($_POST['menu_status'] ?? 'In Stock', ['In Stock', 'Low Stock', 'Out of Stock'], true) ? $_POST['menu_status'] : 'In Stock';
+                $stmt = $conn->prepare("INSERT INTO menu (menu_name, menu_description, menu_price, menu_category, menu_status, menu_image) VALUES (?, ?, ?, ?, ?, ?)");
+                $stmt->bind_param("ssdsss", 
                     $_POST['menu_name'],
                     $_POST['menu_description'],
                     $_POST['menu_price'],
                     $_POST['menu_category'],
+                    $menu_status,
                     $image_path
                 );
                 
@@ -70,12 +72,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
                 
-                $stmt = $conn->prepare("UPDATE menu SET menu_name = ?, menu_description = ?, menu_price = ?, menu_category = ?, menu_image = ? WHERE menu_id = ?");
-                $stmt->bind_param("ssdssi",
+                $menu_status = in_array($_POST['menu_status'] ?? 'In Stock', ['In Stock', 'Low Stock', 'Out of Stock'], true) ? $_POST['menu_status'] : 'In Stock';
+                $stmt = $conn->prepare("UPDATE menu SET menu_name = ?, menu_description = ?, menu_price = ?, menu_category = ?, menu_status = ?, menu_image = ? WHERE menu_id = ?");
+                $stmt->bind_param("ssdsssi",
                     $_POST['menu_name'],
                     $_POST['menu_description'],
                     $_POST['menu_price'],
                     $_POST['menu_category'],
+                    $menu_status,
                     $image_path,
                     $_POST['menu_id']
                 );
@@ -139,6 +143,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     $response['message'] = 'Menu item not found';
                 }
+                $stmt->close();
+            } catch (Exception $e) {
+                $response['message'] = 'Error: ' . $e->getMessage();
+            }
+            break;
+
+        case 'bulk_status':
+            try {
+                $ids = array_values(array_unique(array_filter(array_map('intval', explode(',', (string) ($_POST['menu_ids'] ?? ''))))));
+                $menu_status = $_POST['menu_status'] ?? '';
+                $allowed_statuses = ['In Stock', 'Low Stock', 'Out of Stock'];
+
+                if (!$ids || !in_array($menu_status, $allowed_statuses, true)) {
+                    throw new Exception('Select menu items and a valid stock status.');
+                }
+
+                $placeholders = implode(',', array_fill(0, count($ids), '?'));
+                $types = 's' . str_repeat('i', count($ids));
+                $stmt = $conn->prepare("UPDATE menu SET menu_status = ? WHERE menu_id IN ($placeholders)");
+                $params = array_merge([$menu_status], $ids);
+                $stmt->bind_param($types, ...$params);
+
+                if (!$stmt->execute()) {
+                    throw new Exception($stmt->error);
+                }
+
+                $response['success'] = true;
+                $response['message'] = $stmt->affected_rows . ' item(s) updated.';
                 $stmt->close();
             } catch (Exception $e) {
                 $response['message'] = 'Error: ' . $e->getMessage();

@@ -61,6 +61,13 @@ if ($bookingTableIdCol && $bookingTableIdCol->num_rows === 0) {
     $conn->query("ALTER TABLE `bookings` ADD COLUMN `table_id` int(11) NOT NULL AFTER `phone`");
 }
 
+// ── Menu stock status upgrade ────────────────────────────────────────────────
+$menuStatusCol = $conn->query("SHOW COLUMNS FROM `menu` LIKE 'menu_status'");
+if ($menuStatusCol && $menuStatusCol->num_rows === 0) {
+    $conn->query("ALTER TABLE `menu` ADD COLUMN `menu_status` ENUM('In Stock','Low Stock','Out of Stock') NOT NULL DEFAULT 'In Stock' AFTER `menu_category`");
+    $conn->query("UPDATE `menu` SET `menu_status` = 'In Stock' WHERE `menu_status` IS NULL OR `menu_status` = ''");
+}
+
 // ── Booking system upgrade: grace_end_at column ──────────────────────────────
 $graceCol = $conn->query("SHOW COLUMNS FROM `bookings` LIKE 'grace_end_at'");
 if ($graceCol && $graceCol->num_rows === 0) {

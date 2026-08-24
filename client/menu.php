@@ -234,6 +234,20 @@ if ($catResult) {
     .menu .card-text  { color: #6c757d; font-size: .87rem; line-height: 1.55; }
     .menu .price      { color: #212529; font-weight: 700; font-size: 1.05rem; }
 
+    .mkj-stock-badge {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: .72rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .mkj-stock-in-stock { background: #e8f8ed; color: #15803d; }
+    .mkj-stock-low-stock { background: #fff4df; color: #d97706; }
+    .mkj-stock-out-of-stock { background: #fee2e2; color: #dc2626; }
+
     /* ── Wishlist heart (subtle, non-intrusive) ── */
     .wishlist-btn {
       background: none; border: none; padding: 0;
@@ -519,7 +533,7 @@ if ($catResult) {
                 <div class="container">
                     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
                         <?php
-                        $stmt = $pdo->prepare("SELECT menu_id, menu_name, menu_description, menu_price, menu_image FROM menu WHERE menu_category = ?");
+                        $stmt = $pdo->prepare("SELECT menu_id, menu_name, menu_description, menu_price, menu_image, menu_status FROM menu WHERE menu_category = ?");
                         $stmt->execute([$cat]);
                         $itemsResult = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         if (!empty($itemsResult)):
@@ -538,6 +552,9 @@ if ($catResult) {
                                         <h5 class="card-title mb-0"><?= htmlspecialchars($item['menu_name']) ?></h5>
                                         <button class="wishlist-btn ms-2 flex-shrink-0" title="Wishlist" data-id="<?= intval($item['menu_id']) ?>"><i class="fa fa-heart"></i></button>
                                     </div>
+                                    <span class="mkj-stock-badge mkj-stock-<?php echo strtolower(str_replace(' ', '-', $item['menu_status'] ?? 'In Stock')); ?>">
+                                        <?= htmlspecialchars($item['menu_status'] ?? 'In Stock') ?>
+                                    </span>
                                     <p class="card-text flex-grow-1"><?= htmlspecialchars($item['menu_description']) ?></p>
                                     <div class="d-flex justify-content-between align-items-center mt-1">
                                         <span class="price">रु<?= number_format((float)$item['menu_price'], 2) ?></span>
@@ -548,20 +565,23 @@ if ($catResult) {
                                             <input type="hidden" name="menu_name" value="<?= htmlspecialchars($item['menu_name']) ?>">
                                             <input type="hidden" name="price" value="<?= htmlspecialchars($item['menu_price']) ?>">
                                             <input type="hidden" name="image" value="<?= htmlspecialchars($img) ?>">
-                                            <button type="submit" class="btn btn-orange w-100 <?php echo !$currentUser ? 'require-login' : ''; ?>" <?php echo !$currentUser ? 'data-action="add_to_cart"' : ''; ?>>Add to Cart</button>
+                                            <button type="submit" class="btn btn-orange w-100 <?php echo (!$currentUser || ($item['menu_status'] ?? '') === 'Out of Stock') ? 'require-login' : ''; ?>" <?php echo (!$currentUser || ($item['menu_status'] ?? '') === 'Out of Stock') ? 'data-action="add_to_cart"' : ''; ?> <?php echo ($item['menu_status'] ?? '') === 'Out of Stock' ? 'disabled' : ''; ?>>
+                                                <?= ($item['menu_status'] ?? '') === 'Out of Stock' ? 'Out of Stock' : 'Add to Cart' ?>
+                                            </button>
                                         </form>
                                         <button type="button"
                                             style="flex:1;min-width:0;"
-                                            class="btn btn-orange <?php echo !$currentUser ? 'require-login' : ''; ?>"
-                                            <?php echo !$currentUser ? 'data-action="buy_now"' : ''; ?>
-                                            data-bs-toggle="<?php echo $currentUser ? 'modal' : ''; ?>"
-                                            data-bs-target="<?php echo $currentUser ? '#buyModal' : ''; ?>"
+                                            class="btn btn-orange <?php echo (!$currentUser || ($item['menu_status'] ?? '') === 'Out of Stock') ? 'require-login' : ''; ?>"
+                                            <?php echo (!$currentUser || ($item['menu_status'] ?? '') === 'Out of Stock') ? 'data-action="buy_now"' : ''; ?>
+                                            data-bs-toggle="<?php echo ($currentUser && ($item['menu_status'] ?? '') !== 'Out of Stock') ? 'modal' : ''; ?>"
+                                            data-bs-target="<?php echo ($currentUser && ($item['menu_status'] ?? '') !== 'Out of Stock') ? '#buyModal' : ''; ?>"
                                             data-id="<?= intval($item['menu_id']) ?>"
                                             data-name="<?= htmlspecialchars($item['menu_name']) ?>"
                                             data-description="<?= htmlspecialchars($item['menu_description']) ?>"
                                             data-price="<?= htmlspecialchars($item['menu_price']) ?>"
-                                            data-image="<?= htmlspecialchars($img) ?>">
-                                            Buy Now
+                                            data-image="<?= htmlspecialchars($img) ?>"
+                                            <?php echo ($item['menu_status'] ?? '') === 'Out of Stock' ? 'disabled' : ''; ?>>
+                                            <?= ($item['menu_status'] ?? '') === 'Out of Stock' ? 'Out of Stock' : 'Buy Now' ?>
                                         </button>
                                     </div>
                                 </div>

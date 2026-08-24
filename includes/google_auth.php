@@ -21,7 +21,13 @@ if ($idToken === '') {
 
 $tokenInfoUrl = 'https://oauth2.googleapis.com/tokeninfo?id_token=' . urlencode($idToken);
 
-$response = @file_get_contents($tokenInfoUrl);
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $tokenInfoUrl);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // For local development, it's sometimes needed if SSL certs are missing
+$response = curl_exec($ch);
+curl_close($ch);
+
 if ($response === false) {
     echo json_encode(['success' => false, 'message' => 'Failed to verify token with Google']);
     exit();

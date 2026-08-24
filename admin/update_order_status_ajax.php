@@ -56,11 +56,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif (($existingOrder['status'] ?? '') === $status) {
                 $response = ['success' => false, 'message' => 'Order already has this status'];
             } else {
-                $stmt = $conn->prepare("UPDATE orders SET status = ? WHERE order_id = ?");
+                if ($order_number !== '') {
+                    $stmt = $conn->prepare("UPDATE orders SET status = ? WHERE order_number = ?");
+                    if ($stmt) {
+                        $stmt->bind_param("ss", $status, $order_number);
+                    }
+                } else {
+                    $stmt = $conn->prepare("UPDATE orders SET status = ? WHERE order_id = ?");
+                    if ($stmt) {
+                        $stmt->bind_param("si", $status, $existingOrder['order_id']);
+                    }
+                }
+                
                 if (!$stmt) {
                     $response = ['success' => false, 'message' => 'Failed to prepare update statement'];
                 } else {
-                    $stmt->bind_param("si", $status, $existingOrder['order_id']);
 
                     if ($stmt->execute()) {
                         $response = [

@@ -25,7 +25,14 @@ if ($action === 'add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $image  = trim($_POST['image'] ?? '');
     $qty    = max(1, intval($_POST['quantity'] ?? 1));
 
-    if ($menuId > 0 && $name !== '' && $price > 0) {
+    $stockStmt = $conn->prepare("SELECT menu_status FROM menu WHERE menu_id = ? LIMIT 1");
+    $stockStmt->bind_param("i", $menuId);
+    $stockStmt->execute();
+    $stockResult = $stockStmt->get_result();
+    $stockRow = $stockResult ? $stockResult->fetch_assoc() : null;
+    $stockStmt->close();
+
+    if ($menuId > 0 && $name !== '' && $price > 0 && $stockRow && ($stockRow['menu_status'] ?? 'In Stock') !== 'Out of Stock') {
         if (!isset($_SESSION['cart'][$menuId])) {
             $_SESSION['cart'][$menuId] = [
                 'menu_id' => $menuId,
@@ -44,7 +51,7 @@ if ($action === 'add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: ../client/cart.php');
         exit;
     }
-    $_SESSION['msg'] = ['type' => 'error', 'text' => 'Invalid item.'];
+    $_SESSION['msg'] = ['type' => 'error', 'text' => 'Invalid item or item is out of stock.'];
     header('Location: ../client/cart.php');
     exit;
 }
@@ -95,6 +102,16 @@ if ($action === 'checkout' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $allOk = true;
     if ($stmt) {
         foreach ($_SESSION['cart'] as $item) {
+            $checkStmt = $conn->prepare("SELECT menu_status FROM menu WHERE menu_id = ? LIMIT 1");
+            $checkStmt->bind_param("i", $item['menu_id']);
+            $checkStmt->execute();
+            $checkResult = $checkStmt->get_result();
+            $checkRow = $checkResult ? $checkResult->fetch_assoc() : null;
+            $checkStmt->close();
+            if (!$checkRow || ($checkRow['menu_status'] ?? 'In Stock') === 'Out of Stock') {
+                $allOk = false;
+                break;
+            }
             $total = isset($item['total']) ? floatval($item['total']) : (floatval($item['price']) * intval($item['quantity']));
             $name = $item['menu_name'] ?? $item['name'];
             $stmt->bind_param("sisdidsss", $order_number, $item['menu_id'], $name, $item['price'], $item['quantity'], $total, $email, $mobile, $address);

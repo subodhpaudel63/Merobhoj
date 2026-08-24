@@ -85,6 +85,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Insert into DB using only columns that exist in the orders table
     $order_number = 'ORD-' . date('Ymd') . '-' . sprintf('%04d', rand(1000, 9999));
+    $stock_stmt = $conn->prepare("SELECT menu_status FROM menu WHERE menu_id = ? LIMIT 1");
+    $stock_stmt->bind_param("i", $menu_id);
+    $stock_stmt->execute();
+    $stock_result = $stock_stmt->get_result();
+    $stock_row = $stock_result ? $stock_result->fetch_assoc() : null;
+    $stock_stmt->close();
+
+    if (!$stock_row || (($stock_row['menu_status'] ?? 'In Stock') === 'Out of Stock')) {
+        respond_menu_order([
+            'success' => false,
+            'message' => 'Sorry, this item is currently out of stock.',
+        ], $isAjax);
+    }
+
     $stmt = $conn->prepare("INSERT INTO orders (order_number, menu_id, menu_name, price, quantity, total_price, email, mobile, address, status, order_time, order_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Confirmed', NOW(), CURDATE())");
     $stmt->bind_param("sisdidsss", $order_number, $menu_id, $menu_name, $price, $quantity, $total_price, $email, $mobile, $address);
 
