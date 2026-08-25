@@ -10,7 +10,7 @@ $currentUser = getUserFromCookie();
 
 // If user is not logged in, redirect to appropriate dashboard
 if (!$currentUser) {
-    header('Location: /Masu%20Ko%20Jhol%28full%29/login.php');
+    header('Location: /Merobhoj/login.php');
     exit;
 }
 
@@ -60,7 +60,8 @@ if (isset($_COOKIE['user_img'])) {
       href="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css"
     />
     <?php require_once __DIR__ . '/../config/bootstrap.php'; ?>
-    <link rel="stylesheet" href="<?php echo asset('css/style.css'); ?>" />
+    <!-- <link rel="stylesheet" href="<?php echo asset('css/style.css'); ?>" /> -->
+     <link rel="stylesheet" href="../assets/css/style.css" />
     <!-- Include toast styles -->
     <link rel="stylesheet" href="<?php echo asset('css/toast_styles.css'); ?>" />
   

@@ -25,10 +25,10 @@ unset($_COOKIE['email'], $_COOKIE['user_type'], $_COOKIE['login_time']);
 $referrer = $_SERVER['HTTP_REFERER'] ?? '';
 if (strpos($referrer, '/admin/') !== false) {
     // Redirect to admin login page
-    header("Location: /Masu%20Ko%20Jhol%28full%29/admin/login.php?logged_out=1");
+    header("Location: /Merobhoj/admin/login.php?logged_out=1");
 } else {
     // Redirect to main login page
-    header("Location: /Masu%20Ko%20Jhol%28full%29/login.php?logged_out=1");
+    header("Location: /Merobhoj/login.php?logged_out=1");
 }
 exit;
 ?>

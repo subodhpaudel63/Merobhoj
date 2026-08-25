@@ -540,7 +540,7 @@ session_start();
         .then(function(data) {
             console.log('Auth response data:', data);
             if (data.success) {
-                window.location.href = data.redirect || '/Masu%20Ko%20Jhol%28full%29/client/index.php';
+                window.location.href = data.redirect || '/Merobhoj/client/index.php';
             } else {
                 alert(data.message || 'Google sign-in failed');
             }

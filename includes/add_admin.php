@@ -10,20 +10,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validate input
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $_SESSION['msg'] = ['type' => 'error', 'text' => 'Invalid email address.'];
-        header("Location: /Masu%20Ko%20Jhol%28full%29/admin/users.php");
+        header("Location: /Merobhoj/admin/users.php");
         exit;
     }
     
     if (strlen(trim($_POST['password'])) < 6) {
         $_SESSION['msg'] = ['type' => 'error', 'text' => 'Password must be at least 6 characters long.'];
-        header("Location: /Masu%20Ko%20Jhol%28full%29/admin/users.php");
+        header("Location: /Merobhoj/admin/users.php");
         exit;
     }
 
     // Validate user type
     if (!in_array($user_type, ['user', 'admin'])) {
         $_SESSION['msg'] = ['type' => 'error', 'text' => 'Invalid user type.'];
-        header("Location: /Masu%20Ko%20Jhol%28full%29/admin/users.php");
+        header("Location: /Merobhoj/admin/users.php");
         exit;
     }
 
@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['msg'] = ['type' => 'error', 'text' => 'Email already exists. Please use a different email.'];
         $check_stmt->close();
         $conn->close();
-        header("Location: /Masu%20Ko%20Jhol%28full%29/admin/users.php");
+        header("Location: /Merobhoj/admin/users.php");
         exit;
     }
     $check_stmt->close();
@@ -54,11 +54,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->close();
     $conn->close();
 
-    header("Location: /Masu%20Ko%20Jhol%28full%29/admin/users.php");
+    header("Location: /Merobhoj/admin/users.php");
     exit;
 }
 
 // If not POST request, redirect back
-header("Location: /Masu%20Ko%20Jhol%28full%29/admin/users.php");
+header("Location: /Merobhoj/admin/users.php");
 exit;
 ?>

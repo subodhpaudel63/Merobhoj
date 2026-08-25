@@ -9,7 +9,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 define('SITE_ROOT', str_replace('\\', '/', realpath(__DIR__ . '/..')));
-define('BASE_URL', '/Masu Ko Jhol(full)');
+define('BASE_URL', '/Merobhoj');
 
 function url(string $path = ''): string {
     $path = ltrim($path, '/');

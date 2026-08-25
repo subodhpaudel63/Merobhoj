@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         } else {
             $_SESSION['msg'] = ['type' => 'error', 'text' => 'Invalid role.'];
-            header("Location: /Masu%20Ko%20Jhol%28full%29/admin/users.php");
+            header("Location: /Merobhoj/admin/users.php");
             exit;
         }
     }
@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit;
             } else {
                 $_SESSION['msg'] = ['type' => 'success', 'text' => 'User role updated successfully.'];
-                header("Location: /Masu%20Ko%20Jhol%28full%29/admin/users.php");
+                header("Location: /Merobhoj/admin/users.php");
                 exit;
             }
         } else {
@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit;
             } else {
                 $_SESSION['msg'] = ['type' => 'error', 'text' => 'Failed to update user role.'];
-                header("Location: /Masu%20Ko%20Jhol%28full%29/admin/users.php");
+                header("Location: /Merobhoj/admin/users.php");
                 exit;
             }
         }
@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         } else {
             $_SESSION['msg'] = ['type' => 'error', 'text' => 'Invalid user ID.'];
-            header("Location: /Masu%20Ko%20Jhol%28full%29/admin/users.php");
+            header("Location: /Merobhoj/admin/users.php");
             exit;
         }
     }
@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     } else {
         $_SESSION['msg'] = ['type' => 'error', 'text' => 'Invalid request method.'];
-        header("Location: /Masu%20Ko%20Jhol%28full%29/admin/users.php");
+        header("Location: /Merobhoj/admin/users.php");
         exit;
     }
 }

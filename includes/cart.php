@@ -12,7 +12,7 @@ $user = getUserFromCookie();
 // Require login for cart interactions
 if (in_array($action, ['add','update','remove','clear','checkout'], true) && !$user) {
     $_SESSION['msg'] = ['type' => 'error', 'text' => 'Please login to manage your cart.'];
-    header('Location: /Masu%20Ko%20Jhol%28full%29/login.php');
+    header('Location: /Merobhoj/login.php');
     exit;
 }
 

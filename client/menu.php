@@ -11,7 +11,7 @@ $currentUser = getUserFromCookie();
 // If user is not logged in, redirect to login with appropriate action
 if (!$currentUser) {
     $_SESSION['msg'] = ['type' => 'error', 'text' => 'Please login to order food.'];
-    header('Location: /Masu%20Ko%20Jhol%28full%29/login.php?action=order_food');
+    header('Location: /Merobhoj/login.php?action=order_food');
     exit;
 }
 
@@ -813,7 +813,7 @@ if ($catResult) {
             </div>
             <div class="modal-footer justify-content-center">
                 <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
-                <a href="/Masu%20Ko%20Jhol%28full%29/login.php" class="btn btn-login">Login Now</a>
+                <a href="/Merobhoj/login.php" class="btn btn-login">Login Now</a>
             </div>
         </div>
     </div>

@@ -7,7 +7,7 @@ require_once __DIR__ . '/auth_check.php'; // defines encrypt(), SECRET_KEY, rout
 
 /* Only accept POST  */
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: /Masu%20Ko%20Jhol%28full%29/login.php');
+    header('Location: /Merobhoj/login.php');
     exit();
 }
 
@@ -17,7 +17,7 @@ $password  = $_POST['password'] ?? '';
 
 if ($userEmail === '' || $password === '') {
     $_SESSION['msg'] = ['type' => 'error', 'text' => 'Email and password are required.'];
-    header('Location: /Masu%20Ko%20Jhol%28full%29/login.php');
+    header('Location: /Merobhoj/login.php');
     exit();
 }
 
@@ -25,7 +25,7 @@ if ($userEmail === '' || $password === '') {
 $stmt = $conn->prepare('SELECT id, email, password, user_type, user_img FROM users WHERE email = ? LIMIT 1');
 if (!$stmt) {
     $_SESSION['msg'] = ['type' => 'error', 'text' => 'Database error.'];
-    header('Location: /Masu%20Ko%20Jhol%28full%29/login.php');
+    header('Location: /Merobhoj/login.php');
     exit();
 }
 
@@ -38,7 +38,7 @@ $stmt->close();
 /*  Verify credentials  */
 if (!$user || !password_verify($password, $user['password'])) {
     $_SESSION['msg'] = ['type' => 'error', 'text' => 'Invalid email or password.'];
-    header('Location: /Masu%20Ko%20Jhol%28full%29/login.php');
+    header('Location: /Merobhoj/login.php');
     exit();
 }
 
@@ -72,23 +72,23 @@ $action = $_GET['action'] ?? '';
 
 // Redirect based on role and action
 if ($user['user_type'] === 'admin') {
-    header('Location: /Masu%20Ko%20Jhol%28full%29/admin/index.php');
+    header('Location: /Merobhoj/admin/index.php');
     exit();
 }
 
 // For regular users, redirect based on action
 switch ($action) {
     case 'book_table':
-        header('Location: /Masu%20Ko%20Jhol%28full%29/client/index.php#book-table-section');
+        header('Location: /Merobhoj/client/index.php#book-table-section');
         break;
     case 'order_food':
-        header('Location: /Masu%20Ko%20Jhol%28full%29/client/index.php');
+        header('Location: /Merobhoj/client/index.php');
         break;
     case 'add_to_cart':
-        header('Location: /Masu%20Ko%20Jhol%28full%29/client/index.php');
+        header('Location: /Merobhoj/client/index.php');
         break;
     default:
-        header('Location: /Masu%20Ko%20Jhol%28full%29/client/index.php');
+        header('Location: /Merobhoj/client/index.php');
         break;
 }
 exit();

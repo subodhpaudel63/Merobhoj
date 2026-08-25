@@ -12,14 +12,14 @@ function require_admin(): void
 {
     // FIXED: Changed 'user_type' to 'admin_type' to prevent conflict with regular users
     if (!isset($_COOKIE['admin_type'])) {
-        header('Location: /Masu%20Ko%20Jhol%28full%29/admin/login.php');
+        header('Location: /Merobhoj/admin/login.php');
         exit();
     }
     
     $userType = decrypt($_COOKIE['admin_type'], SECRET_KEY);
     
     if ($userType !== 'admin') {
-        header('Location: /Masu%20Ko%20Jhol%28full%29/admin/login.php');
+        header('Location: /Merobhoj/admin/login.php');
         exit();
     }
     
@@ -28,7 +28,7 @@ function require_admin(): void
         $loginTime = decrypt($_COOKIE['admin_login_time'], SECRET_KEY);
         if ($loginTime && ctype_digit($loginTime)) {
             if (time() - (int) $loginTime > MAX_SESSION_TIME) {
-                header('Location: /Masu%20Ko%20Jhol%28full%29/admin/login.php?session_expired=1');
+                header('Location: /Merobhoj/admin/login.php?session_expired=1');
                 exit();
             }
         }

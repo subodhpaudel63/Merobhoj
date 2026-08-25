@@ -4,7 +4,7 @@ if (isset($_COOKIE['admin_type'])) {
     require_once __DIR__ . '/../includes/auth_check.php';
     $userType = decrypt($_COOKIE['admin_type'], SECRET_KEY);
     if ($userType === 'admin') {
-        header('Location: /Masu%20Ko%20Jhol%28full%29/admin/index.php');
+        header('Location: /Merobhoj/admin/index.php');
         exit();
     }
 }

@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'text' => 'Cannot delete the main admin account.'
                     ];
                     $check_stmt->close();
-                    header("Location: /Masu%20Ko%20Jhol%28full%29/admin/users.php");
+                    header("Location: /Merobhoj/admin/users.php");
                     exit;
                 }
             }
@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'type' => 'success',
                     'text' => 'User deleted successfully.'
                 ];
-                header("Location: /Masu%20Ko%20Jhol%28full%29/admin/users.php");
+                header("Location: /Merobhoj/admin/users.php");
                 exit;
             }
         } else {
@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'type' => 'error',
                     'text' => 'Failed to delete user. Error: ' . $stmt->error
                 ];
-                header("Location: /Masu%20Ko%20Jhol%28full%29/admin/users.php");
+                header("Location: /Merobhoj/admin/users.php");
                 exit;
             }
         }
@@ -95,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'type' => 'error',
                 'text' => 'Invalid user ID.'
             ];
-            header("Location: /Masu%20Ko%20Jhol%28full%29/admin/users.php");
+            header("Location: /Merobhoj/admin/users.php");
             exit;
         }
     }
@@ -114,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'type' => 'error',
             'text' => 'Invalid request method.'
         ];
-        header("Location: /Masu%20Ko%20Jhol%28full%29/admin/users.php");
+        header("Location: /Merobhoj/admin/users.php");
         exit;
     }
 }

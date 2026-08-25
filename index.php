@@ -35,7 +35,7 @@ if (isset($_GET['action'])) {
     // If user is not logged in and trying to access protected actions, redirect to login
     if ($protectedAction && !$user) {
         $_SESSION['msg'] = ['type' => 'error', 'text' => 'Please login to perform this action.'];
-        header('Location: /Masu%20Ko%20Jhol%28full%29/login.php?action=' . $_GET['action']);
+        header('Location: /Merobhoj/login.php?action=' . $_GET['action']);
         exit;
     }
 }
@@ -374,7 +374,7 @@ if (isset($_GET['action'])) {
                   <?php if ($user): ?>
                     <a href="#book-table-section">Book a table</a>
                   <?php else: ?>
-                    <a href="/Masu%20Ko%20Jhol%28full%29/login.php?action=book_table">Book a table</a>
+                    <a href="/Merobhoj/login.php?action=book_table">Book a table</a>
                   <?php endif; ?>
                 </div>
             </div>
@@ -439,8 +439,8 @@ Want to explore that next?
                     <a href="./menu.php" class="btn btn-danger">Order Food</a>
                     <a href="./menu.php" class="btn btn-outline-danger ms-2">Add to Cart</a>
                   <?php else: ?>
-                    <a href="/Masu%20Ko%20Jhol%28full%29/login.php?action=order_food" class="btn btn-danger">Order Food</a>
-                    <a href="/Masu%20Ko%20Jhol%28full%29/login.php?action=add_to_cart" class="btn btn-outline-danger ms-2">Add to Cart</a>
+                    <a href="/Merobhoj/login.php?action=order_food" class="btn btn-danger">Order Food</a>
+                    <a href="/Merobhoj/login.php?action=add_to_cart" class="btn btn-outline-danger ms-2">Add to Cart</a>
                   <?php endif; ?>
                 </div>
               </div>
@@ -515,7 +515,7 @@ Want to explore that next?
                     <?php if ($user): ?>
                       <a href="#book-table-section">Book a table</a>
                     <?php else: ?>
-                      <a href="/Masu%20Ko%20Jhol%28full%29/login.php?action=book_table">Book a table</a>
+                      <a href="/Merobhoj/login.php?action=book_table">Book a table</a>
                     <?php endif; ?>
                   </div>
               </div>
@@ -802,7 +802,7 @@ Want to explore that next?
                   </form>
                 <?php else: ?>
                   <div class="alert alert-warning text-center">
-                    <p>Please <a href="/Masu%20Ko%20Jhol%28full%29/login.php?action=book_table">login</a> to book a table.</p>
+                    <p>Please <a href="/Merobhoj/login.php?action=book_table">login</a> to book a table.</p>
                   </div>
                 <?php endif; ?>
               </div>
@@ -938,8 +938,8 @@ Want to explore that next?
                   <a href="./menu.php" class="btn btn-danger btn-sm">Order Food</a>
                   <a href="./menu.php" class="btn btn-outline-danger btn-sm ms-2">Add to Cart</a>
                 <?php else: ?>
-                  <a href="/Masu%20Ko%20Jhol%28full%29/login.php?action=order_food" class="btn btn-danger btn-sm">Order Food</a>
-                  <a href="/Masu%20Ko%20Jhol%28full%29/login.php?action=add_to_cart" class="btn btn-outline-danger btn-sm ms-2">Add to Cart</a>
+                  <a href="/Merobhoj/login.php?action=order_food" class="btn btn-danger btn-sm">Order Food</a>
+                  <a href="/Merobhoj/login.php?action=add_to_cart" class="btn btn-outline-danger btn-sm ms-2">Add to Cart</a>
                 <?php endif; ?>
               </div>
             </div>

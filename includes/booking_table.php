@@ -15,7 +15,7 @@ $user = getUserFromCookie();
 // If user is not logged in, redirect to login
 if (!$user) {
     $_SESSION['msg'] = ['type' => 'error', 'text' => 'Please login to book a table.'];
-    header("Location: /Masu%20Ko%20Jhol%28full%29/login.php?action=book_table");
+    header("Location: /Merobhoj/login.php?action=book_table");
     exit;
 }
 
@@ -167,6 +167,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $conn->commit();
             $_SESSION['msg'] = ['type' => 'success', 'text' => 'Your table booking has been submitted successfully.'];
             error_log("Booking successful for: " . $name . " (" . $email . ")");
+            $stmt->close();
+               $conn->close();
+
+    header('Location: /Merobhoj/client/myorder.php'); // redirection to myorder.php after sucessfull booking.
         } else {
             throw new Exception("Booking failed: " . $stmt->error);
         }

@@ -635,7 +635,7 @@ function mkjShowOrderNotification(order) {
             <p><strong>Total:</strong> Rs. ${Number(order.total_price || 0).toFixed(2)}</p>
             <div class="order-notification-actions">
                 <button type="button" class="order-notification-secondary" id="mkj-order-later-btn">Later</button>
-                <a class="order-notification-primary" href="/Masu%20Ko%20Jhol%28full%29/admin/orders_page.php">View Orders</a>
+                <a class="order-notification-primary" href="/Merobhoj/admin/orders_page.php">View Orders</a>
             </div>
         </div>
     `;

@@ -7,7 +7,7 @@ require_once __DIR__ . '/../includes/auth_check.php'; // defines encrypt(), SECR
 
 /* Only accept POST */
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: /Masu%20Ko%20Jhol%28full%29/admin/login.php');
+    header('Location: /Merobhoj/admin/login.php');
     exit();
 }
 
@@ -17,7 +17,7 @@ $password  = $_POST['password'] ?? '';
 
 if ($userEmail === '' || $password === '') {
     $_SESSION['msg'] = ['type' => 'error', 'text' => 'Email and password are required.'];
-    header('Location: /Masu%20Ko%20Jhol%28full%29/admin/login.php');
+    header('Location: /Merobhoj/admin/login.php');
     exit();
 }
 
@@ -25,7 +25,7 @@ if ($userEmail === '' || $password === '') {
 $stmt = $conn->prepare('SELECT id, email, password, user_type, user_img FROM users WHERE email = ? AND user_type = ? LIMIT 1');
 if (!$stmt) {
     $_SESSION['msg'] = ['type' => 'error', 'text' => 'Database error.'];
-    header('Location: /Masu%20Ko%20Jhol%28full%29/admin/login.php');
+    header('Location: /Merobhoj/admin/login.php');
     exit();
 }
 
@@ -39,7 +39,7 @@ $stmt->close();
 /* Verify credentials */
 if (!$user || !password_verify($password, $user['password'])) {
     $_SESSION['msg'] = ['type' => 'error', 'text' => 'Invalid admin credentials.'];
-    header('Location: /Masu%20Ko%20Jhol%28full%29/admin/login.php');
+    header('Location: /Merobhoj/admin/login.php');
     exit();
 }
 
@@ -57,5 +57,5 @@ setcookie('admin_type',       encrypt('admin',             SECRET_KEY), $now + $
 setcookie('admin_login_time', encrypt((string) $now,       SECRET_KEY), $now + $cookieMaxAge, '/', '', false, true);
 
 $_SESSION['msg'] = ['type' => 'success', 'text' => 'Admin login successful!'];
-header('Location: /Masu%20Ko%20Jhol%28full%29/admin/index.php');
+header('Location: /Merobhoj/admin/index.php');
 exit();

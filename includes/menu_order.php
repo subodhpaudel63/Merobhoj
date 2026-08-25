@@ -27,7 +27,7 @@ if (!$user) {
         'success' => false,
         'message' => 'Please login to place an order.',
         'login_required' => true,
-        'redirect' => '/Masu%20Ko%20Jhol%28full%29/login.php?action=order_food',
+        'redirect' => '/Merobhoj/login.php?action=order_food',
     ], $isAjax);
 }
 

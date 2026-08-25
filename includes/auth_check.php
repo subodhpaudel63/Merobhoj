@@ -35,7 +35,7 @@ function requireLogin(): array
 {
     // 1️⃣ Cookies present?
     if (!isset($_COOKIE['email'], $_COOKIE['user_type'], $_COOKIE['login_time'])) {
-    header('Location: /Masu%20Ko%20Jhol%28full%29/login.php');
+    header('Location: /Merobhoj/login.php');
         exit();
     }
 
@@ -46,13 +46,13 @@ function requireLogin(): array
 
     // 3️⃣ Validate
     if (!$email || !$userType || !$loginTime || !ctype_digit($loginTime)) {
-        header('Location: /Masu%20Ko%20Jhol%28full%29/login.php');
+        header('Location: /Merobhoj/login.php');
         exit();
     }
 
     // 4️⃣ Max session age
     if (time() - (int) $loginTime > MAX_SESSION_TIME) {
-    header('Location: /Masu%20Ko%20Jhol%28full%29/login.php?session_expired=1');
+    header('Location: /Merobhoj/login.php?session_expired=1');
         exit();
     }
 
@@ -67,13 +67,13 @@ function routeAfterLogin(string $userType): void    // ← use "void"
 {
     switch ($userType) {
         case 'admin':
-            header('Location: /Masu%20Ko%20Jhol%28full%29/admin/index.php');
+            header('Location: /Merobhoj/admin/index.php');
             break;
         case 'user':
-            header('Location: /Masu%20Ko%20Jhol%28full%29/client/index.php');
+            header('Location: /Merobhoj/client/index.php');
             break;
         default:
-            header('Location: /Masu%20Ko%20Jhol%28full%29/login.php');
+            header('Location: /Merobhoj/login.php');
             break;
     }
     exit();

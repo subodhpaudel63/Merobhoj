@@ -13,7 +13,7 @@ $existing_image = $_POST['existing_image'] ?? ''; // e.g. 'menu_12345.jpg'
 // Validate required fields
 if (empty($menu_name) || empty($menu_price) || empty($menu_category)) {
     $_SESSION['msg'] = ['type' => 'error', 'text' => 'Menu name, price, and category are required.'];
-    header("Location: /Masu%20Ko%20Jhol%28full%29/admin/menu.php");
+    header("Location: /Merobhoj/admin/menu.php");
     exit();
 }
 
@@ -34,7 +34,7 @@ if (isset($_FILES['menu_image']) && $_FILES['menu_image']['error'] === UPLOAD_ER
 
     if (!in_array($file_type, $allowed_types)) {
         $_SESSION['msg'] = ['type' => 'error', 'text' => 'Invalid image type. Allowed: JPG, PNG, GIF.'];
-        header("Location: /Masu%20Ko%20Jhol%28full%29/admin/menu.php");
+        header("Location: /Merobhoj/admin/menu.php");
         exit();
     }
 
@@ -50,7 +50,7 @@ if (isset($_FILES['menu_image']) && $_FILES['menu_image']['error'] === UPLOAD_ER
         $new_image_filename = $new_filename;
     } else {
         $_SESSION['msg'] = ['type' => 'error', 'text' => 'Failed to upload the new image.'];
-        header("Location: /Masu%20Ko%20Jhol%28full%29/admin/menu.php");
+        header("Location: /Merobhoj/admin/menu.php");
         exit();
     }
 }
@@ -74,5 +74,5 @@ if ($stmt->execute()) {
 $stmt->close();
 $conn->close();
 
-header("Location: /Masu%20Ko%20Jhol%28full%29/admin/menu.php");
+header("Location: /Merobhoj/admin/menu.php");
 exit();

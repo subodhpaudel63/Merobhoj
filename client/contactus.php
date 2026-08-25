@@ -10,7 +10,7 @@ $currentUser = getUserFromCookie();
 
 // If user is not logged in, redirect to appropriate dashboard
 if (!$currentUser) {
-    header('Location: /Masu%20Ko%20Jhol%28full%29/login.php');
+    header('Location: /Merobhoj/login.php');
     exit;
 }
 
@@ -97,13 +97,13 @@ if (isset($_COOKIE['user_img'])) {
           <ul class="d-flex mb-0">
             <li class="list-unstyled py-2">
               <a class="text-dark text-decoration-none text-uppercase p-4" href="./index.php"
-                >Home</a
-              >
+                >Home</a>
+              
             </li>
             <li class="list-unstyled py-2">
               <a class="text-dark text-decoration-none text-uppercase p-4" href="./aboutus.php"
-                >About</a
-              >
+                >About</a>
+
             </li>
             
             <li class="list-unstyled py-2">
@@ -112,8 +112,8 @@ if (isset($_COOKIE['user_img'])) {
               >
             </li>
             <li class="list-unstyled py-2">
-              <a class="text-dark text-decoration-none text-uppercase p-4" href="./myorder.php"
-                >My Order</a
+              <a class="text-dark text-decoration-none text-uppercase p-4" href="./myorder.php">My Order</a>
+                
             </li>
             <?php if (!$currentUser): ?>
               <li class="list-unstyled py-2">
@@ -121,9 +121,8 @@ if (isset($_COOKIE['user_img'])) {
               </li>
             <?php endif; ?>
             <li class="list-unstyled py-2">
-              <a class="text-dark text-decoration-none text-uppercase p-4" href="./contactus.php"
-                >Contact</a
-              >
+              <a class="text-dark text-decoration-none text-uppercase p-4" href="./contactus.php">Contact</a>
+             
             </li>
           </ul>
         </div>

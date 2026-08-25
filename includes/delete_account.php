@@ -18,18 +18,18 @@ error_log("DELETE‑DEBUG: script started");
 
 $user = requireLogin();
 if ($user['userType'] !== 'user') {
-    header('Location: /Masu%20Ko%20Jhol%28full%29/');
+    header('Location: /Merobhoj/');
     exit();
 }
 
 if (empty($_POST['confirm_phrase']) || trim($_POST['confirm_phrase']) !== 'DELETE') {
-    header('Location: /Masu%20Ko%20Jhol%28full%29/client/index.php?error=confirm');
+    header('Location: /Merobhoj/client/index.php?error=confirm');
     exit();
 }
 
 $email = $user['email'] ?? '';
 if (!$email) {
-    header('Location: /Masu%20Ko%20Jhol%28full%29/client/index.php?error=noemail');
+    header('Location: /Merobhoj/client/index.php?error=noemail');
     exit();
 }
 
@@ -81,7 +81,7 @@ try {
     $conn->rollback();
     $err = urlencode($e->getMessage());
     error_log("DELETE‑ERROR: " . $e->getMessage());
-    header("Location: /Masu%20Ko%20Jhol%28full%29/client/index.php?error=deletion&details=$err");
+    header("Location: /Merobhoj/client/index.php?error=deletion&details=$err");
     exit();
 }
 
@@ -93,5 +93,5 @@ foreach ($_COOKIE as $name => $value) {
     setcookie($name, '', time() - 3600, '/');
 }
 
-header('Location: /Masu%20Ko%20Jhol%28full%29/login.php?account=deleted');
+header('Location: /Merobhoj/login.php?account=deleted');
 exit();

@@ -22,11 +22,11 @@ if (isset($_POST['upload'])) {
             }
         }
         $_SESSION['msg'] = ['type' => 'success', 'text' => 'Image uploaded successfully!'];
-        header("Location: /Masu%20Ko%20Jhol%28full%29/admin/index.php");
+        header("Location: /Merobhoj/admin/index.php");
         exit();
     } else {
         $_SESSION['msg'] = ['type' => 'error', 'text' => 'Failed to upload image.'];
-        header("Location: /Masu%20Ko%20Jhol%28full%29/admin/index.php");
+        header("Location: /Merobhoj/admin/index.php");
         exit();
     }
 }

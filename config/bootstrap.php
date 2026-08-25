@@ -18,7 +18,7 @@ define('BOOKING_STATUSES', ['Pending', 'Confirmed', 'Checked-in', 'Completed', '
 
 // ── Site Paths ───────────────────────────────────────────────────────────────
 define('SITE_ROOT', str_replace('\\', '/', realpath(__DIR__ . '/..')));
-define('BASE_URL', '/Masu Ko Jhol(full)');
+define('BASE_URL', '/Merobhoj');
 
 // TODO: Replace with your actual Google OAuth Client ID from
 // https://console.cloud.google.com/apis/credentials

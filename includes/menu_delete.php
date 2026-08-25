@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 'type' => 'error',
                                 'text' => 'Failed to delete image file: ' . htmlspecialchars($imageFileName)
                             ];
-                            header("Location: /Masu%20Ko%20Jhol%28full%29/admin/menu.php");
+                            header("Location: /Merobhoj/admin/menu.php");
                             exit;
                         }
                     }
@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'type' => 'success',
                         'text' => 'Menu item deleted successfully.'
                     ];
-                    header("Location: /Masu%20Ko%20Jhol%28full%29/admin/menu.php");
+                    header("Location: /Merobhoj/admin/menu.php");
                     exit;
                 }
             } else {
@@ -83,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'type' => 'error',
                         'text' => 'Failed to delete menu item from database.'
                     ];
-                    header("Location: /Masu%20Ko%20Jhol%28full%29/admin/menu.php");
+                    header("Location: /Merobhoj/admin/menu.php");
                     exit;
                 }
             }
@@ -102,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'type' => 'error',
                     'text' => 'Menu item not found.'
                 ];
-                header("Location: /Masu%20Ko%20Jhol%28full%29/admin/menu.php");
+                header("Location: /Merobhoj/admin/menu.php");
                 exit;
             }
         }
@@ -121,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'type' => 'error',
                 'text' => 'Invalid menu ID.'
             ];
-            header("Location: /Masu%20Ko%20Jhol%28full%29/admin/menu.php");
+            header("Location: /Merobhoj/admin/menu.php");
             exit;
         }
     }

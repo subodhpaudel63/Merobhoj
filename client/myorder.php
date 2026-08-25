@@ -11,7 +11,7 @@ $currentUser = getUserFromCookie();
 // If user is not logged in, redirect to login
 if (!$currentUser) {
     $_SESSION['msg'] = ['type' => 'error', 'text' => 'Please login to view your orders.'];
-    header('Location: /Masu%20Ko%20Jhol%28full%29/login.php?action=view_orders');
+    header('Location: /Merobhoj/login.php?action=view_orders');
     exit;
 }
 
@@ -277,7 +277,7 @@ if (isset($_COOKIE['user_img'])) {
             </li>
             <li class="list-unstyled py-2">
               <a class="text-dark text-decoration-none text-uppercase p-4" href="./myorder.php"
-                >My Order</a
+                >My Order</a> 
             </li>
             <?php if (!$currentUser): ?>
               <li class="list-unstyled py-2">

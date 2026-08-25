@@ -57,5 +57,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Redirect back to the admin orders page
-header("Location: /Masu%20Ko%20Jhol%28full%29/admin/orders_page.php");
+header("Location: /Merobhoj/admin/orders_page.php");
 exit;

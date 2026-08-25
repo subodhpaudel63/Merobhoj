@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'type' => 'error',
             'text' => 'All fields are required and price must be greater than zero.'
         ];
-        header("Location: /Masu%20Ko%20Jhol%28full%29/admin/menu.php");
+        header("Location: /Merobhoj/admin/menu.php");
         exit;
     }
 
@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'type' => 'error',
                 'text' => 'Invalid image format. Allowed: JPG, JPEG, PNG, WEBP.'
             ];
-            header("Location: /Masu%20Ko%20Jhol%28full%29/admin/menu.php");
+            header("Location: /Merobhoj/admin/menu.php");
             exit;
         }
 
@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'type' => 'error',
                 'text' => 'Failed to upload image.'
             ];
-            header("Location: /Masu%20Ko%20Jhol%28full%29/admin/menu.php");
+            header("Location: /Merobhoj/admin/menu.php");
             exit;
         }
     } else {
@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'type' => 'error',
             'text' => 'Image upload failed or no image selected.'
         ];
-        header("Location: /Masu%20Ko%20Jhol%28full%29/admin/menu.php");
+        header("Location: /Merobhoj/admin/menu.php");
         exit;
     }
 
@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $stmt->close();
-    header("Location: /Masu%20Ko%20Jhol%28full%29/admin/menu.php");
+    header("Location: /Merobhoj/admin/menu.php");
     exit;
 } else {
     header("HTTP/1.1 405 Method Not Allowed");
