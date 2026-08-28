@@ -21,14 +21,15 @@ if (!$user) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Sanitize and validate inputs
-    $name    = trim($_POST['name'] ?? '');
-    $email   = trim($_POST['email'] ?? '');
-    $phone   = trim($_POST['phone'] ?? '');
-    $date    = trim($_POST['date'] ?? '');
-    $time    = trim($_POST['time'] ?? '');
-    $people  = (int)($_POST['people'] ?? 0);
-    $message = trim($_POST['message'] ?? '');
-    $table_id = (int)($_POST['table_id'] ?? 0);
+    $name       = trim($_POST['name'] ?? '');
+    $email      = trim($_POST['email'] ?? '');
+    $phone      = trim($_POST['phone'] ?? '');
+    $date       = trim($_POST['date'] ?? '');
+    $start_time = trim($_POST['start_time'] ?? $_POST['time'] ?? '');
+    $end_time   = trim($_POST['end_time'] ?? '');
+    $people     = (int)($_POST['people'] ?? 0);
+    $message    = trim($_POST['message'] ?? '');
+    $table_id   = (int)($_POST['table_id'] ?? 0);
 
     // Debug: Log received data
     error_log("Booking data received: " . print_r($_POST, true));
@@ -74,27 +75,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // ── Validate Time ────────────────────────────────────────────────────────
-    if (!preg_match('/^\d{2}:\d{2}$/', $time)) {
-        $_SESSION['msg'] = ['type' => 'error', 'text' => 'Please enter a valid time.'];
+    if (!preg_match('/^\d{2}:\d{2}$/', $start_time)) {
+        $_SESSION['msg'] = ['type' => 'error', 'text' => 'Please enter a valid start time.'];
         redirect_user();
         exit;
     }
 
-    $timeParts = explode(':', $time);
+    if (empty($end_time)) {
+        $end_time = date('H:i', strtotime($start_time) + 7200);
+    }
+
+    if (!preg_match('/^\d{2}:\d{2}$/', $end_time)) {
+        $_SESSION['msg'] = ['type' => 'error', 'text' => 'Please enter a valid end time.'];
+        redirect_user();
+        exit;
+    }
+
+    if ($start_time >= $end_time) {
+        $_SESSION['msg'] = ['type' => 'error', 'text' => 'End time must be after start time.'];
+        redirect_user();
+        exit;
+    }
+
+    $timeParts = explode(':', $start_time);
     $hour = (int)$timeParts[0];
-    $minute = (int)$timeParts[1];
 
     if ($hour < RESTAURANT_OPEN_HOUR || $hour >= RESTAURANT_CLOSE_HOUR) {
         $openFormatted = date('g:i A', mktime(RESTAURANT_OPEN_HOUR, 0));
         $closeFormatted = date('g:i A', mktime(RESTAURANT_CLOSE_HOUR, 0));
-        $_SESSION['msg'] = ['type' => 'error', 'text' => "We are open from $openFormatted to $closeFormatted. Please choose a time within these hours."];
+        $_SESSION['msg'] = ['type' => 'error', 'text' => "We are open from $openFormatted to $closeFormatted. Please choose a start time within these hours."];
         redirect_user();
         exit;
     }
 
-    // If booking is today, check if the time hasn't already passed
+    $endTimeParts = explode(':', $end_time);
+    $endHour = (int)$endTimeParts[0];
+    $endMin = (int)$endTimeParts[1];
+    if ($endHour < RESTAURANT_OPEN_HOUR || $endHour > RESTAURANT_CLOSE_HOUR || ($endHour === RESTAURANT_CLOSE_HOUR && $endMin > 0)) {
+        $openFormatted = date('g:i A', mktime(RESTAURANT_OPEN_HOUR, 0));
+        $closeFormatted = date('g:i A', mktime(RESTAURANT_CLOSE_HOUR, 0));
+        $_SESSION['msg'] = ['type' => 'error', 'text' => "We are open from $openFormatted to $closeFormatted. Please choose an end time within these hours."];
+        redirect_user();
+        exit;
+    }
+
+    // If booking is today, check if the start time hasn't already passed
     $now = new DateTime('now', $tz);
-    $bookingDateTime = DateTime::createFromFormat('Y-m-d H:i', "$date $time", $tz);
+    $bookingDateTime = DateTime::createFromFormat('Y-m-d H:i', "$date $start_time", $tz);
     if ($bookingDate->format('Y-m-d') === $today->format('Y-m-d') && $bookingDateTime <= $now) {
         $_SESSION['msg'] = ['type' => 'error', 'text' => 'You cannot book a table for a time that has already passed.'];
         redirect_user();
@@ -142,11 +169,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Include 'Checked-in' since that table is still occupied.
         $stmt = $conn->prepare(
             "SELECT id FROM bookings 
-             WHERE table_id = ? AND booking_date = ? AND booking_time = ? 
+             WHERE table_id = ? AND booking_date = ? 
              AND status IN ('Pending', 'Confirmed', 'Checked-in') 
+             AND start_time < ? 
+             AND end_time > ? 
              FOR UPDATE"
         );
-        $stmt->bind_param("iss", $table_id, $date, $time);
+        $stmt->bind_param("isss", $table_id, $date, $end_time, $start_time);
         $stmt->execute();
         $result = $stmt->get_result();
         
@@ -156,12 +185,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->close();
         
         // Insert booking with 'Pending' status (Title Case)
-        $timeForDb = $time . ':00'; // Ensure HH:MM:SS format
+        $timeForDb = $start_time . ':00'; // Ensure HH:MM:SS format
+        $endTimeForDb = $end_time . ':00';
         $stmt = $conn->prepare(
-            "INSERT INTO bookings (name, email, phone, table_id, booking_date, booking_time, people, message, status) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pending')"
+            "INSERT INTO bookings (name, email, phone, table_id, booking_date, booking_time, start_time, end_time, people, message, status) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending')"
         );
-        $stmt->bind_param("sssissis", $name, $email, $phone, $table_id, $date, $timeForDb, $people, $message);
+        $stmt->bind_param("sssissssis", $name, $email, $phone, $table_id, $date, $timeForDb, $timeForDb, $endTimeForDb, $people, $message);
         
         if ($stmt->execute()) {
             $conn->commit();

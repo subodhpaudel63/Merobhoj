@@ -128,12 +128,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
                 // Generate a single unique order_number for this entire checkout
                 $order_number = 'ORD-' . date('Ymd') . '-' . sprintf('%04d', rand(1000, 9999));
                 
+                // Determine payment status
+                $is_esewa = ($payment_method === 'eSewa');
+                $payment_status = $is_esewa ? 'Pending' : 'Paid';
+                
                 $conn->begin_transaction();
                 
                 $success_count = 0;
                 $error_occurred = false;
+                $last_insert_id = 0;
                 
-                $stmt = $conn->prepare("INSERT INTO orders (order_number, menu_id, email, menu_name, quantity, price, total_price, mobile, address, status, order_time, order_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Confirmed', NOW(), CURDATE())");
+                $stmt = $conn->prepare(
+                    "INSERT INTO orders (order_number, menu_id, email, menu_name, quantity, price, total_price, mobile, address, payment_method, payment_status, status, order_time, order_date) "
+                    . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Confirmed', NOW(), CURDATE())"
+                );
                 
                 if (!$stmt) {
                     error_log('Prepare statement failed: ' . $conn->error);
@@ -149,7 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
                         continue;
                     }
                     
-                    $result = $stmt->bind_param("sissidsss", 
+                    $result = $stmt->bind_param("sissidsssss", 
                         $order_number,
                         $item['menu_id'],
                         $email,
@@ -158,7 +166,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
                         $item['price'],
                         $item['total'],
                         $mobile,
-                        $address
+                        $address,
+                        $payment_method,
+                        $payment_status
                     );
                     
                     if (!$result) {
@@ -169,6 +179,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
                     
                     if ($stmt->execute()) {
                         $success_count++;
+                        if ($last_insert_id === 0) {
+                            $last_insert_id = $conn->insert_id;
+                        }
                     } else {
                         error_log('Execute failed: ' . $stmt->error);
                         $error_occurred = true;
@@ -179,10 +192,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
                 
                 if ($success_count > 0 && !$error_occurred) {
                     $conn->commit();
-                    $_SESSION['cart'] = [];
                     $response['success'] = true;
-                    $response['message'] = 'Order placed successfully!';
-                    $response['redirect'] = 'myorder.php';
+                    
+                    if ($is_esewa) {
+                        // For eSewa: keep cart until payment confirmed, redirect to esewa/pay.php
+                        $response['message'] = 'Order saved. Redirecting to eSewa...';
+                        $response['payment_method'] = 'eSewa';
+                        $response['order_id'] = $last_insert_id;
+                        $response['order_number'] = $order_number;
+                        $response['redirect'] = null;
+                    } else {
+                        // For cash/pay-at-restaurant: clear cart and go to myorder
+                        $_SESSION['cart'] = [];
+                        $response['message'] = 'Order placed successfully!';
+                        $response['redirect'] = 'myorder.php';
+                    }
                 } else {
                     $conn->rollback();
                     $response['message'] = 'Error placing order' . ($error_occurred ? ': Database error occurred' : '');

@@ -3365,3 +3365,10 @@ footer p {
     border-radius: 0.375rem;
 }
 
+.mkj-radio-esewa-logo {
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
+    margin-right: 12px;
+}
+

@@ -297,6 +297,31 @@
       .then(response => response.json())
       .then(data => {
         if (data.success) {
+          // eSewa payment: redirect via hidden POST form to esewa/pay.php
+          if (data.payment_method === 'eSewa' && data.order_id) {
+            showInfo('Redirecting to eSewa for secure payment...', 'eSewa Payment');
+            const esewaForm = document.createElement('form');
+            esewaForm.method = 'POST';
+            esewaForm.action = '../esewa/pay.php';
+            esewaForm.style.display = 'none';
+
+            function addHidden(name, value) {
+              const input = document.createElement('input');
+              input.type = 'hidden';
+              input.name = name;
+              input.value = value || '';
+              esewaForm.appendChild(input);
+            }
+
+            addHidden('order_id',     data.order_id);
+            addHidden('order_number', data.order_number || '');
+
+            document.body.appendChild(esewaForm);
+            esewaForm.submit();
+            return;
+          }
+
+          // Normal order (cash / pay at restaurant)
           showSuccess(data.message || 'Order placed successfully!', 'Order confirmed');
           cartItems = [];
           renderCart();
@@ -316,3 +341,4 @@
 
   renderCart();
 })();
+

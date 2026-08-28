@@ -74,7 +74,46 @@ if ($graceCol && $graceCol->num_rows === 0) {
     $conn->query("ALTER TABLE `bookings` ADD COLUMN `grace_end_at` DATETIME DEFAULT NULL AFTER `status`");
 }
 
+// ── Booking system upgrade: start_time and end_time columns ──────────────────
+$startTimeCol = $conn->query("SHOW COLUMNS FROM `bookings` LIKE 'start_time'");
+if ($startTimeCol && $startTimeCol->num_rows === 0) {
+    $conn->query("ALTER TABLE `bookings` ADD COLUMN `start_time` TIME DEFAULT NULL AFTER `booking_time`");
+    $conn->query("UPDATE `bookings` SET `start_time` = `booking_time` WHERE `start_time` IS NULL");
+}
+$endTimeCol = $conn->query("SHOW COLUMNS FROM `bookings` LIKE 'end_time'");
+if ($endTimeCol && $endTimeCol->num_rows === 0) {
+    $conn->query("ALTER TABLE `bookings` ADD COLUMN `end_time` TIME DEFAULT NULL AFTER `start_time`");
+    $conn->query("UPDATE `bookings` SET `end_time` = ADDTIME(`booking_time`, '02:00:00') WHERE `end_time` IS NULL");
+}
+
+
 // ── Normalize statuses to Title Case ─────────────────────────────────────────
+// Only runs once: if any lowercase 'pending' rows exist, migrate them all
+$lcCheck = $conn->query("SELECT COUNT(*) FROM `bookings` WHERE `status` = 'pending'");
+if ($lcCheck && $lcCheck->fetch_row()[0] > 0) {
+    $conn->query("UPDATE `bookings` SET `status` = 'Pending'    WHERE `status` = 'pending'");
+    $conn->query("UPDATE `bookings` SET `status` = 'Confirmed'  WHERE `status` = 'confirmed'");
+    $conn->query("UPDATE `bookings` SET `status` = 'Cancelled'  WHERE `status` = 'cancelled'");
+    $conn->query("UPDATE `bookings` SET `status` = 'Completed'  WHERE `status` = 'completed'");
+}
+
+// ── Payment method and status columns for orders ─────────────────────────────
+$paymentMethodCol = $conn->query("SHOW COLUMNS FROM `orders` LIKE 'payment_method'");
+if ($paymentMethodCol && $paymentMethodCol->num_rows === 0) {
+    $conn->query("ALTER TABLE `orders` ADD COLUMN `payment_method` VARCHAR(50) DEFAULT NULL AFTER `status`");
+}
+$paymentStatusCol = $conn->query("SHOW COLUMNS FROM `orders` LIKE 'payment_status'");
+if ($paymentStatusCol && $paymentStatusCol->num_rows === 0) {
+    $conn->query("ALTER TABLE `orders` ADD COLUMN `payment_status` ENUM('Pending','Paid','Failed') NOT NULL DEFAULT 'Pending' AFTER `payment_method`");
+}
+$transactionUuidCol = $conn->query("SHOW COLUMNS FROM `orders` LIKE 'transaction_uuid'");
+if ($transactionUuidCol && $transactionUuidCol->num_rows === 0) {
+    $conn->query("ALTER TABLE `orders` ADD COLUMN `transaction_uuid` VARCHAR(100) DEFAULT NULL AFTER `payment_status`");
+}
+$transactionCodeCol = $conn->query("SHOW COLUMNS FROM `orders` LIKE 'transaction_code'");
+if ($transactionCodeCol && $transactionCodeCol->num_rows === 0) {
+    $conn->query("ALTER TABLE `orders` ADD COLUMN `transaction_code` VARCHAR(100) DEFAULT NULL AFTER `transaction_uuid`");
+}
 // Only runs once: if any lowercase 'pending' rows exist, migrate them all
 $lcCheck = $conn->query("SELECT COUNT(*) FROM `bookings` WHERE `status` = 'pending'");
 if ($lcCheck && $lcCheck->fetch_row()[0] > 0) {

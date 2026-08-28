@@ -218,68 +218,7 @@ foreach($users as $user) {
 <body>
   
    <div class="container">
-      <aside>
-           
-         <div class="top">
-           <div class="logo">
-             <h2>Masu <span class="danger"> ko jhol</span> </h2>
-           </div>
-           <div class="close" id="close_btn">
-            <span class="material-symbols-sharp">
-              close
-              </span>
-           </div>
-         </div>
-         <!-- end top -->
-          <div class="sidebar">
-
-            <a href="./index.php">
-              <span class="material-symbols-sharp">grid_view </span>
-              <h3>Dashbord</h3>
-           </a>
-           <a href="#" class="active">
-              <span class="material-symbols-sharp">person_outline </span>
-              <h3>costumers</h3>
-           </a>
-           <a href="analytics.php">
-              <span class="material-symbols-sharp">insights </span>
-              <h3>Analytics</h3>
-           </a>
-           <a href="orders_page.php">
-              <span class="material-symbols-sharp">mail_outline </span>
-              <h3>Orders</h3>
-              <span class="msg_count">14</span>
-           </a>
-           <a href="menu.php">
-              <span class="material-symbols-sharp">receipt_long </span>
-              <h3>Menu</h3>
-           </a>
-           <a href="bookings.php">
-              <span class="material-symbols-sharp">calendar_month </span>
-              <h3>Bookings</h3>
-              <span class="msg_count">1</span>
-           </a>
-
-           <a href="feedback.php">
-              <span class="material-symbols-sharp">Feedback </span>
-              <h3>Feedback</h3>
-           </a>
-           
-           <a href="#">
-              <span class="material-symbols-sharp">settings </span>
-              <h3>settings</h3>
-           </a>
-           <a href="#">
-              <span class="material-symbols-sharp">add </span>
-              <h3>Add Product</h3>
-           </a>
-           <a href="../includes/logout.php">
-              <span class="material-symbols-sharp">logout </span>
-              <h3>logout</h3>
-           </a>
-             
-          </div>
-      </aside>
+      <?php include_once __DIR__ . '/sidebar.php'; ?>
       <!-- --------------
         end asid
       -------------------- -->

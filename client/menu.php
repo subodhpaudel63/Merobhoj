@@ -722,6 +722,27 @@ if ($catResult) {
                                         <i class="fa fa-store mkj-radio-icon"></i>
                                         <span class="mkj-radio-label">Pay at Restaurant</span>
                                     </label>
+
+                                    <label class="mkj-custom-radio-btn">
+    <input type="radio" name="payment_method" value="eSewa">
+
+    <span class="mkj-radio-indicator"></span>
+    
+<img src="../assets/img/esewa/esewalogo.png"
+     alt="eSewa"
+     class="mkj-radio-esewa-logo">
+    
+
+    
+
+    <span class="mkj-radio-label">Pay with eSewa</span>
+</label>
+                                    
+
+
+    
+
+                                    
                                 </div>
                             </div>
                             <div class="mkj-field mt-2">
@@ -1059,6 +1080,32 @@ if ($catResult) {
                 }
 
                 if (data.success) {
+                    // eSewa payment: redirect via hidden POST form to esewa/pay.php
+                    if (data.payment_method === 'eSewa' && data.order_id) {
+                        if (window.ToastNotifications) {
+                            ToastNotifications.info('Redirecting to eSewa for secure payment...', { title: 'eSewa Payment' });
+                        }
+                        const esewaForm = document.createElement('form');
+                        esewaForm.method = 'POST';
+                        esewaForm.action = '../esewa/pay.php';
+                        esewaForm.style.display = 'none';
+
+                        function addHidden(name, value) {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = name;
+                            input.value = value || '';
+                            esewaForm.appendChild(input);
+                        }
+
+                        addHidden('order_id',     data.order_id);
+                        addHidden('order_number', data.order_number || '');
+
+                        document.body.appendChild(esewaForm);
+                        esewaForm.submit();
+                        return;
+                    }
+
                     if (window.ToastNotifications) {
                         ToastNotifications.success(data.message || 'Order placed successfully!', { title: 'Order placed' });
                     }

@@ -15,6 +15,11 @@ if (!$currentUser) {
     exit;
 }
 
+// Show eSewa payment success message
+if (($_GET['payment'] ?? '') === 'esewa_success') {
+    $_SESSION['msg'] = ['type' => 'success', 'text' => 'eSewa payment successful! Your order has been confirmed.'];
+}
+
 try {
   $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $password, [
     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,

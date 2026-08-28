@@ -16,16 +16,21 @@ if (!$user) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $date = trim($_POST['date'] ?? '');
-    $time = trim($_POST['time'] ?? '');
+    $start_time = trim($_POST['start_time'] ?? $_POST['time'] ?? '');
+    $end_time = trim($_POST['end_time'] ?? '');
     $people = (int)($_POST['people'] ?? 0);
     
-    if (empty($date) || empty($time) || $people <= 0) {
+    if (empty($date) || empty($start_time) || $people <= 0) {
         echo json_encode(['error' => 'Missing required fields']);
         exit;
     }
 
+    if (empty($end_time)) {
+        $end_time = date('H:i', strtotime($start_time) + 7200);
+    }
+
     // ── Validate opening hours ───────────────────────────────────────────────
-    if (preg_match('/^(\d{2}):(\d{2})/', $time, $m)) {
+    if (preg_match('/^(\d{2}):(\d{2})/', $start_time, $m)) {
         $hour = (int)$m[1];
         if ($hour < RESTAURANT_OPEN_HOUR || $hour >= RESTAURANT_CLOSE_HOUR) {
             $openFmt  = date('g:i A', mktime(RESTAURANT_OPEN_HOUR, 0));
@@ -42,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // ── Process expired no-shows so their tables become available ─────────────
     processNoShows($conn);
     
-    // A table is unavailable if it is booked for the EXACT same date and time,
+    // A table is unavailable if it is booked for an overlapping time slot,
     // and the booking status is Pending, Confirmed, or Checked-in.
     $query = "
         SELECT rt.id, rt.table_name, rt.capacity 
@@ -51,15 +56,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         AND rt.id NOT IN (
             SELECT table_id FROM bookings 
             WHERE booking_date = ? 
-              AND booking_time = ? 
               AND status IN ('Pending', 'Confirmed', 'Checked-in')
+              AND start_time < ? 
+              AND end_time > ?
         )
         ORDER BY rt.capacity ASC, rt.id ASC
     ";
     
     $stmt = $conn->prepare($query);
     if ($stmt) {
-        $stmt->bind_param("iss", $people, $date, $time);
+        $stmt->bind_param("isss", $people, $date, $end_time, $start_time);
         $stmt->execute();
         $result = $stmt->get_result();
         

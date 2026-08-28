@@ -43,7 +43,7 @@ if ($statusFilter !== '') {
     }
 }
 
-$sql = "SELECT o.order_id, o.order_number, o.menu_id, o.menu_name, o.email, o.mobile, o.address, o.quantity, o.price, o.total_price, o.status, o.order_time, o.order_date, m.menu_image FROM orders o LEFT JOIN menu m ON o.menu_id = m.menu_id";
+$sql = "SELECT o.order_id, o.order_number, o.menu_id, o.menu_name, o.email, o.mobile, o.address, o.quantity, o.price, o.total_price, o.payment_method, o.payment_status, o.status, o.order_time, o.order_date, m.menu_image FROM orders o LEFT JOIN menu m ON o.menu_id = m.menu_id";
 if ($where) $sql .= ' WHERE ' . implode(' AND ', $where);
 $sql .= " ORDER BY o.$orderBySql";
 
@@ -71,6 +71,8 @@ foreach ($rawOrders as $row) {
             'mobile' => $row['mobile'],
             'address' => $row['address'],
             'status' => $row['status'],
+            'payment_method' => $row['payment_method'],
+            'payment_status' => $row['payment_status'],
             'order_time' => $row['order_time'],
             'order_date' => $row['order_date'],
             'total_amount' => 0.0,
@@ -457,66 +459,7 @@ if ($recent_res) {
 </head>
 <body>
    <div class="container">
-      <aside>
-           
-         <div class="top">
-           <div class="logo">
-             <h2>Masu <span class="danger"> ko jhol</span> </h2>
-           </div>
-           <div class="close" id="close_btn">
-            <span class="material-symbols-sharp">
-              close
-              </span>
-           </div>
-         </div>
-         <!-- end top -->
-          <div class="sidebar">
-
-            <a href="./index.php">
-              <span class="material-symbols-sharp">grid_view </span>
-              <h3>Dashbord</h3>
-           </a>
-           <a href="users.php">
-              <span class="material-symbols-sharp">person_outline </span>
-              <h3>costumers</h3>
-           </a>
-           <a href="analytics.php">
-              <span class="material-symbols-sharp">insights </span>
-              <h3>Analytics</h3>
-           </a>
-           <a href="#" class="active">
-              <span class="material-symbols-sharp">mail_outline </span>
-              <h3>Orders</h3>
-              <span class="msg_count"><?php echo count($orders); ?></span>
-           </a>
-           <a href="menu.php">
-              <span class="material-symbols-sharp">receipt_long </span>
-              <h3>Menu</h3>
-           </a>
-           <a href="bookings.php">
-              <span class="material-symbols-sharp">calendar_month </span>
-              <h3>Bookings</h3>
-              <span class="msg_count">1</span>
-           </a>
-           <a href="feedback.php">
-              <span class="material-symbols-sharp">Feedback </span>
-              <h3>Feedback</h3>
-           </a>
-           <a href="#">
-              <span class="material-symbols-sharp">settings </span>
-              <h3>settings</h3>
-           </a>
-           <a href="#">
-              <span class="material-symbols-sharp">add </span>
-              <h3>Add Product</h3>
-           </a>
-           <a href="../includes/logout.php">
-              <span class="material-symbols-sharp">logout </span>
-              <h3>logout</h3>
-           </a>
-             
-          </div>
-      </aside>
+      <?php include_once __DIR__ . '/sidebar.php'; ?>
       <!-- --------------
         end asid
       -------------------- -->
@@ -640,8 +583,9 @@ if ($recent_res) {
                                  <?php if (!$orders): ?>
                                    <tr><td colspan="8" class="text-center text-muted" style="padding: 2rem;">No orders found.</td></tr>
                                  <?php else: foreach ($orders as $o): 
-                                     $pm = 'Cash on Delivery'; 
-                                     $pmClass = 'payment-cod';
+                                     $pm = !empty($o['payment_method']) ? $o['payment_method'] : 'Cash on Delivery'; 
+                                     $pmStatus = !empty($o['payment_status']) ? $o['payment_status'] : ($pm === 'Pay at Restaurant' ? 'Paid' : 'Unpaid');
+                                     $pmClass = strtolower($pmStatus) === 'paid' ? 'payment-online' : 'payment-cod';
                                      
                                      $stBadgeClass = 'status-new-badge';
                                      $visualStatus = 'New';

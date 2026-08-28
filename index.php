@@ -765,16 +765,22 @@ Want to explore that next?
                       </div>
                     </div>
                     <div class="row mt-3">
-                      <div class="col-12 col-lg-6 mb-3">
+                      <div class="col-12 col-lg-4 mb-3">
                         <div class="input d-flex align-items-center">
                           <i class="fa fa-calendar py-2 px-3"></i>
                           <input class="form-control datepicker bg-transparent border-0 px-3 text-white" type="date" name="date" required>
                         </div>
                       </div>
-                      <div class="col-12 col-lg-6 mb-3">
+                      <div class="col-12 col-lg-4 mb-3">
                         <div class="input d-flex align-items-center">
                           <i class="fa fa-clock py-2 px-3"></i>
-                          <input class="form-control bg-transparent border-0 px-3 text-white" type="time" name="time" required>
+                          <input class="form-control bg-transparent border-0 px-3 text-white" type="time" name="start_time" placeholder="Start Time" required>
+                        </div>
+                      </div>
+                      <div class="col-12 col-lg-4 mb-3">
+                        <div class="input d-flex align-items-center">
+                          <i class="fa fa-clock py-2 px-3"></i>
+                          <input class="form-control bg-transparent border-0 px-3 text-white" type="time" name="end_time" placeholder="End Time" required>
                         </div>
                       </div>
                     </div>
@@ -817,21 +823,24 @@ Want to explore that next?
             if (!form) return;
             
             const dateInput = form.querySelector('input[name="date"]');
-            const timeInput = form.querySelector('input[name="time"]');
+            const startTimeInput = form.querySelector('input[name="start_time"]');
+            const endTimeInput = form.querySelector('input[name="end_time"]');
             const peopleInput = form.querySelector('input[name="people"]');
             const tableSelect = document.getElementById('tableSelect');
             
             function updateTables() {
                 const date = dateInput.value;
-                const time = timeInput.value;
+                const startTime = startTimeInput.value;
+                const endTime = endTimeInput.value;
                 const people = peopleInput.value;
                 
-                if (date && time && people > 0) {
+                if (date && startTime && endTime && people > 0) {
                     tableSelect.innerHTML = '<option value="" style="color: white; background-color: #212529;">Loading available tables...</option>';
                     
                     const formData = new FormData();
                     formData.append('date', date);
-                    formData.append('time', time);
+                    formData.append('start_time', startTime);
+                    formData.append('end_time', endTime);
                     formData.append('people', people);
                     
                     fetch('./includes/get_available_tables.php', {
@@ -860,12 +869,13 @@ Want to explore that next?
                         tableSelect.innerHTML = '<option value="" style="color: white; background-color: #212529;">Error loading tables</option>';
                     });
                 } else {
-                    tableSelect.innerHTML = '<option value="" style="color: white; background-color: #212529;">Select a Date, Time, and People first</option>';
+                    tableSelect.innerHTML = '<option value="" style="color: white; background-color: #212529;">Select a Date, Start & End Time, and People first</option>';
                 }
             }
             
             dateInput.addEventListener('change', updateTables);
-            timeInput.addEventListener('change', updateTables);
+            startTimeInput.addEventListener('change', updateTables);
+            endTimeInput.addEventListener('change', updateTables);
             peopleInput.addEventListener('change', updateTables);
             peopleInput.addEventListener('keyup', updateTables);
             
@@ -879,12 +889,29 @@ Want to explore that next?
                 }
                 
                 // Opening hours validation
-                const time = timeInput.value;
-                if (time) {
-                    const hour = parseInt(time.split(':')[0], 10);
-                    if (hour < 7 || hour >= 23) {
+                const startTime = startTimeInput.value;
+                const endTime = endTimeInput.value;
+                if (startTime) {
+                    const startHour = parseInt(startTime.split(':')[0], 10);
+                    if (startHour < 7 || startHour >= 23) {
                         e.preventDefault();
-                        alert('We are open from 7:00 AM to 11:00 PM. Please choose a valid time.');
+                        alert('We are open from 7:00 AM to 11:00 PM. Please choose a valid start time.');
+                        return;
+                    }
+                }
+                if (endTime) {
+                    const endHour = parseInt(endTime.split(':')[0], 10);
+                    const endMin = parseInt(endTime.split(':')[1], 10);
+                    if (endHour < 7 || endHour > 23 || (endHour === 23 && endMin > 0)) {
+                        e.preventDefault();
+                        alert('We are open from 7:00 AM to 11:00 PM. Please choose a valid end time.');
+                        return;
+                    }
+                }
+                if (startTime && endTime) {
+                    if (startTime >= endTime) {
+                        e.preventDefault();
+                        alert('End time must be after start time.');
                         return;
                     }
                 }

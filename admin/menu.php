@@ -1105,80 +1105,12 @@ $buildMenuUrl = static function (array $overrides = []) use ($queryParams): stri
         .menu-image { min-height:160px; height:160px; }
     }
 
-    /* Match the shared admin navigation sizing and keep this dashboard comfortably focused. */
-    @media screen and (min-width: 1181px) {
-        .container { width:96%; max-width:1540px; margin:0 auto; grid-template-columns:14rem minmax(0,1fr); }
-        aside { height:100vh; border-right:0; background:transparent; }
-        aside .top { margin-top:1.4rem; min-height:auto; padding:0; border-bottom:0; background:transparent; }
-        aside .logo { gap:1rem; }
-        aside .logo h2 { font-size:1.4rem; letter-spacing:normal; }
-        aside .sidebar { top:1rem; height:86vh; padding-top:0; background:transparent; }
-        aside .sidebar a { margin-left:2rem; margin-right:0; height:3.3rem; border-radius:0; font-size:.88rem; }
-        aside .sidebar a.active { margin-left:calc(1rem - 3px); border-left:5px solid var(--mkj-primary); border-radius:0; }
-        .page-shell { width:100%; max-width:1180px; margin:0 auto; padding:0 1.35rem 2.3rem; }
-        .topbar { margin:0 -1.35rem 1.3rem; }
-    }
   </style>
 </head>
 <body>
 
    <div class="container">
-      <aside>
-         <div class="top">
-           <div class="logo">
-             <h2>Masu <span class="danger"> ko jhol</span> </h2>
-           </div>
-           <div class="close" id="close_btn">
-            <span class="material-symbols-sharp">close</span>
-           </div>
-         </div>
-         <div class="sidebar">
-            <a href="./index.php">
-              <span class="material-symbols-sharp">grid_view </span>
-              <h3>Dashbord</h3>
-           </a>
-           <a href="users.php">
-              <span class="material-symbols-sharp">person_outline </span>
-              <h3>costumers</h3>
-           </a>
-           <a href="analytics.php">
-              <span class="material-symbols-sharp">insights </span>
-              <h3>Analytics</h3>
-           </a>
-           <a href="orders_page.php">
-              <span class="material-symbols-sharp">mail_outline </span>
-              <h3>Orders</h3>
-              <span class="msg_count">14</span>
-           </a>
-           <a href="menu.php" class="active">
-              <span class="material-symbols-sharp">receipt_long </span>
-              <h3>Menu</h3>
-           </a>
-           <a href="bookings.php">
-              <span class="material-symbols-sharp">calendar_month </span>
-              <h3>Bookings</h3>
-              <span class="msg_count">1</span>
-           </a>
-
-           <a href="feedback.php">
-              <span class="material-symbols-sharp">Feedback </span>
-              <h3>Feedback</h3>
-           </a>
-           
-           <a href="#">
-              <span class="material-symbols-sharp">settings </span>
-              <h3>settings</h3>
-           </a>
-           <a href="#">
-              <span class="material-symbols-sharp">add </span>
-              <h3>Add Product</h3>
-           </a>
-           <a href="../includes/logout.php">
-              <span class="material-symbols-sharp">logout </span>
-              <h3>logout</h3>
-           </a>
-         </div>
-      </aside>
+      <?php include_once __DIR__ . '/sidebar.php'; ?>
 
       <main>
           <?php
@@ -1200,34 +1132,6 @@ $buildMenuUrl = static function (array $overrides = []) use ($queryParams): stri
           };
           ?>
           <div class="page-shell">
-              <div class="topbar">
-                  <div class="topbar-left">
-                      <button class="icon-btn" type="button" aria-label="Toggle sidebar" id="menu_bar">
-                          <span class="material-symbols-sharp" style="font-size:18px;">menu</span>
-                      </button>
-                  </div>
-                  <div class="topbar-right">
-                      <label class="searchbox" aria-label="Search anything">
-                          <span class="material-symbols-sharp" style="font-size:18px;">search</span>
-                          <input type="text" placeholder="Search anything...">
-                      </label>
-                      <button class="icon-btn" type="button" aria-label="Theme settings">
-                          <span class="material-symbols-sharp" style="font-size:18px;">settings</span>
-                      </button>
-                      <button class="icon-btn notif" type="button" aria-label="Notifications">
-                          <span class="material-symbols-sharp" style="font-size:18px;">notifications</span>
-                          <span class="dot">3</span>
-                      </button>
-                      <div class="profile-chip">
-                          <img src="../assets/img/usersprofiles/adminpic.jpg" alt="Subash Admin">
-                          <div>
-                              <b>Subash Admin</b>
-                              <small>Administrator</small>
-                          </div>
-                          <span class="material-symbols-sharp" style="font-size:18px;color:#667085;">keyboard_arrow_down</span>
-                      </div>
-                  </div>
-              </div>
 
               <div class="page-head" style="margin-bottom:0.9rem;">
                   <div>

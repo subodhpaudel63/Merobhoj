@@ -99,15 +99,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ], $isAjax);
     }
 
-    $stmt = $conn->prepare("INSERT INTO orders (order_number, menu_id, menu_name, price, quantity, total_price, email, mobile, address, status, order_time, order_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Confirmed', NOW(), CURDATE())");
-    $stmt->bind_param("sisdidsss", $order_number, $menu_id, $menu_name, $price, $quantity, $total_price, $email, $mobile, $address);
+    $is_esewa = ($payment_method === 'eSewa');
+    $payment_status = $is_esewa ? 'Pending' : 'Paid';
+
+    $stmt = $conn->prepare("INSERT INTO orders (order_number, menu_id, menu_name, price, quantity, total_price, email, mobile, address, payment_method, payment_status, status, order_time, order_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Confirmed', NOW(), CURDATE())");
+    $stmt->bind_param("sisdidsssss", $order_number, $menu_id, $menu_name, $price, $quantity, $total_price, $email, $mobile, $address, $payment_method, $payment_status);
 
     if ($stmt->execute()) {
+        $insert_id = $stmt->insert_id;
+        
         respond_menu_order([
             'success' => true,
-            'message' => 'Order placed successfully!',
-            'order_id' => $stmt->insert_id,
+            'message' => $is_esewa ? 'Order saved. Redirecting to eSewa...' : 'Order placed successfully!',
+            'order_id' => $insert_id,
             'order_number' => $order_number,
+            'payment_method' => $payment_method,
         ], $isAjax);
     } else {
         respond_menu_order([

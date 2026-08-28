@@ -509,6 +509,24 @@ $drawerCount = count($drawerCart);
       width: 100%;
     }
   }
+
+  /* eSewa payment logo inside radio button */
+  .mkj-radio-esewa-logo {
+    height: 22px;
+    width: auto;
+    object-fit: contain;
+    vertical-align: middle;
+    filter: grayscale(30%);
+    transition: filter .2s;
+  }
+  .mkj-custom-radio-btn:has(input:checked) .mkj-radio-esewa-logo {
+    filter: none;
+  }
+  /* Hide the generic eSewa icon when logo is used */
+  .mkj-custom-radio-btn:has(.mkj-radio-esewa-logo) .mkj-radio-icon {
+    display: none;
+  }
+
 </style>
 
 <div class="cart-drawer-backdrop" id="cartDrawerBackdrop"></div>
@@ -649,6 +667,15 @@ $drawerCount = count($drawerCart);
                           <i class="fa fa-store mkj-radio-icon"></i>
                           <span class="mkj-radio-label">Pay at Restaurant</span>
                       </label>
+
+                      <label class="mkj-custom-radio-btn">
+                 <input type="radio" name="payment_method" value="eSewa">
+                 <span class="mkj-radio-indicator"></span>
+                <img src="../assets/img/esewa/esewalogo.png"
+                     alt="eSewa"
+                     class="mkj-radio-esewa-logo">
+                  <span class="mkj-radio-label">Pay with eSewa</span>
+                    </label>
                   </div>
               </div>
               <div class="mkj-field mt-2">
