@@ -639,20 +639,31 @@ Want to explore that next?
                       </div>
                     </div>
                   </div>
+                  
+
                   <div class="row mt-3">
-                    <div class="col-12 col-lg-6 mb-3">
-                      <div class="input d-flex align-items-center">
-                        <i class="fa fa-calendar py-2 px-3"></i>
-                        <input class="form-control datepicker date-picker-white bg-transparent border-0 px-3 text-white" type="date" name="date" id="reservationDate" required min="<?php echo date('Y-m-d'); ?>">
-                      </div>
-                    </div>
-                    <div class="col-12 col-lg-6 mb-3">
-                      <div class="input d-flex align-items-center">
-                        <i class="fa fa-clock py-2 px-3"></i>
-                        <input class="form-control time-picker-white bg-transparent border-0 px-3 text-white" type="time" name="time" required>
-                      </div>
-                    </div>
-                  </div>
+    <div class="col-12 col-lg-4 mb-3">
+        <div class="input d-flex align-items-center bg-dark rounded">
+            <i class="fa fa-calendar py-2 px-3 text-white-50"></i>
+            <input class="form-control bg-transparent border-0 text-white shadow-none" type="text" name="date" placeholder="Select Date" onfocus="this.type='date'" onblur="if(!this.value)this.type='text'" required>
+        </div>
+    </div>
+    <div class="col-12 col-lg-4 mb-3">
+        <div class="input d-flex align-items-center bg-dark rounded">
+            <i class="fa fa-clock py-2 px-3 text-white-50"></i>
+            <input class="form-control bg-transparent border-0 text-white shadow-none" type="text" name="start_time" placeholder="Start Time" onfocus="this.type='time'" onblur="if(!this.value)this.type='text'" required>
+        </div>
+    </div>
+    <div class="col-12 col-lg-4 mb-3">
+        <div class="input d-flex align-items-center bg-dark rounded">
+            <i class="fa fa-clock py-2 px-3 text-white-50"></i>
+            <input class="form-control bg-transparent border-0 text-white shadow-none" type="text" name="end_time" placeholder="End Time" onfocus="this.type='time'" onblur="if(!this.value)this.type='text'" required>
+        </div>
+    </div>
+</div>
+
+                   
+
                   <div class="row mt-3">
                     <div class="col-12 mb-3">
                       <div class="input d-flex align-items-center">
