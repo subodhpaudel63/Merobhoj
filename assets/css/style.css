@@ -224,6 +224,8 @@
   --heading-color: #343a40; /* Example Heading Color */
   --border-color: #dee2e6; /* Example Border Color */
   --text-color-white: #ffff;
+  --brand: #ff6a00; /* Brand orange — primary CTA color */
+  --brand-light: #d32f2f; /* Brand red — gradient end color */
 }
 
 /* Applying Fonts and Colors to Elements */

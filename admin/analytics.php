@@ -200,15 +200,36 @@ $avg_order_value = $total_orders > 0 ? $total_revenue / $total_orders : 0;
     .analytics-table th, .analytics-table td { padding: 0.8rem; border-bottom: 1px solid var(--clr-info-light); text-align: left; }
   </style>
 </head>
-<body>
+<body class="admin-page analytics-page">
   <div class="container">
     <?php include_once __DIR__ . '/sidebar.php'; ?>
 
-    <main style="max-width: 100%;">
-      <div class="dashboard-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+    <main class="admin-page-main">
+      <div class="admin-topbar" aria-label="Admin toolbar">
+          <button type="button" id="menu_bar" class="admin-menu-button" aria-label="Open navigation">
+              <span class="material-symbols-sharp">menu</span>
+          </button>
+          <div class="admin-topbar-actions">
+              <div class="theme-toggler" aria-label="Change color theme">
+                  <span class="material-symbols-sharp active">light_mode</span>
+                  <span class="material-symbols-sharp">dark_mode</span>
+              </div>
+              <div class="admin-profile">
+                  <div class="admin-profile-copy">
+                      <strong>Subodh Admin</strong>
+                      <small>Administrator</small>
+                  </div>
+                  <div class="profile-photo">
+                      <img src="../assets/img/usersprofiles/adminpic.jpg" alt="Admin profile">
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      <div class="admin-page-heading">
         <div>
-          <h1 style="font-size:2.2rem; font-weight:800; color:var(--clr-dark); margin:0;">Analytics</h1>
-          <p style="color:var(--clr-dark-variant); font-size:0.9rem; margin-top:0.2rem;">Overview of your business performance</p>
+          <h1>Analytics</h1>
+          <p>Overview of your business performance</p>
         </div>
       </div>
 

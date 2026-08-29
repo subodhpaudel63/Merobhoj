@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mero Bhoj | Page Not Found</title>
     <link rel="stylesheet" href="assets/scss/404.css">
+   
     <style>
         .button {
             display: flex;
@@ -276,5 +277,6 @@
     </div>
 
 </body>
+
 
 </html>

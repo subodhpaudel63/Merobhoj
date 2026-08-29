@@ -244,13 +244,6 @@ $buildMenuUrl = static function (array $overrides = []) use ($queryParams): stri
         font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
-    .container {
-        width: 100%;
-        gap: 0;
-        grid-template-columns: 185px minmax(0, 1fr);
-        margin: 0;
-    }
-
     aside {
         position: sticky;
         top: 0;
@@ -1107,12 +1100,32 @@ $buildMenuUrl = static function (array $overrides = []) use ($queryParams): stri
 
   </style>
 </head>
-<body>
+<body class="admin-page">
 
    <div class="container">
       <?php include_once __DIR__ . '/sidebar.php'; ?>
 
-      <main>
+      <main class="admin-page-main">
+<div class="admin-topbar" aria-label="Admin toolbar">
+              <button type="button" id="menu_bar" class="admin-menu-button" aria-label="Open navigation">
+                  <span class="material-symbols-sharp">menu</span>
+              </button>
+              <div class="admin-topbar-actions">
+                  <div class="theme-toggler" aria-label="Change color theme">
+                      <span class="material-symbols-sharp active">light_mode</span>
+                      <span class="material-symbols-sharp">dark_mode</span>
+                  </div>
+                  <div class="admin-profile">
+                      <div class="admin-profile-copy">
+                          <strong>Subodh Admin</strong>
+                          <small>Administrator</small>
+                      </div>
+                      <div class="profile-photo">
+                          <img src="../assets/img/usersprofiles/adminpic.jpg" alt="Admin profile">
+                      </div>
+                  </div>
+              </div>
+          </div>
           <?php
           $stockTotals = ['In Stock' => 0, 'Low Stock' => 0, 'Out of Stock' => 0];
           foreach ($menu_items as $mi) {
@@ -1417,28 +1430,7 @@ $buildMenuUrl = static function (array $overrides = []) use ($queryParams): stri
           </div>
       </div>
 
-      <div class="right">
-          <div class="top">
-              <button id="menu_bar">
-                  <span class="material-symbols-sharp">menu</span>
-              </button>
-              <div class="theme-toggler">
-                  <span class="material-symbols-sharp active">light_mode</span>
-                  <span class="material-symbols-sharp">dark_mode</span>
-              </div>
-              <div class="profile">
-                  <div class="info">
-                      <p><b>Subodh Admin</b></p>
-                      <p>Administrator</p>
-                      <small class="text-muted">Online</small>
-                  </div>
-                  <div class="profile-photo">
-                      <img src="../assets/img/usersprofiles/adminpic.jpg" alt="Admin Profile"/>
-                  </div>
-              </div>
-          </div>
       </div>
-   </div>
 
    <script>
        // Modal functionality

@@ -12,8 +12,8 @@ $total_orders = $total_orders_query->fetch_assoc()['total'];
 $confirmed_orders_query = $conn->query("SELECT COUNT(*) as confirmed FROM orders WHERE status = 'Confirmed'");
 $confirmed_orders = $confirmed_orders_query->fetch_assoc()['confirmed'];
 
-$shipping_orders_query = $conn->query("SELECT COUNT(*) as shipping FROM orders WHERE status = 'Shipping'");
-$shipping_orders = $shipping_orders_query->fetch_assoc()['shipping'];
+$delivering_orders_query = $conn->query("SELECT COUNT(*) as delivering FROM orders WHERE status = 'Delivering'");
+$shipping_orders = $delivering_orders_query->fetch_assoc()['delivering'];
 
 $response = [
     'success' => true,

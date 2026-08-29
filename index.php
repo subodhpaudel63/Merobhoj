@@ -227,6 +227,7 @@ if (isset($_GET['action'])) {
         <span></span>
       </div>
     </div>
+    
 
 
     <header>
@@ -272,7 +273,7 @@ if (isset($_GET['action'])) {
           <a class="text-decoration-none" id="shoppingbutton" href="./includes/cart.php">
             <i class="fa fa-shopping-bag me-3"></i>
           </a>
-          <!-- Login and Signup buttons -->
+          
           <div class="d-flex">
             <a href="./login.php" class="nav-button">Login</a>
             <a href="./register.php" class="nav-button-outline">Sign Up</a>
@@ -1030,7 +1031,7 @@ Want to explore that next?
             padding: 60px 20px;
             max-width: 900px;
             margin: 0 auto;
-            color: #2d2d2d;
+            color: #e5612f;
         }
 
         .mkj-faq-header {
@@ -1054,7 +1055,7 @@ Want to explore that next?
         .mkj-faq-item {
             background: #fffbf5;
             border: 1px solid #fce4cc;
-            border-left: 5px solid #FF8C00;
+            border-left: 5px solid #e5612f;
             border-radius: 10px;
             overflow: hidden;
             /* Using hardware acceleration for smoother shadow/transform */
@@ -1084,7 +1085,7 @@ Want to explore that next?
 
         .mkj-faq-icon {
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            color: #FF8C00;
+            color: #e5612f;
             font-size: 1.2rem;
         }
 

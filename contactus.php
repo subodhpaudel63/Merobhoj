@@ -659,8 +659,9 @@ if (!$user) {
         <span></span>
       </div>
     </div>
+    <?php include 'header.php'; ?>
     
-    <header class="bg-white">
+    <!-- <header class="bg-white">
       <div class="container header my-3 d-none d-lg-flex">
         <div class="logo">
           <a href="./index.php">
@@ -700,7 +701,7 @@ if (!$user) {
           <a class="text-decoration-none" id="shoppingbutton" href="#">
             <i class="fa fa-shopping-bag me-3 text-dark"></i>
           </a>
-          <!-- Login and Signup buttons -->
+          
           <div class="d-flex align-items-center">
             <a href="./login.php" class="nav-button">Login</a>
             <a href="./register.php" class="nav-button-outline">Sign Up</a>
@@ -762,7 +763,7 @@ if (!$user) {
           </div>
         </div>
       </div>
-    </header>
+    </header> -->
 
    
 

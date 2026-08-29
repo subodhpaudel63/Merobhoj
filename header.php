@@ -1,5 +1,22 @@
+<?php require_once __DIR__ . '/config/bootstrap.php'; ?>
 <style>
     body { background:#fff; }
+
+    /* ── Header scroll behavior (same as index.php) ──
+       White at the top, brand orange once the page is scrolled. */
+    header {
+        background-color: #fff;
+        transition: background-color 0.3s ease;
+    }
+    header.scrolled .text-dark {
+        color: #fff !important;
+    }
+    header.scrolled #mobile-menu .text-dark {
+        color: #343a40 !important; /* keep mobile dropdown text dark on its white background */
+    }
+    header.scrolled .menus > ul > li::after {
+        background-color: #fff;
+    }
     .menu .card { border-radius: 16px; overflow: hidden; border: 0; background: #fff; box-shadow: 0 8px 24px rgba(0,0,0,.08); transition: transform .2s ease, box-shadow .2s ease; }
     .menu .card:hover { transform: translateY(-4px); box-shadow: 0 16px 36px rgba(0,0,0,.12); }
     .menu .card-img-top { height: 220px; object-fit: cover; }
@@ -153,10 +170,11 @@
     <link href="assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
     <link href="assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
 
-    <?php require_once __DIR__ . '/config/bootstrap.php'; ?>
+    <!-- Theme color (brand orange) — used by mobile browsers for UI tint -->
+    <meta name="theme-color" content="#ff6a00">
     <link rel="stylesheet" href="<?php echo asset('css/style.css'); ?>" />
     
-    <header class="bg-white">
+    <header>
       <div class="container header my-3 d-none d-lg-flex">
         <div class="logo">
           <a href="./index.php">

@@ -3,11 +3,18 @@ header('Content-Type: application/json');
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/auth_check.php';
+require_once __DIR__ . '/../includes/order_validation.php';
 
 $response = ['success' => false, 'message' => 'Invalid request'];
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// 1. Verify admin permissions (Rule 3)
+if (!isset($_COOKIE['admin_type']) || decrypt($_COOKIE['admin_type'], SECRET_KEY) !== 'admin') {
+    echo json_encode(['success' => false, 'message' => 'Unauthorized access. Admin permissions required.']);
+    exit;
+}
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $raw = file_get_contents('php://input');
     $input = json_decode($raw, true);
 
@@ -15,48 +22,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $order_id = intval($input['order_id'] ?? 0);
         $order_number = trim((string)($input['order_number'] ?? ''));
         $status = $input['status'] ?? '';
-        $admin_note = isset($input['admin_note']) ? (string)$input['admin_note'] : null;
     } else {
         $order_id = intval($_POST['order_id'] ?? 0);
         $order_number = trim((string)($_POST['order_number'] ?? ''));
         $status = $_POST['status'] ?? '';
-        $admin_note = isset($_POST['admin_note']) ? (string)$_POST['admin_note'] : null;
     }
-
-    $allowed_status = ['Confirmed', 'Shipping', 'Ongoing', 'Delivering', 'Cancelled'];
 
     if ($order_id <= 0 && $order_number === '') {
         $response = ['success' => false, 'message' => 'Missing order identifier'];
-    } elseif (!in_array($status, $allowed_status, true)) {
+    } elseif (!in_array($status, ORDER_STATUSES, true)) {
         $response = ['success' => false, 'message' => 'Invalid order status selected'];
     } else {
-        $lookup = null;
+        // 2. The order exists (Rule 1)
+        $existingOrder = null;
         if ($order_number !== '') {
-            $lookup = $conn->prepare("SELECT order_id, status FROM orders WHERE order_number = ? OR order_id = ? LIMIT 1");
+            $lookup = $conn->prepare("SELECT order_id, status, order_type FROM orders WHERE order_number = ? LIMIT 1");
             if ($lookup) {
-                $lookup->bind_param("si", $order_number, $order_id);
+                $lookup->bind_param("s", $order_number);
+                $lookup->execute();
+                $result = $lookup->get_result();
+                $existingOrder = $result ? $result->fetch_assoc() : null;
+                $lookup->close();
             }
         } else {
-            $lookup = $conn->prepare("SELECT order_id, status FROM orders WHERE order_id = ? LIMIT 1");
+            $lookup = $conn->prepare("SELECT order_id, status, order_type FROM orders WHERE order_id = ? LIMIT 1");
             if ($lookup) {
                 $lookup->bind_param("i", $order_id);
+                $lookup->execute();
+                $result = $lookup->get_result();
+                $existingOrder = $result ? $result->fetch_assoc() : null;
+                $lookup->close();
             }
         }
 
-        if (!$lookup) {
-            $response = ['success' => false, 'message' => 'Failed to validate order'];
+        if (!$existingOrder) {
+            $response = ['success' => false, 'message' => 'Order not found'];
         } else {
-            $lookup->execute();
-            $result = $lookup->get_result();
-            $existingOrder = $result ? $result->fetch_assoc() : null;
-            $lookup->close();
-
-            if (!$existingOrder) {
-                $response = ['success' => false, 'message' => 'Order not found'];
-            } elseif (($existingOrder['status'] ?? '') === $status) {
-                $response = ['success' => false, 'message' => 'Order already has this status'];
+            // 3. Validate transition & type compatibility (Rules 4, 5, 6)
+            $validation = validate_order_transition($existingOrder['order_type'] ?? 'Delivery', $existingOrder['status'], $status, true);
+            if (!$validation['valid']) {
+                $response = ['success' => false, 'message' => $validation['error']];
             } else {
-                if ($order_number !== '') {
+                // Update all items sharing this order number, or just this item if order_number is missing
+                if (!empty($order_number)) {
                     $stmt = $conn->prepare("UPDATE orders SET status = ? WHERE order_number = ?");
                     if ($stmt) {
                         $stmt->bind_param("ss", $status, $order_number);
@@ -71,7 +79,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!$stmt) {
                     $response = ['success' => false, 'message' => 'Failed to prepare update statement'];
                 } else {
-
                     if ($stmt->execute()) {
                         $response = [
                             'success' => true,
@@ -88,7 +95,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
-
 }
 
 echo json_encode($response);

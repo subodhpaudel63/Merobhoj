@@ -154,13 +154,34 @@ $positive_percent = $total_feedback > 0 ? round(($positive_feedback / $total_fee
     .view-btn:hover { opacity: 0.8; }
   </style>
 </head>
-<body>
+<body class="admin-page">
 
    <div class="container">
       <?php include_once __DIR__ . '/sidebar.php'; ?>
 
 
-      <main>
+      <main class="admin-page-main">
+         <div class="admin-topbar" aria-label="Admin toolbar">
+            <button type="button" id="menu_bar" class="admin-menu-button" aria-label="Open navigation">
+                <span class="material-symbols-sharp">menu</span>
+            </button>
+            <div class="admin-topbar-actions">
+                <div class="theme-toggler" aria-label="Change color theme">
+                    <span class="material-symbols-sharp active">light_mode</span>
+                    <span class="material-symbols-sharp">dark_mode</span>
+                </div>
+                <div class="admin-profile">
+                    <div class="admin-profile-copy">
+                        <strong>Subodh Admin</strong>
+                        <small>Administrator</small>
+                    </div>
+                    <div class="profile-photo">
+                        <img src="../assets/img/usersprofiles/adminpic.jpg" alt="Admin profile">
+                    </div>
+                </div>
+            </div>
+         </div>
+
          <h1>Customer Feedback</h1>
 
          <div class="insights">
@@ -303,41 +324,7 @@ $positive_percent = $total_feedback > 0 ? round(($positive_feedback / $total_fee
    </div>
 
       <script>
-       const sideMenu = document.querySelector("aside");
-       const menuBtn = document.querySelector("#menu_btn");
-       const closeBtn = document.querySelector("#close_btn");
-       const themeToggler = document.querySelector(".theme-toggler");
-
-       // Sidebar controls
-       menuBtn.addEventListener('click', () => {
-           sideMenu.style.display = 'block';
-       });
-
-       closeBtn.addEventListener('click', () => {
-           sideMenu.style.display = 'none';
-       });
-
-       // Theme Toggler
-       themeToggler.addEventListener('click', () => {
-           document.body.classList.toggle('dark-theme-variables');
-           themeToggler.querySelector('span:nth-child(1)').classList.toggle('active');
-           themeToggler.querySelector('span:nth-child(2)').classList.toggle('active');
-           
-           // Save preference
-           const isDark = document.body.classList.contains('dark-theme-variables');
-           localStorage.setItem('admin-theme', isDark ? 'dark' : 'light');
-       });
-
-       // Apply saved theme on load
-       window.addEventListener('DOMContentLoaded', () => {
-           if (localStorage.getItem('admin-theme') === 'dark') {
-               document.body.classList.add('dark-theme-variables');
-               themeToggler.querySelector('span:nth-child(1)').classList.remove('active');
-               themeToggler.querySelector('span:nth-child(2)').classList.add('active');
-           }
-       });
-
-       function openFeedbackModal(name, message, rating, date) {
+      function openFeedbackModal(name, message, rating, date) {
            document.getElementById('modalTitle').innerText = "Feedback from " + name;
            document.getElementById('modalDate').innerText = "Submitted on " + date;
            document.getElementById('modalMsgBody').innerText = message;
@@ -471,6 +458,7 @@ $positive_percent = $total_feedback > 0 ? round(($positive_feedback / $total_fee
            }
        }
    </script>
-   
+
+   <script src="../assets/js/adminscript.js"></script>
 </body>
 </html>

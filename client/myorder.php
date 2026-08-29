@@ -68,11 +68,40 @@ if (isset($_COOKIE['user_img'])) {
             display: inline-block;
             margin-bottom: 5px;
         }
-        .status-confirmed { background:#e3f2fd; color:#0d47a1; }
-        .status-shipping { background:#fff3cd; color:#8a6d3b; }
-        .status-ongoing { background:#e8f5e9; color:#1b5e20; }
-        .status-delivering { background:#fdecea; color:#b71c1c; }
-        .status-cancelled { background:#ffebee; color:#c62828; }
+        .status-pending {
+    background: #FEF3C7;
+    color: #B45309;
+}
+
+.status-confirmed {
+    background: #DBEAFE;
+    color: #1D4ED8;
+}
+
+.status-preparing {
+    background: #FFEDD5;
+    color: #C2410C;
+}
+
+.status-ready {
+    background: #EDE9FE;
+    color: #6D28D9;
+}
+
+.status-delivering {
+    background: #CFFAFE;
+    color: #0E7490;
+}
+
+.status-completed {
+    background: #DCFCE7;
+    color: #15803D;
+}
+
+.status-cancelled {
+    background: #FEE2E2;
+    color: #B91C1C;
+}
         
         .order-date {
             font-size: 0.75rem;
@@ -190,6 +219,13 @@ if (isset($_COOKIE['user_img'])) {
                         </div>`
                     ).join('');
                     
+                    let actionHtml = '';
+                    if (o.status === 'Delivering') {
+                        actionHtml = `<small class="text-danger mt-1 fw-semibold" style="font-size:0.78rem; display:block;">Your order is already on the way and can no longer be cancelled.</small>`;
+                    } else if (['Pending', 'Confirmed', 'Preparing', 'Ready'].includes(o.status)) {
+                        actionHtml = `<button class="btn btn-sm btn-danger mt-2 fw-bold" style="font-size: 0.75rem; padding: 2px 8px; border-radius: 4px;" onclick="cancelOrder('${orderRef}')">Cancel Order</button>`;
+                    }
+                    
                     return `
                     <tr>
                         <td style="font-weight: 700; color: #0d47a1;">${orderRef}</td>
@@ -199,6 +235,7 @@ if (isset($_COOKIE['user_img'])) {
                             <div class="status-container">
                                 <span class="status-badge ${statusClass}" data-status="${o.status}" data-order-id="${o.order_id}" ${statusChanged ? 'data-status-changed="true"' : ''}>${o.status}</span>
                                 <span class="order-date text-muted">Ordered: ${new Date(o.order_date).toLocaleDateString()}</span>
+                                ${actionHtml}
                             </div>
                         </td>
                     </tr>
@@ -238,6 +275,30 @@ if (isset($_COOKIE['user_img'])) {
                 });
             } catch (e) {
                 console.error(e);
+            }
+        }
+
+        async function cancelOrder(orderRef) {
+            if (confirm('Are you sure you want to cancel this order?')) {
+                try {
+                    const response = await fetch('../includes/order_cancel_customer.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ order_number: orderRef })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        alert('Order cancelled successfully.');
+                        fetchOrders();
+                    } else {
+                        alert(result.message || 'Failed to cancel order.');
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert('An error occurred while cancelling the order.');
+                }
             }
         }
     </script>

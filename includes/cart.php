@@ -98,7 +98,7 @@ if ($action === 'checkout' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $order_number = 'ORD-' . date('Ymd') . '-' . sprintf('%04d', rand(1000, 9999));
     $conn->begin_transaction();
-    $stmt = $conn->prepare("INSERT INTO orders (order_number, menu_id, menu_name, price, quantity, total_price, email, mobile, address, status, order_time, order_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Confirmed', NOW(), CURDATE())");
+    $stmt = $conn->prepare("INSERT INTO orders (order_number, menu_id, menu_name, price, quantity, total_price, email, mobile, address, status, order_time, order_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW(), CURDATE())");
     $allOk = true;
     if ($stmt) {
         foreach ($_SESSION['cart'] as $item) {

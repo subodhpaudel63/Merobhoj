@@ -140,7 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
                 
                 $stmt = $conn->prepare(
                     "INSERT INTO orders (order_number, menu_id, email, menu_name, quantity, price, total_price, mobile, address, payment_method, payment_status, status, order_time, order_date) "
-                    . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Confirmed', NOW(), CURDATE())"
+                    . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW(), CURDATE())"
                 );
                 
                 if (!$stmt) {

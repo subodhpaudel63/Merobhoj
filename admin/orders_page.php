@@ -29,21 +29,23 @@ if ($search !== '') {
 if ($statusFilter !== '') {
     // Map visual tab labels to database status values
     $statusMap = [
-        'new' => 'Confirmed',
-        'preparing' => 'Ongoing',
-        'out_delivery' => 'Shipping',
-        'delivered' => 'Delivering',
+        'pending' => 'Pending',
+        'confirmed' => 'Confirmed',
+        'preparing' => 'Preparing',
+        'ready' => 'Ready',
+        'delivering' => 'Delivering',
+        'completed' => 'Completed',
         'cancelled' => 'Cancelled'
     ];
     $dbStatus = $statusMap[$statusFilter] ?? $statusFilter;
-    if (in_array($dbStatus, ['Confirmed','Shipping','Ongoing','Delivering','Cancelled'], true)) {
+    if (in_array($dbStatus, ['Pending' , 'Confirmed' , 'Preparing' , 'Ready' , 'Delivering' , 'Completed' , 'Cancelled'], true)) {
         $where[] = "o.status = ?";
         $params[] = $dbStatus;
         $types .= 's';
     }
 }
 
-$sql = "SELECT o.order_id, o.order_number, o.menu_id, o.menu_name, o.email, o.mobile, o.address, o.quantity, o.price, o.total_price, o.payment_method, o.payment_status, o.status, o.order_time, o.order_date, m.menu_image FROM orders o LEFT JOIN menu m ON o.menu_id = m.menu_id";
+$sql = "SELECT o.order_id, o.order_number, o.menu_id, o.menu_name, o.email, o.mobile, o.address, o.quantity, o.price, o.total_price, o.payment_method, o.payment_status, o.status, o.order_type, o.order_time, o.order_date, m.menu_image FROM orders o LEFT JOIN menu m ON o.menu_id = m.menu_id";
 if ($where) $sql .= ' WHERE ' . implode(' AND ', $where);
 $sql .= " ORDER BY o.$orderBySql";
 
@@ -71,6 +73,7 @@ foreach ($rawOrders as $row) {
             'mobile' => $row['mobile'],
             'address' => $row['address'],
             'status' => $row['status'],
+            'order_type' => $row['order_type'] ?? 'Delivery',
             'payment_method' => $row['payment_method'],
             'payment_status' => $row['payment_status'],
             'order_time' => $row['order_time'],
@@ -95,10 +98,13 @@ $orders = array_values($grouped);
 // Calculate global, unfiltered statistics for summary widgets
 $all_orders_count = 0;
 $total_revenue = 0.0;
-$delivered_count = 0;
-$out_delivery_count = 0;
+$completed_count = 0;
+$delivering_count = 0;
 $preparing_count = 0;
 $cancelled_count = 0;
+// Aliases used in the donut chart sidebar
+$out_delivery_count = 0; // = Delivering orders
+$delivered_count = 0;    // = Completed orders
 
 $stats_res = $conn->query("SELECT COALESCE(NULLIF(order_number, ''), CONCAT('ORD-', LPAD(order_id, 4, '0'))) as ord_num, status, total_price FROM orders");
 if ($stats_res) {
@@ -109,9 +115,9 @@ if ($stats_res) {
         if (!isset($seenOrders[$num])) {
             $seenOrders[$num] = $row['status'];
             $all_orders_count++;
-            if ($row['status'] === 'Delivering') $delivered_count++;
-            elseif ($row['status'] === 'Shipping') $out_delivery_count++;
-            elseif ($row['status'] === 'Ongoing') $preparing_count++;
+            if ($row['status'] === 'Completed')  { $completed_count++; $delivered_count++; }
+            elseif ($row['status'] === 'Delivering') { $delivering_count++; $out_delivery_count++; }
+            elseif ($row['status'] === 'Preparing') $preparing_count++;
             elseif ($row['status'] === 'Cancelled') $cancelled_count++;
         }
     }
@@ -138,6 +144,14 @@ if ($recent_res) {
   <link rel="stylesheet" href="../assets/css/adminstyle.css?v=<?= filemtime(__DIR__ . '/../assets/css/adminstyle.css') ?>">
 
   <style>
+    .status-pending { background: #FEF3C7 !important; color: #B45309 !important; }
+    .status-confirmed { background: #DBEAFE !important; color: #1D4ED8 !important; }
+    .status-preparing { background: #FFEDD5 !important; color: #C2410C !important; }
+    .status-ready { background: #EDE9FE !important; color: #6D28D9 !important; }
+    .status-delivering { background: #CFFAFE !important; color: #0E7490 !important; }
+    .status-completed { background: #DCFCE7 !important; color: #15803D !important; }
+    .status-cancelled { background: #FEE2E2 !important; color: #B91C1C !important; }
+
     @media screen and (min-width: 1200px) {
       .container {
         grid-template-columns: 14rem auto !important;
@@ -457,7 +471,7 @@ if ($recent_res) {
     }
   </style>
 </head>
-<body>
+<body class="admin-orders-page">
    <div class="container">
       <?php include_once __DIR__ . '/sidebar.php'; ?>
       <!-- --------------
@@ -468,26 +482,32 @@ if ($recent_res) {
         start main part
       --------------- -->
 
-       <main style="max-width: 100%;">
-            <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-                <div>
-                    <h1 style="font-size: 2.2rem; font-weight: 800; color: var(--clr-dark); margin: 0;">All Orders</h1>
-                    <p style="color: var(--clr-dark-variant); font-size: 0.9rem; margin-top: 0.2rem;">Track and manage all customer orders</p>
+       <main class="admin-page-main">
+            <div class="admin-topbar" aria-label="Admin toolbar">
+                <button type="button" id="menu_bar" class="admin-menu-button" aria-label="Open navigation">
+                    <span class="material-symbols-sharp">menu</span>
+                </button>
+                <div class="admin-topbar-actions">
+                    <div class="theme-toggler" aria-label="Change color theme">
+                        <span class="material-symbols-sharp active">light_mode</span>
+                        <span class="material-symbols-sharp">dark_mode</span>
+                    </div>
+                    <div class="admin-profile">
+                        <div class="admin-profile-copy">
+                            <strong>Subodh Admin</strong>
+                            <small>Administrator</small>
+                        </div>
+                        <div class="profile-photo">
+                            <img src="../assets/img/usersprofiles/adminpic.jpg" alt="Admin profile">
+                        </div>
+                    </div>
                 </div>
-                <div class="desktop-header-profile" style="display: none; align-items: center; gap: 1.5rem;">
-                    <div class="theme-toggler" style="background: var(--clr-white); display: flex; justify-content: space-between; height: 1.8rem; width: 4.2rem; cursor: pointer; border-radius: var(--border-radius-1); box-shadow: var(--box-shadow); align-items: center; padding: 0 4px;">
-                      <span class="material-symbols-sharp active" style="font-size: 1.2rem;">light_mode</span>
-                      <span class="material-symbols-sharp" style="font-size: 1.2rem;">dark_mode</span>
-                    </div>
-                    <div class="profile" style="display: flex; gap: 1rem; align-items: center;">
-                       <div class="info" style="text-align: right;">
-                           <p style="margin: 0; font-weight: 700; color: var(--clr-dark);"><b>Subodh Admin</b></p>
-                           <small class="text-muted" style="font-size: 0.75rem;">Administrator</small>
-                       </div>
-                       <div class="profile-photo">
-                         <img src="../assets/img/usersprofiles/adminpic.jpg" alt="Admin Profile" style="width: 2.8rem; height: 2.8rem; border-radius: 50%; object-fit: cover; display: block;"/>
-                       </div>
-                    </div>
+            </div>
+
+            <div class="dashboard-header admin-page-heading">
+                <div>
+                    <h1>All Orders</h1>
+                    <p>Track and manage all customer orders</p>
                 </div>
             </div>
 
@@ -507,16 +527,16 @@ if ($recent_res) {
                         <div class="order-stat-card">
                             <div class="order-stat-icon stat-delivered"><i class="fa fa-circle-check"></i></div>
                             <div>
-                                <small class="text-muted" style="font-size: 0.8rem; font-weight: 500;">Delivered</small>
-                                <h2 style="font-size: 1.5rem; font-weight: 800; margin: 0; color: var(--clr-dark);"><?php echo $delivered_count; ?></h2>
+                                <small class="text-muted" style="font-size: 0.8rem; font-weight: 500;">Completed</small>
+                                <h2 style="font-size: 1.5rem; font-weight: 800; margin: 0; color: var(--clr-dark);"><?php echo $completed_count; ?></h2>
                                 <small class="text-muted" style="font-size: 0.7rem;">This month</small>
                             </div>
                         </div>
                         <div class="order-stat-card">
                             <div class="order-stat-icon stat-out"><i class="fa fa-truck"></i></div>
                             <div>
-                                <small class="text-muted" style="font-size: 0.8rem; font-weight: 500;">Out for Delivery</small>
-                                <h2 style="font-size: 1.5rem; font-weight: 800; margin: 0; color: var(--clr-dark);"><?php echo $out_delivery_count; ?></h2>
+                                <small class="text-muted" style="font-size: 0.8rem; font-weight: 500;">Delivering</small>
+                                <h2 style="font-size: 1.5rem; font-weight: 800; margin: 0; color: var(--clr-dark);"><?php echo $delivering_count; ?></h2>
                                 <small class="text-muted" style="font-size: 0.7rem;">Today</small>
                             </div>
                         </div>
@@ -542,10 +562,12 @@ if ($recent_res) {
                     <div class="order-tabs-row">
                         <div class="order-tabs">
                             <a href="orders_page.php" class="order-tab <?php echo $statusFilter===''?'active':''; ?>">All Orders</a>
-                            <a href="orders_page.php?status=new" class="order-tab <?php echo $statusFilter==='new'?'active':''; ?>">New</a>
+                            <a href="orders_page.php?status=pending" class="order-tab <?php echo $statusFilter==='pending'?'active':''; ?>">Pending</a>
+                            <a href="orders_page.php?status=confirmed" class="order-tab <?php echo $statusFilter==='confirmed'?'active':''; ?>">Confirmed</a>
                             <a href="orders_page.php?status=preparing" class="order-tab <?php echo $statusFilter==='preparing'?'active':''; ?>">Preparing</a>
-                            <a href="orders_page.php?status=out_delivery" class="order-tab <?php echo $statusFilter==='out_delivery'?'active':''; ?>">Out for Delivery</a>
-                            <a href="orders_page.php?status=delivered" class="order-tab <?php echo $statusFilter==='delivered'?'active':''; ?>">Delivered</a>
+                            <a href="orders_page.php?status=ready" class="order-tab <?php echo $statusFilter==='ready'?'active':''; ?>">Ready</a>
+                            <a href="orders_page.php?status=delivering" class="order-tab <?php echo $statusFilter==='delivering'?'active':''; ?>">Delivering</a>
+                            <a href="orders_page.php?status=completed" class="order-tab <?php echo $statusFilter==='completed'?'active':''; ?>">Completed</a>
                             <a href="orders_page.php?status=cancelled" class="order-tab <?php echo $statusFilter==='cancelled'?'active':''; ?>">Cancelled</a>
                         </div>
                         
@@ -587,12 +609,8 @@ if ($recent_res) {
                                      $pmStatus = !empty($o['payment_status']) ? $o['payment_status'] : ($pm === 'Pay at Restaurant' ? 'Paid' : 'Unpaid');
                                      $pmClass = strtolower($pmStatus) === 'paid' ? 'payment-online' : 'payment-cod';
                                      
-                                     $stBadgeClass = 'status-new-badge';
-                                     $visualStatus = 'New';
-                                     if ($o['status'] === 'Ongoing') { $stBadgeClass = 'status-prep-badge'; $visualStatus = 'Preparing'; }
-                                     elseif ($o['status'] === 'Shipping') { $stBadgeClass = 'status-out-badge'; $visualStatus = 'Out for Delivery'; }
-                                     elseif ($o['status'] === 'Delivering') { $stBadgeClass = 'status-del-badge'; $visualStatus = 'Delivered'; }
-                                     elseif ($o['status'] === 'Cancelled') { $stBadgeClass = 'status-can-badge'; $visualStatus = 'Cancelled'; }
+                                      $stBadgeClass = 'status-' . strtolower($o['status']);
+                                      $visualStatus = htmlspecialchars($o['status']);
                                      
                                      $firstItem = $o['items'][0] ?? null;
                                      $itemsCount = count($o['items']);
@@ -635,13 +653,17 @@ if ($recent_res) {
                                      <td style="padding: 1rem 0.5rem; font-weight: 700; color: var(--clr-dark);">Rs. <?php echo number_format((float)$o['total_amount'], 2); ?></td>
                                      <td style="padding: 1rem 0.5rem;"><span class="badge-payment <?php echo $pmClass; ?>"><?php echo $pm; ?></span></td>
                                        <td style="padding: 1rem 0.5rem;">
-                                         <select name="status" class="booking-status-select" id="status-<?php echo intval($o['order_id']); ?>" data-current-status="<?php echo htmlspecialchars($o['status'], ENT_QUOTES); ?>" onchange="handleOrderUpdate('<?php echo htmlspecialchars($o['order_number'], ENT_QUOTES); ?>', <?php echo intval($o['order_id']); ?>)" style="padding: 0.25rem 0.5rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; cursor: pointer; border: 1px solid var(--clr-border); background: var(--clr-white);">
-                                           <option value="Confirmed" <?php echo $o['status']==='Confirmed'?'selected':''; ?>>New</option>
-                                           <option value="Ongoing" <?php echo $o['status']==='Ongoing'?'selected':''; ?>>Preparing</option>
-                                           <option value="Shipping" <?php echo $o['status']==='Shipping'?'selected':''; ?>>Out for Delivery</option>
-                                           <option value="Delivering" <?php echo $o['status']==='Delivering'?'selected':''; ?>>Delivered</option>
-                                           <option value="Cancelled" <?php echo $o['status']==='Cancelled'?'selected':''; ?>>Cancelled</option>
-                                         </select>
+                                          <select name="status" class="booking-status-select <?php echo 'status-' . strtolower($o['status']); ?>" id="status-<?php echo intval($o['order_id']); ?>" data-current-status="<?php echo htmlspecialchars($o['status'], ENT_QUOTES); ?>" onchange="handleOrderUpdate('<?php echo htmlspecialchars($o['order_number'], ENT_QUOTES); ?>', <?php echo intval($o['order_id']); ?>)" style="padding: 0.25rem 0.5rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; cursor: pointer; border: 1px solid var(--clr-border); background: var(--clr-white);">
+                                            <option value="Pending" <?php echo $o['status']==='Pending'?'selected':''; ?>>Pending</option>
+                                            <option value="Confirmed" <?php echo $o['status']==='Confirmed'?'selected':''; ?>>Confirmed</option>
+                                            <option value="Preparing" <?php echo $o['status']==='Preparing'?'selected':''; ?>>Preparing</option>
+                                            <option value="Ready" <?php echo $o['status']==='Ready'?'selected':''; ?>>Ready</option>
+                                            <?php if (($o['order_type'] ?? 'Delivery') === 'Delivery'): ?>
+                                            <option value="Delivering" <?php echo $o['status']==='Delivering'?'selected':''; ?>>Delivering</option>
+                                            <?php endif; ?>
+                                            <option value="Completed" <?php echo $o['status']==='Completed'?'selected':''; ?>>Completed</option>
+                                            <option value="Cancelled" <?php echo $o['status']==='Cancelled'?'selected':''; ?>>Cancelled</option>
+                                          </select>
                                      </td>
                                      <td style="padding: 1rem 0.5rem; font-size: 0.8rem; color: var(--clr-dark-variant);"><?php echo date('d M Y h:i A', strtotime($o['order_time'])); ?></td>
                                        <td class="order-actions-cell" style="padding: 1rem 0.5rem;">
@@ -661,10 +683,10 @@ if ($recent_res) {
                     <!-- SVG Donut Chart -->
                     <div style="position: relative; width: 160px; height: 160px; margin: 0 auto 1.5rem;">
                         <?php
-                        $total_mapped = $out_delivery_count + $preparing_count + $delivered_count + $cancelled_count;
-                        $p_out = $total_mapped > 0 ? ($out_delivery_count / $total_mapped) * 100 : 0;
+                        $total_mapped = $delivering_count + $preparing_count + $completed_count + $cancelled_count;
+                        $p_out = $total_mapped > 0 ? ($delivering_count / $total_mapped) * 100 : 0;
                         $p_prep = $total_mapped > 0 ? ($preparing_count / $total_mapped) * 100 : 0;
-                        $p_del = $total_mapped > 0 ? ($delivered_count / $total_mapped) * 100 : 0;
+                        $p_del = $total_mapped > 0 ? ($completed_count / $total_mapped) * 100 : 0;
                         $p_can = $total_mapped > 0 ? ($cancelled_count / $total_mapped) * 100 : 0;
                         
                         $circ = 377.0;
@@ -703,9 +725,9 @@ if ($recent_res) {
                     <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 2rem;">
                         <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
                             <span style="display: flex; align-items: center; gap: 0.5rem; color: var(--clr-dark-variant);">
-                                <span style="width: 10px; height: 10px; border-radius: 50%; background: #7380ec;"></span> Out for Delivery
+                                <span style="width: 10px; height: 10px; border-radius: 50%; background: #7380ec;"></span> Delivering
                             </span>
-                            <strong style="color: var(--clr-dark);"><?php echo $out_delivery_count; ?> (<?php echo $all_orders_count > 0 ? round(($out_delivery_count/$all_orders_count)*100) : 0; ?>%)</strong>
+                            <strong style="color: var(--clr-dark);"><?php echo $delivering_count; ?> (<?php echo $all_orders_count > 0 ? round(($delivering_count/$all_orders_count)*100) : 0; ?>%)</strong>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
                             <span style="display: flex; align-items: center; gap: 0.5rem; color: var(--clr-dark-variant);">
@@ -715,9 +737,9 @@ if ($recent_res) {
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
                             <span style="display: flex; align-items: center; gap: 0.5rem; color: var(--clr-dark-variant);">
-                                <span style="width: 10px; height: 10px; border-radius: 50%; background: #2ed573;"></span> Delivered
+                                <span style="width: 10px; height: 10px; border-radius: 50%; background: #2ed573;"></span> Completed
                             </span>
-                            <strong style="color: var(--clr-dark);"><?php echo $delivered_count; ?> (<?php echo $all_orders_count > 0 ? round(($delivered_count/$all_orders_count)*100) : 0; ?>%)</strong>
+                            <strong style="color: var(--clr-dark);"><?php echo $completed_count; ?> (<?php echo $all_orders_count > 0 ? round(($completed_count/$all_orders_count)*100) : 0; ?>%)</strong>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
                             <span style="display: flex; align-items: center; gap: 0.5rem; color: var(--clr-dark-variant);">
@@ -753,14 +775,6 @@ if ($recent_res) {
                 </div>
             </div>
        </main>
-
-       <!-- Replaced right sidebar block -->
-    <div class="right right-column-sidebar" style="display: none;">
-    </div>
-
-     </div>
-</div>
-
    </div>
 
 
@@ -785,7 +799,7 @@ function handleOrderUpdate(orderNumber, orderId) {
     const currentStatus = statusSelect ? statusSelect.getAttribute('data-current-status') : '';
     const newStatus = statusSelect.value;
 
-    const allowedStatuses = ['Confirmed', 'Ongoing', 'Shipping', 'Delivering', 'Cancelled'];
+    const allowedStatuses = ['Pending', 'Confirmed', 'Preparing', 'Ready', 'Delivering', 'Completed', 'Cancelled'];
     if (!statusSelect || !Number.isInteger(Number(orderId)) || Number(orderId) <= 0) {
         alert('Invalid order selection.');
         return;
@@ -793,7 +807,7 @@ function handleOrderUpdate(orderNumber, orderId) {
 
     if (!allowedStatuses.includes(newStatus)) {
         alert('Please choose a valid order status.');
-        statusSelect.value = currentStatus || 'Confirmed';
+        statusSelect.value = currentStatus || 'Pending';
         return;
     }
 
@@ -820,6 +834,7 @@ function handleOrderUpdate(orderNumber, orderId) {
         if (data.success) {
             statusSelect.value = newStatus;
             statusSelect.setAttribute('data-current-status', newStatus);
+            statusSelect.className = 'booking-status-select status-' + newStatus.toLowerCase();
         } else {
             alert(data.message || 'Unable to update the order status.');
             statusSelect.value = currentStatus || statusSelect.value;
@@ -982,16 +997,6 @@ document.addEventListener('click', function(event) {
     }
 });
 
-// Debug: Check if script is loading
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Orders page loaded');
-    
-    // Debug: Check if buttons exist
-    const updateButtons = document.querySelectorAll('.btn-booking-update');
-    const deleteButtons = document.querySelectorAll('.btn-booking-delete');
-    console.log('Update buttons found:', updateButtons.length);
-    console.log('Delete buttons found:', deleteButtons.length);
-});
 </script>
 
 

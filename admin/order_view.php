@@ -41,8 +41,10 @@ $disp_order_num = !empty($order['order_number']) ? $order['order_number'] : ('OR
 // Handle Order Status Transitions from bottom buttons
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_status') {
     $new_status = $_POST['status'] ?? '';
-    $allowed_status = ['Confirmed', 'Ongoing', 'Shipping', 'Delivering', 'Cancelled'];
-    if (in_array($new_status, $allowed_status, true)) {
+    require_once __DIR__ . '/../includes/order_validation.php';
+    $order_type = $order['order_type'] ?? 'Delivery';
+    $val = validate_order_transition($order_type, $order['status'], $new_status, true);
+    if ($val['valid']) {
         if (!empty($order['order_number'])) {
             $stmt = $conn->prepare("UPDATE orders SET status = ? WHERE order_number = ? OR order_id = ?");
             if ($stmt) {
@@ -59,6 +61,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             }
         }
         $_SESSION['order_msg'] = "Order status updated to " . $new_status;
+    } else {
+        $_SESSION['order_msg'] = "Error: " . $val['error'];
     }
     $redir = !empty($order['order_number']) ? ("order_view.php?order_number=" . urlencode($order['order_number'])) : ("order_view.php?id=" . $order['order_id']);
     header("Location: " . $redir);
@@ -66,12 +70,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 }
 
 // Map database statuses to visual labels & badges
-$status_label = 'New Order';
-$status_badge_class = 'status-new-badge';
-if ($order['status'] === 'Ongoing') { $status_label = 'Preparing'; $status_badge_class = 'status-prep-badge'; }
-elseif ($order['status'] === 'Shipping') { $status_label = 'Out for Delivery'; $status_badge_class = 'status-out-badge'; }
-elseif ($order['status'] === 'Delivering') { $status_label = 'Delivered'; $status_badge_class = 'status-del-badge'; }
-elseif ($order['status'] === 'Cancelled') { $status_label = 'Cancelled'; $status_badge_class = 'status-can-badge'; }
+$status_label = htmlspecialchars($order['status']);
+$status_badge_class = 'status-' . strtolower($order['status']);
 
 // Payment status mapping
 $payment_method = $order['payment_method'] ?? 'Cash on Delivery';
@@ -101,6 +101,14 @@ $actionUrl = "order_view.php?" . (!empty($order['order_number']) ? ("order_numbe
   <link rel="stylesheet" href="../assets/css/adminstyle.css?v=<?= filemtime(__DIR__ . '/../assets/css/adminstyle.css') ?>">
   
   <style>
+    .status-pending { background: #FEF3C7 !important; color: #B45309 !important; }
+    .status-confirmed { background: #DBEAFE !important; color: #1D4ED8 !important; }
+    .status-preparing { background: #FFEDD5 !important; color: #C2410C !important; }
+    .status-ready { background: #EDE9FE !important; color: #6D28D9 !important; }
+    .status-delivering { background: #CFFAFE !important; color: #0E7490 !important; }
+    .status-completed { background: #DCFCE7 !important; color: #15803D !important; }
+    .status-cancelled { background: #FEE2E2 !important; color: #B91C1C !important; }
+
     @media screen and (min-width: 1200px) {
       .container {
         grid-template-columns: 14rem auto !important;
@@ -262,16 +270,37 @@ $actionUrl = "order_view.php?" . (!empty($order['order_number']) ? ("order_numbe
     .btn-cancel-ord:hover { background: #fee2e2; }
   </style>
 </head>
-<body>
+<body class="admin-orders-page">
    <div class="container">
       <?php include_once __DIR__ . '/sidebar.php'; ?>
 
-      <main style="max-width: 100%;">
+      <main class="admin-page-main">
+         <div class="admin-topbar" aria-label="Admin toolbar">
+             <button type="button" id="menu_bar" class="admin-menu-button" aria-label="Open navigation">
+                 <span class="material-symbols-sharp">menu</span>
+             </button>
+             <div class="admin-topbar-actions">
+                 <div class="theme-toggler" aria-label="Change color theme">
+                     <span class="material-symbols-sharp active">light_mode</span>
+                     <span class="material-symbols-sharp">dark_mode</span>
+                 </div>
+                 <div class="admin-profile">
+                     <div class="admin-profile-copy">
+                         <strong>Subodh Admin</strong>
+                         <small>Administrator</small>
+                     </div>
+                     <div class="profile-photo">
+                         <img src="../assets/img/usersprofiles/adminpic.jpg" alt="Admin profile">
+                     </div>
+                 </div>
+             </div>
+         </div>
+
          <!-- Header Section -->
-         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+         <div class="admin-page-heading">
              <div>
-                 <h1 style="font-size: 2.2rem; font-weight: 800; color: var(--clr-dark); margin: 0;">Order Details</h1>
-                 <p style="color: var(--clr-dark-variant); font-size: 0.9rem; margin-top: 0.2rem;">
+                 <h1>Order Details</h1>
+                 <p>
                      Orders <i class="fa fa-chevron-right" style="font-size: 0.75rem; margin: 0 0.3rem;"></i> Order <span style="color: var(--clr-primary); font-weight: 600;"><?php echo htmlspecialchars($disp_order_num); ?></span>
                  </p>
              </div>
@@ -401,80 +430,100 @@ $actionUrl = "order_view.php?" . (!empty($order['order_number']) ? ("order_numbe
                  <!-- Timeline -->
                  <div class="timeline-container">
                      <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--clr-dark); margin-bottom: 1.5rem; border-bottom: 1px solid var(--clr-border); padding-bottom: 0.5rem;">Order Timeline</h3>
+                     <?php
+                     $isDelivery = ($order_type === 'Delivery');
+                     $cancelled  = ($order['status'] === 'Cancelled');
+                     $completed  = ($order['status'] === 'Completed');
+                     // Ordered progression
+                     $flow_delivery   = ['Pending','Confirmed','Preparing','Ready','Delivering','Completed'];
+                     $flow_nod        = ['Pending','Confirmed','Preparing','Ready','Completed'];
+                     $flow = $isDelivery ? $flow_delivery : $flow_nod;
+                     $currentIdx = array_search($order['status'], $flow);
+                     $labels = [
+                         'Pending'   => 'Order Pending',
+                         'Confirmed' => 'Confirmed',
+                         'Preparing' => 'Preparing',
+                         'Ready'     => 'Ready',
+                         'Delivering'=> 'Delivering',
+                         'Completed' => 'Completed',
+                     ];
+                     $descriptions = [
+                         'Pending'   => 'Order placed, waiting confirmation.',
+                         'Confirmed' => 'Order confirmed by Admin.',
+                         'Preparing' => 'Food is being prepared.',
+                         'Ready'     => 'Order is ready.',
+                         'Delivering'=> 'Order is on the way.',
+                         'Completed' => 'Order delivered successfully.',
+                     ];
+                     ?>
                      <ul class="timeline">
+                         <?php if ($cancelled): ?>
                          <li class="timeline-item active">
                              <span class="timeline-dot"></span>
                              <strong style="color: var(--clr-dark); display: block; font-size: 0.9rem;">Order Placed</strong>
                              <small class="text-muted" style="font-size: 0.75rem;"><?php echo date('d M Y, h:i A', strtotime($order['order_time'])); ?></small>
                          </li>
-                         <li class="timeline-item <?php echo in_array($order['status'], ['Confirmed', 'Ongoing', 'Shipping', 'Delivering'], true) ? 'active' : ''; ?>">
+                         <li class="timeline-item active">
+                             <span class="timeline-dot" style="border-color:#dc2626;background:#dc2626;"></span>
+                             <strong style="color: #dc2626; display: block; font-size: 0.9rem;">Cancelled</strong>
+                             <small class="text-muted" style="font-size: 0.75rem;">Order was cancelled.</small>
+                         </li>
+                         <?php else: ?>
+                         <?php foreach ($flow as $idx => $step): ?>
+                         <li class="timeline-item <?php echo ($currentIdx !== false && $idx <= $currentIdx) ? 'active' : ''; ?>">
                              <span class="timeline-dot"></span>
-                             <strong style="color: var(--clr-dark); display: block; font-size: 0.9rem;">Accepted</strong>
+                             <strong style="color: var(--clr-dark); display: block; font-size: 0.9rem;"><?php echo $labels[$step]; ?></strong>
                              <small class="text-muted" style="font-size: 0.75rem;">
-                                 <?php echo in_array($order['status'], ['Confirmed', 'Ongoing', 'Shipping', 'Delivering'], true) ? 'Order confirmed by Admin' : '-'; ?>
+                                 <?php echo ($currentIdx !== false && $idx <= $currentIdx) ? $descriptions[$step] : '-'; ?>
                              </small>
                          </li>
-                         <li class="timeline-item <?php echo in_array($order['status'], ['Ongoing', 'Shipping', 'Delivering'], true) ? 'active' : ''; ?>">
-                             <span class="timeline-dot"></span>
-                             <strong style="color: var(--clr-dark); display: block; font-size: 0.9rem;">Preparing</strong>
-                             <small class="text-muted" style="font-size: 0.75rem;">
-                                 <?php echo in_array($order['status'], ['Ongoing', 'Shipping', 'Delivering'], true) ? 'Food is being prepared' : '-'; ?>
-                             </small>
-                         </li>
-                         <li class="timeline-item <?php echo in_array($order['status'], ['Shipping', 'Delivering'], true) ? 'active' : ''; ?>">
-                             <span class="timeline-dot"></span>
-                             <strong style="color: var(--clr-dark); display: block; font-size: 0.9rem;">Out for Delivery</strong>
-                             <small class="text-muted" style="font-size: 0.75rem;">
-                                 <?php echo in_array($order['status'], ['Shipping', 'Delivering'], true) ? 'Order dispatched for delivery' : '-'; ?>
-                             </small>
-                         </li>
-                         <li class="timeline-item <?php echo $order['status'] === 'Delivering' ? 'active' : ''; ?>">
-                             <span class="timeline-dot"></span>
-                             <strong style="color: var(--clr-dark); display: block; font-size: 0.9rem;">Delivered</strong>
-                             <small class="text-muted" style="font-size: 0.75rem;">
-                                 <?php echo $order['status'] === 'Delivering' ? 'Order delivered successfully' : '-'; ?>
-                             </small>
-                         </li>
+                         <?php endforeach; ?>
+                         <?php endif; ?>
                      </ul>
                  </div>
              </div>
          </div>
 
          <!-- Order Actions -->
+         <?php if (!$cancelled && !$completed): ?>
          <div class="actions-card">
              <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--clr-dark); margin-bottom: 1.2rem; border-bottom: 1px solid var(--clr-border); padding-bottom: 0.5rem;">Order Actions</h3>
              <div class="actions-buttons-container">
+                 <?php
+                 require_once __DIR__ . '/../includes/order_validation.php';
+                 // Build the ordered flow for next-step
+                 $adminFlow = $isDelivery ? ['Pending','Confirmed','Preparing','Ready','Delivering','Completed'] : ['Pending','Confirmed','Preparing','Ready','Completed'];
+                 $curIdx = array_search($order['status'], $adminFlow);
+                 $nextStatus = ($curIdx !== false && isset($adminFlow[$curIdx + 1])) ? $adminFlow[$curIdx + 1] : null;
+                 $btnLabels = ['Confirmed'=>'Confirm Order','Preparing'=>'Mark as Preparing','Ready'=>'Mark as Ready','Delivering'=>'Mark as Delivering','Completed'=>'Mark as Completed'];
+                 $btnClasses = ['Confirmed'=>'btn-accept','Preparing'=>'btn-prepare','Ready'=>'btn-shipping','Delivering'=>'btn-shipping','Completed'=>'btn-deliver'];
+                 ?>
+                 <?php if ($nextStatus): ?>
                  <form action="<?php echo $actionUrl; ?>" method="post" style="display:inline-block;">
                      <input type="hidden" name="action" value="update_status">
-                     <input type="hidden" name="status" value="Confirmed">
-                     <button type="submit" class="action-btn btn-accept" <?php echo $order['status'] === 'Confirmed' ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''; ?>>Accept Order</button>
+                     <input type="hidden" name="status" value="<?php echo htmlspecialchars($nextStatus); ?>">
+                     <button type="submit" class="action-btn <?php echo $btnClasses[$nextStatus] ?? 'btn-accept'; ?>"><?php echo $btnLabels[$nextStatus] ?? htmlspecialchars($nextStatus); ?></button>
                  </form>
+                 <?php endif; ?>
 
-                 <form action="<?php echo $actionUrl; ?>" method="post" style="display:inline-block;">
-                     <input type="hidden" name="action" value="update_status">
-                     <input type="hidden" name="status" value="Ongoing">
-                     <button type="submit" class="action-btn btn-prepare" <?php echo $order['status'] === 'Ongoing' ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''; ?>>Mark as Preparing</button>
-                 </form>
-
-                 <form action="<?php echo $actionUrl; ?>" method="post" style="display:inline-block;">
-                     <input type="hidden" name="action" value="update_status">
-                     <input type="hidden" name="status" value="Shipping">
-                     <button type="submit" class="action-btn btn-shipping" <?php echo $order['status'] === 'Shipping' ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''; ?>>Out for Delivery</button>
-                 </form>
-
-                 <form action="<?php echo $actionUrl; ?>" method="post" style="display:inline-block;">
-                     <input type="hidden" name="action" value="update_status">
-                     <input type="hidden" name="status" value="Delivering">
-                     <button type="submit" class="action-btn btn-deliver" <?php echo $order['status'] === 'Delivering' ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''; ?>>Mark as Delivered</button>
-                 </form>
-
+                 <?php if (!in_array($order['status'], ['Completed', 'Cancelled'], true)): ?>
                  <form action="<?php echo $actionUrl; ?>" method="post" style="display:inline-block;">
                      <input type="hidden" name="action" value="update_status">
                      <input type="hidden" name="status" value="Cancelled">
-                     <button type="submit" class="action-btn btn-cancel-ord" <?php echo $order['status'] === 'Cancelled' ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''; ?>>Cancel Order</button>
+                     <button type="submit" class="action-btn btn-cancel-ord">Cancel Order</button>
                  </form>
+                 <?php endif; ?>
              </div>
          </div>
+         <?php elseif ($completed): ?>
+         <div class="actions-card">
+             <p style="color: #15803D; font-weight: 600;"><i class="fa fa-circle-check"></i> This order has been completed. No further actions available.</p>
+         </div>
+         <?php elseif ($cancelled): ?>
+         <div class="actions-card">
+             <p style="color: #B91C1C; font-weight: 600;"><i class="fa fa-circle-xmark"></i> This order has been cancelled. No further actions available.</p>
+         </div>
+         <?php endif; ?>
       </main>
    </div>
 

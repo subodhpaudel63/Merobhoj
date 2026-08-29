@@ -88,6 +88,15 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Keep the sidebar visible by default once the layout is back on
+    // desktop widths. Without this, closing the drawer on mobile would
+    // leave the sidebar hidden even after resizing the window wider.
+    window.addEventListener('resize', function() {
+        if (sideBar && window.innerWidth > 768) {
+            sideBar.style.display = '';
+        }
+    });
+
     const themeToggler = document.querySelector('.theme-toggler');
     if (themeToggler) {
         const themeIcons = themeToggler.querySelectorAll('span');

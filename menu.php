@@ -251,8 +251,10 @@ if ($catResult) {
       </div>
     </div>
 
-    <header>
-      <!-- Desktop nav -->
+    <?php include 'header.php'; ?>
+
+    <!-- <header>
+      
       <div class="container header my-3 d-none d-lg-flex">
         <div class="logo">
           <a href="./index.php">
@@ -284,13 +286,13 @@ if ($catResult) {
              href="<?php echo $currentUser ? './cart.php' : '#'; ?>">
             <i class="fa fa-shopping-bag me-3"></i>
           </a>
-          <!-- Login + Sign Up always visible (same as original public menu) -->
+          
           <a href="./login.php" class="nav-button">Login</a>
           <a href="./register.php" class="nav-button-outline">Sign Up</a>
         </div>
       </div>
 
-      <!-- Mobile nav -->
+      
       <div class="d-flex justify-content-around py-3 align-items-center d-lg-none">
         <div id="hamburger">
           <i class="fa fa-2x fa-bars me-3 text-dark"></i>
@@ -345,7 +347,7 @@ if ($catResult) {
           </div>
         </div>
       </div>
-    </header>
+    </header> -->
 
 <section id="menu" class="menu section main-content">
     <div class="container section-title py-4">

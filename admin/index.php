@@ -26,8 +26,8 @@ $total_orders = $total_orders_query->fetch_assoc()['total'];
 $confirmed_orders_query = $conn->query("SELECT COUNT(*) as confirmed FROM orders WHERE status = 'Confirmed'");
 $confirmed_orders = $confirmed_orders_query->fetch_assoc()['confirmed'];
 
-$shipping_orders_query = $conn->query("SELECT COUNT(*) as shipping FROM orders WHERE status = 'Shipping'");
-$shipping_orders = $shipping_orders_query->fetch_assoc()['shipping'];
+$delivering_orders_query = $conn->query("SELECT COUNT(*) as delivering FROM orders WHERE status = 'Delivering'");
+$shipping_orders = $delivering_orders_query->fetch_assoc()['delivering'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -39,7 +39,7 @@ $shipping_orders = $shipping_orders_query->fetch_assoc()['shipping'];
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@48,400,0,0" />
   <link rel="stylesheet" href="../assets/css/adminstyle.css?v=<?= filemtime(__DIR__ . '/../assets/css/adminstyle.css') ?>">
 </head>
-<body>
+<body class="admin-page">
    <div class="container">
       <?php include_once __DIR__ . '/sidebar.php'; ?>
       <!-- --------------
@@ -50,7 +50,27 @@ $shipping_orders = $shipping_orders_query->fetch_assoc()['shipping'];
         start main part
       --------------- -->
 
-      <main>
+      <main class="admin-page-main">
+           <div class="admin-topbar" aria-label="Admin toolbar">
+               <button type="button" id="menu_bar" class="admin-menu-button" aria-label="Open navigation">
+                   <span class="material-symbols-sharp">menu</span>
+               </button>
+               <div class="admin-topbar-actions">
+                   <div class="theme-toggler" aria-label="Change color theme">
+                       <span class="material-symbols-sharp active">light_mode</span>
+                       <span class="material-symbols-sharp">dark_mode</span>
+                   </div>
+                   <div class="admin-profile">
+                       <div class="admin-profile-copy">
+                           <strong>Subodh Admin</strong>
+                           <small>Administrator</small>
+                       </div>
+                       <div class="profile-photo">
+                           <img src="../assets/img/usersprofiles/adminpic.jpg" alt="Admin profile">
+                       </div>
+                   </div>
+               </div>
+           </div>
            <h1>Dashbord</h1>
 
            <div class="date">
@@ -166,10 +186,6 @@ $shipping_orders = $shipping_orders_query->fetch_assoc()['shipping'];
     <div class="right">
 
 <div class="top">
-   <button id="menu_bar">
-     <span class="material-symbols-sharp">menu</span>
-   </button>
-
    <div class="theme-toggler">
      <span class="material-symbols-sharp active">light_mode</span>
      <span class="material-symbols-sharp">dark_mode</span>

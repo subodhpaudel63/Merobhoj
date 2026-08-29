@@ -15,6 +15,7 @@
   --clr-dark-variant: #64748b;
   --clr-color-background: #f8f9fa;
   --clr-border: #e2e8f0;
+  --clr-card-background: #ffffff;
 
   --card-border-radius: 1.2rem;
   --border-radius-1: 0.5rem;
@@ -34,6 +35,7 @@
   --clr-dark: #f8fafc;
   --clr-dark-variant: #94a3b8;
   --clr-border: #334155;
+  --clr-card-background: #1e293b;
   --box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
 }
 
@@ -122,90 +124,164 @@ b{
   color: var(--clr-warnig);
 }
 
+/* ===================
+   Aside
+=================== */
+/* ===================
+   Aside
+=================== */
 
-/* aside */
- aside{
-  height: 100vh;
- }
- aside .top{
-  background: var(--clr-white);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 1.4rem;
- }
+aside .top {
+    background: var(--clr-white);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1.4rem;
+}
 
- aside .logo{
-   display: flex;
-   gap: 1rem;
- }
- aside .logo img{
-   width: 2rem;
-   height: 2rem;
- }
- aside .top div.close span{
-   display: none;
- }
+aside .logo {
+    display: flex;
+    gap: 1rem;
+}
 
- /* ===================
- Sidebar
- ================== */
+aside .logo img {
+    width: 2rem;
+    height: 2rem;
+}
 
- aside .sidebar{
-  background: var(--clr-white);
-  display: flex;
-  flex-direction: column;
-  height: 86vh;
-  position: relative;
-  top: 1rem;
- }
+aside .top div.close span {
+    display: none;
+}
 
- aside h3{
-  font-weight: 500;
- }
 
- aside .sidebar a{
-  display: flex;
-  color: var(--clr-info-dark);
-  margin-left: 2rem;
-  gap: 1rem;
-  align-items: center;
-  height: 3.3rem;
-  transition: all .1s ease;
- 
- }
+/* ===================
+   Sidebar
+=================== */
 
- aside .sidebar a span{
-  font-size: 1.6rem;
-  transition: all .3s ease-in-out;
-  
- }
+aside .sidebar {
+    background: var(--clr-white);
+    display: flex;
+    flex-direction: column;
 
- aside .sidebar a:last-child{
-  position: absolute;
-  bottom: 1rem; 
-  width: 100%;
- }
+    /* Let the sidebar grow naturally */
+    height: auto;
+    min-height: calc(100vh - 5rem);
 
- aside .sidebar a.active{
-   background-color: var(--clr-light);
-   color: var(--clr-primary);
-   margin-left: 0;
-   border-left: 5px solid var(--clr-primary);
-   margin-left: calc(1rem - 3px);
- }
- aside .sidebar a:hover span{
-  margin-left: 1rem;
- }
+    position: relative;
+    top: 1rem;
 
- aside .sidebar a span.msg_count{
-   background-color: var(--clr-danger);
-   color: var(--clr-white);
-   padding: 2px 5px;
-   font-size: 11px;
-   border-radius: var(--border-radius-1);
- }
+    /* Scroll only if the screen is too short */
+    overflow-y: auto;
+    overflow-x: hidden;
+}
 
+aside h3 {
+    font-weight: 500;
+}
+
+
+/* ===================
+   Sidebar Links
+=================== */
+
+aside .sidebar a {
+    display: flex;
+    align-items: center;
+
+    color: var(--clr-info-dark);
+
+    margin-left: 2rem;
+    gap: 1rem;
+
+    height: 3.3rem;
+
+    transition: all .1s ease;
+    text-decoration: none;
+
+    flex-shrink: 0;
+}
+
+aside .sidebar a span {
+    font-size: 1.6rem;
+    transition: all .3s ease-in-out;
+}
+
+
+/* ===================
+   Sidebar Section Titles
+=================== */
+
+aside .sidebar-section-title {
+    font-size: 0.65rem;
+    font-weight: 700;
+
+    text-transform: uppercase;
+    letter-spacing: 0.08rem;
+
+    color: var(--clr-info-dark);
+
+    margin: 1.2rem 0 0.4rem 2rem;
+
+    flex-shrink: 0;
+}
+
+
+/* First section */
+
+aside .sidebar-section-title:first-child {
+    margin-top: 0;
+}
+
+
+/* ===================
+   Active Link
+=================== */
+
+aside .sidebar a.active {
+    background-color: var(--clr-light);
+    color: var(--clr-primary);
+
+    margin-left: calc(1rem - 3px);
+
+    border-left: 5px solid var(--clr-primary);
+}
+
+
+/* ===================
+   Hover
+=================== */
+
+aside .sidebar a:hover span {
+    margin-left: 1rem;
+}
+
+
+/* ===================
+   Notification Count
+=================== */
+
+aside .sidebar a span.msg_count {
+    background-color: var(--clr-danger);
+    color: var(--clr-white);
+
+    padding: 2px 5px;
+    font-size: 11px;
+
+    border-radius: var(--border-radius-1);
+}
+
+
+/* ===================
+   Logout
+=================== */
+
+aside .sidebar a[href="../includes/logout.php"] {
+    position: static;
+    margin-top: 0.8rem;
+    margin-bottom: 1rem;
+
+    flex-shrink: 0;
+}
  /* ----------------------------
  --------- Main--------------
  ------------------------------ */
@@ -465,9 +541,6 @@ Right Side
 }
 
 
-.right .recent_updates .update p{
-
-}
 
 /* see analytics */
 
@@ -804,144 +877,232 @@ MEDIA QUERY
 ****************/
 
 @media screen and (max-width:1200px) {
-    .container{
-      width: 94%;
-      grid-template-columns: 7rem auto 14rem;
+    .container {
+        width: 94%;
+        grid-template-columns: 7rem auto 14rem;
     }
-    aside .sidebar h3{
-      display: none;
+
+    aside .sidebar h3 {
+        display: none;
     }
-    aside .sidebar a{
-      width: 5.6rem;
+
+    aside .sidebar a {
+        width: 5.6rem;
     }
-    aside .sidebar a:last-child{
-      position: relative;
-      margin-top: 1.8rem;
+
+    /* Keep logout in normal sidebar flow */
+    aside .sidebar a[href="../includes/logout.php"] {
+        position: static;
+        margin-top: 0.8rem;
+        margin-bottom: 1rem;
+        width: 5.6rem;
     }
-    main .insights{
-      display: grid;
-      grid-template-columns: repeat(1,1fr);
+
+    main .insights {
+        display: grid;
+        grid-template-columns: repeat(1, 1fr);
     }
 }
 
 /* ****************
 MEDIA QUERY PHONE
 ************************/
+/* ===================
+   MEDIA QUERY
+   PHONE
+=================== */
 
-@media screen and (max-width:768px) {
-  .container{
-    width: 100%;
-    grid-template-columns: repeat(1,1fr);
-  
-  }
-  
-  aside{
-    position: fixed;
-    width: 18rem;
-    z-index: 3;
-    height: 100vh;
-    background-color: var(--clr-white);
-    display: none;
-    left: -110px;
-    animation:  menuLeft .3s ease forwards;
-  }
-  
-  @keyframes menuLeft {
-      to{
-        left: 0;
-      }
-  }
-  
+@media screen and (max-width: 768px) {
 
-
-
-  aside .logo h2{
-       display: inline;
-  }
-  aside .sidebar h3{
-    display: inline;
-  }
-  aside .sidebar a{
-    width: 100%;
-    height: 3.4rem;
-  }
-  aside .top div.close  span{
-     display: inline;
-     position: absolute;
-     right: 0;
-     margin-right:30px;
-     font-size: 35px;
-     cursor: pointer;
-  }
-
-    .right .top{
-       position: fixed;
-       top: 0;
-       left: 0;
-       display: flex;
-       justify-content: center;
-       align-items: center;
-       padding: 0 0.8rem;
-       background: var(--clr-white);
-       height: 4.6rem;
-       width: 100%;
-       z-index: 2;
-       box-shadow: 0 1rem 1rem var(--clr-light);
-       margin: 0;
+    .container {
+        width: 100%;
+        grid-template-columns: repeat(1, 1fr);
     }
 
 
- main .insights{
-  display: grid;
-  grid-template-columns: repeat(1,1fr);
-  gap: 1.6rem;
-  padding: 40px;
- }
- main .recent_order{
-  padding: 30px;
-  margin: 0 auto;
- }
+    /* Mobile Sidebar */
+
+    aside {
+        position: fixed;
+
+        width: 18rem;
+        height: 100vh;
+
+        left: -110px;
+
+        z-index: 3;
+
+        background-color: var(--clr-white);
+
+        display: none;
+
+        animation: menuLeft .3s ease forwards;
+    }
 
 
-
-  .right .profile{
-    position: absolute;
-    left: 70%;
-  }
-
-  .right .top .theme-toggler{
-    width: 4.4rem;
-    position: absolute;
-    left: 50%;
-  }
-   .right .profile .info{
-    display: none;
-   }
-
-   .right .top button{
-     display: inline-block;
-     background: transparent;
-     cursor: pointer;
-     color: var(--clr-dark);
-     position: absolute;
-     left: 1rem;
-
-   }
-   .right .recent_order{
-    padding: 0 30px;
-   }
-   .right .recent_updates{
-    padding: 0 40px;
-   }
-   .right .sales-analytics{
-    padding: 0 40px;
-   }
-   .right .add_product{
-    padding: 0 40px;
-    margin-bottom: 40px;
-   }
+    @keyframes menuLeft {
+        to {
+            left: 0;
+        }
+    }
 
 
+    /* Mobile Sidebar Container */
+
+    aside .sidebar {
+        height: calc(100vh - 5rem);
+        min-height: 0;
+
+        overflow-y: auto;
+        overflow-x: hidden;
+
+        top: 1rem;
+    }
+
+
+    /* Show Logo */
+
+    aside .logo h2 {
+        display: inline;
+    }
+
+
+    /* Show Menu Text */
+
+    aside .sidebar h3 {
+        display: inline;
+    }
+
+
+    /* Mobile Links */
+
+    aside .sidebar a {
+        width: 100%;
+        height: 3.4rem;
+
+        flex-shrink: 0;
+    }
+
+
+    /* Mobile Section Titles */
+
+    aside .sidebar-section-title {
+        display: block;
+    }
+
+
+    /* Mobile Close Button */
+
+    aside .top div.close span {
+        display: inline;
+
+        position: absolute;
+
+        right: 0;
+
+        margin-right: 30px;
+
+        font-size: 35px;
+
+        cursor: pointer;
+    }
+
+
+    /* Keep Logout Normal */
+
+    aside .sidebar a[href="../includes/logout.php"] {
+        position: static;
+
+        width: 100%;
+
+        margin-top: 0.8rem;
+        margin-bottom: 1rem;
+    }
+
+
+    /* Rest of your existing mobile styles */
+
+    .right .top {
+        position: fixed;
+
+        top: 0;
+        left: 0;
+
+        display: flex;
+
+        justify-content: center;
+        align-items: center;
+
+        padding: 0 0.8rem;
+
+        background: var(--clr-white);
+
+        height: 4.6rem;
+        width: 100%;
+
+        z-index: 2;
+
+        box-shadow: 0 1rem 1rem var(--clr-light);
+
+        margin: 0;
+    }
+
+    main .insights {
+        display: grid;
+        grid-template-columns: repeat(1, 1fr);
+        gap: 1.6rem;
+        padding: 40px;
+    }
+
+    main .recent_order {
+        padding: 30px;
+        margin: 0 auto;
+    }
+
+    .right .profile {
+        position: absolute;
+        left: 70%;
+    }
+
+    .right .top .theme-toggler {
+        width: 4.4rem;
+        position: absolute;
+        left: 50%;
+    }
+
+    .right .profile .info {
+        display: none;
+    }
+
+    .right .top button {
+        display: inline-block;
+
+        background: transparent;
+
+        cursor: pointer;
+
+        color: var(--clr-dark);
+
+        position: absolute;
+        left: 1rem;
+    }
+
+    .right .recent_order {
+        padding: 0 30px;
+    }
+
+    .right .recent_updates {
+        padding: 0 40px;
+    }
+
+    .right .sales-analytics {
+        padding: 0 40px;
+    }
+
+    .right .add_product {
+        padding: 0 40px;
+        margin-bottom: 40px;
+    }
 }
 
 /* User Management Styles */
@@ -1851,7 +2012,286 @@ MEDIA QUERY PHONE
   to { transform: translateY(0) scale(1); opacity: 1; }
 }
 
+/* Order Status Badge Colors */
+.status-pending   { background: #FEF3C7 !important; color: #B45309 !important; border-radius: 20px; padding: 0.2rem 0.6rem; font-weight: 600; font-size: 0.75rem; }
+.status-confirmed { background: #DBEAFE !important; color: #1D4ED8 !important; border-radius: 20px; padding: 0.2rem 0.6rem; font-weight: 600; font-size: 0.75rem; }
+.status-preparing { background: #FFEDD5 !important; color: #C2410C !important; border-radius: 20px; padding: 0.2rem 0.6rem; font-weight: 600; font-size: 0.75rem; }
+.status-ready     { background: #EDE9FE !important; color: #6D28D9 !important; border-radius: 20px; padding: 0.2rem 0.6rem; font-weight: 600; font-size: 0.75rem; }
+.status-delivering{ background: #CFFAFE !important; color: #0E7490 !important; border-radius: 20px; padding: 0.2rem 0.6rem; font-weight: 600; font-size: 0.75rem; }
+.status-completed { background: #DCFCE7 !important; color: #15803D !important; border-radius: 20px; padding: 0.2rem 0.6rem; font-weight: 600; font-size: 0.75rem; }
+.status-cancelled { background: #FEE2E2 !important; color: #B91C1C !important; border-radius: 20px; padding: 0.2rem 0.6rem; font-weight: 600; font-size: 0.75rem; }
 
+
+/* =========================================
+   FINAL SIDEBAR FIX
+========================================= */
+
+aside {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+aside .top {
+    flex-shrink: 0;
+    margin-top: 1.4rem;
+}
+
+aside .sidebar {
+    flex: 1;
+    min-height: 0;
+    height: auto;
+
+    position: relative;
+    top: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    padding-bottom: 1rem;
+}
+
+
+/* Sidebar links */
+
+aside .sidebar a {
+    flex-shrink: 0;
+}
+
+
+/* Section headings */
+
+aside .sidebar-section-title {
+    flex-shrink: 0;
+}
+
+
+/* Logout */
+
+aside .sidebar a[href="../includes/logout.php"] {
+    position: static !important;
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+    flex-shrink: 0;
+}
+
+/* Admin pages: consistent admin shell and toolbar
+   Applies to every admin sub-page so the nav bar and layout
+   behave identically to the dashboard across breakpoints. */
+.admin-orders-page,
+.admin-page {
+  height: auto;
+  min-height: 100vh;
+  user-select: auto;
+}
+
+.admin-orders-page > .container,
+.admin-page > .container {
+  width: min(96%, 1600px);
+  grid-template-columns: 14rem minmax(0, 1fr);
+  gap: 1.8rem;
+}
+
+.admin-orders-page aside,
+.admin-page aside {
+  position: sticky;
+  top: 0;
+  align-self: start;
+}
+
+.admin-orders-page .admin-page-main,
+.admin-page .admin-page-main {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  padding-bottom: 2rem;
+}
+
+/* Legacy pages that still carry the old "right" content column
+   (dashboard, feedback): push it down into the content column and
+   hide its obsolete nav row (the shared topbar replaces it). */
+.admin-page > .container > .right {
+  grid-column: 2;
+  margin-top: 2rem;
+  min-width: 0;
+}
+
+.admin-page > .container > .right .top {
+  display: none;
+}
+
+.admin-page > .container > .right .recent_updates {
+  margin-left: 0;
+}
+
+.admin-topbar {
+  min-height: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 1.25rem;
+  padding: 0.55rem 0.8rem;
+  background: var(--clr-white);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--border-radius-2);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+}
+
+.admin-menu-button {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  background: transparent;
+  color: var(--clr-dark);
+  cursor: pointer;
+  border-radius: var(--border-radius-1);
+}
+
+.admin-topbar-actions,
+.admin-profile {
+  display: flex;
+  align-items: center;
+}
+
+.admin-topbar-actions { gap: 1.25rem; }
+.admin-profile { gap: 0.75rem; }
+
+.admin-profile-copy {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+  line-height: 1.25;
+}
+
+.admin-profile-copy strong { color: var(--clr-dark); }
+.admin-profile-copy small { color: var(--clr-dark-variant); }
+.admin-profile .profile-photo img { display: block; object-fit: cover; }
+
+.admin-topbar .theme-toggler {
+  display: flex;
+  width: 4.2rem;
+  height: 1.8rem;
+  overflow: hidden;
+  background: var(--clr-color-background);
+  border-radius: var(--border-radius-1);
+  cursor: pointer;
+}
+
+.admin-topbar .theme-toggler span {
+  width: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--clr-dark-variant);
+  font-size: 1.15rem;
+}
+
+.admin-topbar .theme-toggler span.active {
+  background: var(--clr-primary);
+  color: #fff;
+}
+
+.admin-page-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-page-heading h1 {
+  margin: 0;
+  color: var(--clr-dark);
+  font-size: clamp(1.8rem, 3vw, 2.2rem);
+  line-height: 1.15;
+}
+
+.admin-page-heading p {
+  margin-top: 0.25rem;
+  color: var(--clr-dark-variant);
+  font-size: 0.9rem;
+}
+
+.admin-orders-page .recent_order {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
+
+.admin-orders-page .order-stat-card,
+.admin-orders-page .summary-card,
+.admin-orders-page .details-card,
+.admin-orders-page .tracking-sidebar,
+.admin-orders-page .actions-card {
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+@media screen and (max-width: 1200px) {
+  .admin-orders-page > .container,
+  .admin-page > .container {
+    width: 94%;
+    grid-template-columns: 7rem minmax(0, 1fr);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .admin-orders-page > .container,
+  .admin-page > .container {
+    width: 100%;
+    display: block;
+  }
+
+  .admin-orders-page .admin-page-main,
+  .admin-page .admin-page-main {
+    margin-top: 0;
+    padding: 0 1rem 1.5rem;
+  }
+
+  .admin-orders-page aside,
+  .admin-page aside {
+    position: fixed;
+    top: 0;
+    left: 0;
+    align-self: auto;
+    z-index: 100;
+  }
+
+  .admin-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    justify-content: space-between;
+    margin: 0 -1rem 1.25rem;
+    padding-inline: 1rem;
+    border-width: 0 0 1px;
+    border-radius: 0;
+  }
+
+  .admin-menu-button { display: inline-flex; }
+  .admin-profile-copy { display: none; }
+  .admin-topbar-actions { gap: 0.8rem; }
+  .admin-page-heading { align-items: flex-start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-orders-page *,
+  .admin-orders-page *::before,
+  .admin-orders-page *::after,
+  .admin-page *,
+  .admin-page *::before,
+  .admin-page *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
 
 
 

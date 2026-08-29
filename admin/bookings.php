@@ -194,13 +194,33 @@ $avail_path = generateSparklinePath($avail_spark);
   <link rel="stylesheet" href="../assets/css/adminstyle.css?v=<?= filemtime(__DIR__ . '/../assets/css/adminstyle.css') ?>">
   <link rel="stylesheet" href="../assets/css/admin_bookings.css?v=<?= filemtime(__DIR__ . '/../assets/css/admin_bookings.css') ?>">
 </head>
-<body>
+<body class="admin-page">
    <div class="container">
       <!-- Left Sidebar Nav Bar -->
       <?php include_once __DIR__ . '/sidebar.php'; ?>
 
       <!-- Main Content Area -->
-      <main>
+      <main class="admin-page-main">
+          <div class="admin-topbar" aria-label="Admin toolbar">
+              <button type="button" id="menu_bar" class="admin-menu-button" aria-label="Open navigation">
+                  <span class="material-symbols-sharp">menu</span>
+              </button>
+              <div class="admin-topbar-actions">
+                  <div class="theme-toggler" aria-label="Change color theme">
+                      <span class="material-symbols-sharp active">light_mode</span>
+                      <span class="material-symbols-sharp">dark_mode</span>
+                  </div>
+                  <div class="admin-profile">
+                      <div class="admin-profile-copy">
+                          <strong>Subodh Admin</strong>
+                          <small>Administrator</small>
+                      </div>
+                      <div class="profile-photo">
+                          <img src="../assets/img/usersprofiles/adminpic.jpg" alt="Admin profile">
+                      </div>
+                  </div>
+              </div>
+          </div>
 
           <!-- Title section -->
           <div class="bookings-title-section">
@@ -443,27 +463,6 @@ $avail_path = generateSparklinePath($avail_spark);
           </div>
       </main>
 
-      <div class="right">
-          <div class="top">
-              <button id="menu_bar">
-                  <span class="material-symbols-sharp">menu</span>
-              </button>
-              <div class="theme-toggler">
-                  <span class="material-symbols-sharp active">light_mode</span>
-                  <span class="material-symbols-sharp">dark_mode</span>
-              </div>
-              <div class="profile">
-                  <div class="info">
-                      <p><b>Subodh Admin</b></p>
-                      <p>Administrator</p>
-                      <small class="text-muted">Online</small>
-                  </div>
-                  <div class="profile-photo">
-                      <img src="../assets/img/usersprofiles/adminpic.jpg" alt="Admin Profile"/>
-                  </div>
-              </div>
-          </div>
-      </div>
    </div>
 
    <!-- MODAL: View Details -->

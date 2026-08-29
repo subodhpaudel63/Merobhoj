@@ -102,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $is_esewa = ($payment_method === 'eSewa');
     $payment_status = $is_esewa ? 'Pending' : 'Paid';
 
-    $stmt = $conn->prepare("INSERT INTO orders (order_number, menu_id, menu_name, price, quantity, total_price, email, mobile, address, payment_method, payment_status, status, order_time, order_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Confirmed', NOW(), CURDATE())");
+    $stmt = $conn->prepare("INSERT INTO orders (order_number, menu_id, menu_name, price, quantity, total_price, email, mobile, address, payment_method, payment_status, status, order_time, order_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW(), CURDATE())");
     $stmt->bind_param("sisdidsssss", $order_number, $menu_id, $menu_name, $price, $quantity, $total_price, $email, $mobile, $address, $payment_method, $payment_status);
 
     if ($stmt->execute()) {
