@@ -25,53 +25,9 @@
       href="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css"
     />
     <link rel="stylesheet" href="./assets/css/style.css" />
-    <style>
-      /* Custom button styles */
-      .nav-button {
-        background-color: #ff0000;
-        color: white;
-        border: none;
-        padding: 8px 20px;
-        border-radius: 30px;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        display: inline-block;
-        margin-left: 10px;
-      }
-      
-      .nav-button:hover {
-        background-color: #cc0000;
-        color: white;
-        text-decoration: none;
-      }
-      
-      .nav-button-outline {
-        background-color: transparent;
-        color: #ff0000;
-        border: 2px solid #ff0000;
-        padding: 6px 18px;
-        border-radius: 30px;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        display: inline-block;
-        margin-left: 10px;
-      }
-      
-      .nav-button-outline:hover {
-        background-color: #ff0000;
-        color: white;
-        text-decoration: none;
-      }
-    </style>
   </head>
 
-
 <body>
-   
-
-    <body>
     <div class="loader">
       <i class="fas fa-utensils loader-icone"></i>
       <p>Mero Bhoj</p>

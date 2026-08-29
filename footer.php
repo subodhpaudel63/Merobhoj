@@ -136,56 +136,6 @@ $isStandalone = isset($_SERVER['SCRIPT_FILENAME'])
         <i class="fab fa-whatsapp"></i>
     </a>
     
-    <style>
-        /* Floating WhatsApp Button */
-.floating-whatsapp {
-    position: fixed;
-    bottom: 100px; /* moved above scroll top button */
-    right: 25px;
-    width: 60px;
-    height: 60px;
-    background-color: #25d366;
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 32px;
-    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
-    transition: all 0.3s ease;
-    z-index: 9999;
-    text-decoration: none;
-    animation: whatsapp-pulse 2s infinite;
-}
-
-.floating-whatsapp:hover {
-    background-color: #20ba5a;
-    transform: scale(1.1);
-    box-shadow: 0 6px 16px rgba(37, 211, 102, 0.6);
-}
-
-@keyframes whatsapp-pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7);
-    }
-    70% {
-        box-shadow: 0 0 0 15px rgba(37, 211, 102, 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(37, 211, 102, 0);
-    }
-}
-
-@media (max-width: 768px) {
-    .floating-whatsapp {
-        width: 50px;
-        height: 50px;
-        bottom: 90px; /* keep above scroll button on mobile */
-        right: 20px;
-        font-size: 26px;
-    }
-}
-    </style>
   </body>
 </html>
 

@@ -18,6 +18,7 @@ if (isset($_COOKIE['admin_type'])) {
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 
+<link rel="stylesheet" href="./adminstyles.css">
 <style>
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 
@@ -347,16 +348,8 @@ html, body {
 
   <!-- Toast container will be added here -->
   <?php if (isset($_SESSION['msg'])): ?>
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        
-        const msg = <?php echo json_encode($_SESSION['msg']); ?>;
-        if (msg) {
-        }
-        // Clear the session message
-        <?php unset($_SESSION['msg']); ?>
-      });
-    </script>
+    <div id="admin-session-msg" data-type="<?php echo htmlspecialchars($_SESSION['msg']['type']); ?>" data-message="<?php echo htmlspecialchars($_SESSION['msg']['text']); ?>"></div>
+    <?php unset($_SESSION['msg']); ?>
   <?php endif; ?>
 
   <form action="admin_login_process.php" method="POST" id="loginForm">
@@ -387,32 +380,4 @@ html, body {
   </form>
 </div>
 
-<script>
-/* password toggle only */
-function togglePw() {
-  const pwI = document.getElementById('pw');
-  const show = pwI.type === 'password';
-  pwI.type = show ? 'text' : 'password';
-  document.getElementById('eyeIco').className = show ? 'fas fa-eye-slash' : 'fas fa-eye';
-}
-
-/* ripple effect */
-document.getElementById('submitBtn').addEventListener('click', function(e) {
-  const r = document.createElement('span');
-  r.className = 'ripple';
-  const sz = Math.max(this.offsetWidth, this.offsetHeight);
-  const rc = this.getBoundingClientRect();
-  const cx = e.clientX - rc.left;
-  const cy = e.clientY - rc.top;
-  
-  r.style.width = r.style.height = sz + 'px';
-  r.style.left = cx - sz/2 + 'px';
-  r.style.top = cy - sz/2 + 'px';
-  
-  this.appendChild(r);
-  
-  setTimeout(() => {
-    r.remove();
-  }, 550);
-});
-</script>
+<script src="./adminscript.js"></script>

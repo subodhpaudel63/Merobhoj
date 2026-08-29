@@ -231,6 +231,7 @@ $cart = array_values($_SESSION['cart'] ?? []);
   <title>Cart | Mero Bhoj</title>
   <link rel="stylesheet" href="../assets/css/style.css" />
   <link rel="stylesheet" href="../assets/css/toast_styles.css" />
+  <link rel="stylesheet" href="../assets/css/clientstyles.css" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
@@ -298,16 +299,5 @@ $cart = array_values($_SESSION['cart'] ?? []);
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="<?php echo asset('js/script.js'); ?>"></script>
   <script src="../assets/js/toast_notifications.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      <?php if (isset($_SESSION['msg'])): $m = $_SESSION['msg']; unset($_SESSION['msg']); ?>
-        window.MKJ_SESSION_MSG = {
-          type: '<?php echo $m['type']; ?>',
-          text: <?php echo json_encode(htmlspecialchars($m['text'])); ?>
-        };
-        mkjShowToastFromSession();
-      <?php endif; ?>
-    });
-  </script>
 </body>
 </html>

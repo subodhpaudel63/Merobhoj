@@ -57,27 +57,13 @@ if (isset($_COOKIE['user_img'])) {
     <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css"/>
     <?php require_once __DIR__ . '/../config/bootstrap.php'; ?>
     <link rel="stylesheet" href="<?php echo asset('css/style.css'); ?>" />
+    <link rel="stylesheet" href="<?php echo asset('css/clientstyle.css'); ?>" />
+    
     
     <!-- Include toast styles -->
     <link rel="stylesheet" href="<?php echo asset('css/toast_styles.css'); ?>" />
-    <style>
-      header.scrolled .menus > ul > li::after {
-        background-color: var(--text-color-white);
-      }
-      
-      /* Smooth scrolling for anchor links */
-      html {
-        scroll-behavior: smooth;
-      }
-
-      .reservation .date-picker-white::-webkit-calendar-picker-indicator,
-      .reservation .time-picker-white::-webkit-calendar-picker-indicator {
-        filter: invert(1);
-        opacity: 1;
-      }
-    </style>
   </head>
-  <body>
+  <body class="home-page">
     
 
     <div class="loader">
@@ -698,94 +684,6 @@ Want to explore that next?
         </div>
         
         
-        <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('bookingForm');
-            if (!form) return;
-            
-            const dateInput = form.querySelector('input[name="date"]');
-            const timeInput = form.querySelector('input[name="time"]');
-            const peopleInput = form.querySelector('input[name="people"]');
-            const tableSelect = document.getElementById('tableSelect');
-            
-            function updateTables() {
-                const date = dateInput.value;
-                const time = timeInput.value;
-                const people = peopleInput.value;
-                
-                if (date && time && people > 0) {
-                    tableSelect.innerHTML = '<option value="" style="color: white; background-color: #212529;">Loading available tables...</option>';
-                    
-                    const formData = new FormData();
-                    formData.append('date', date);
-                    formData.append('time', time);
-                    formData.append('people', people);
-                    
-                    fetch('../includes/get_available_tables.php', {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        tableSelect.innerHTML = '<option value="" style="color: white; background-color: #212529;">Select a Table</option>';
-                        if (data.success && data.tables.length > 0) {
-                            data.tables.forEach(table => {
-                                const option = document.createElement('option');
-                                option.value = table.id;
-                                option.textContent = `${table.name} - ${table.capacity} Seats`;
-                                option.style.color = 'white';
-                                option.style.backgroundColor = '#212529';
-                                tableSelect.appendChild(option);
-                            });
-                        } else if (data.success && data.tables.length === 0) {
-                            tableSelect.innerHTML = '<option value="" style="color: white; background-color: #212529;">No tables available for this time and group size</option>';
-                        } else {
-                            tableSelect.innerHTML = '<option value="" style="color: white; background-color: #212529;">Error loading tables</option>';
-                        }
-                    })
-                    .catch(err => {
-                        tableSelect.innerHTML = '<option value="" style="color: white; background-color: #212529;">Error loading tables</option>';
-                    });
-                } else {
-                    tableSelect.innerHTML = '<option value="" style="color: white; background-color: #212529;">Select a Date, Time, and People first</option>';
-                }
-            }
-            
-            dateInput.addEventListener('change', updateTables);
-            timeInput.addEventListener('change', updateTables);
-            peopleInput.addEventListener('change', updateTables);
-            peopleInput.addEventListener('keyup', updateTables);
-            
-            form.addEventListener('submit', function(e) {
-                // Phone validation: +977 or 977 followed by 96/97/98 + 8 digits
-                const phone = form.querySelector('input[name="phone"]').value.replace(/[\s\-]/g, '');
-                if (phone && !/^(\+?977)?9[6-8]\d{8}$/.test(phone)) {
-                    e.preventDefault();
-                    alert('Please enter a valid Nepal phone number (e.g., 98XXXXXXXX or +977-98XXXXXXXX).');
-                    return;
-                }
-                
-                // Opening hours validation
-                const time = timeInput.value;
-                if (time) {
-                    const hour = parseInt(time.split(':')[0], 10);
-                    if (hour < 7 || hour >= 23) {
-                        e.preventDefault();
-                        alert('We are open from 7:00 AM to 11:00 PM. Please choose a valid time.');
-                        return;
-                    }
-                }
-                
-                // Max people validation
-                const people = parseInt(peopleInput.value, 10);
-                if (people > 8) {
-                    e.preventDefault();
-                    alert('The maximum capacity for a single table is 8 people.');
-                    return;
-                }
-            });
-        });
-        </script>
       </section>      
       
       <section class="our-services py-5 my-5">
@@ -922,30 +820,9 @@ Want to explore that next?
     <?php require_once __DIR__ . '/../config/bootstrap.php'; ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="<?php echo asset('js/script.js'); ?>"></script>
+    <script src="./script.js"></script>
     <!-- Include toast notifications JS -->
     <script src="<?php echo asset('js/toast_notifications.js'); ?>"></script>
     
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const reservationDate = document.getElementById('reservationDate');
-        if (reservationDate) {
-          const today = new Date();
-          const year = today.getFullYear();
-          const month = String(today.getMonth() + 1).padStart(2, '0');
-          const day = String(today.getDate()).padStart(2, '0');
-          reservationDate.min = `${year}-${month}-${day}`;
-        }
-      });
-
-      document.addEventListener('DOMContentLoaded', function() {
-        <?php if (isset($_SESSION['msg'])): $m = $_SESSION['msg']; unset($_SESSION['msg']); ?>
-          window.MKJ_SESSION_MSG = {
-            type: '<?php echo $m['type']; ?>',
-            text: <?php echo json_encode(htmlspecialchars($m['text'])); ?>
-          };
-          mkjShowToastFromSession();
-        <?php endif; ?>
-      });
-    </script>
   </body>
 </html>

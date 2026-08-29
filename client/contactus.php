@@ -57,21 +57,10 @@ if (isset($_COOKIE['user_img'])) {
     <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css"/>
     <?php require_once __DIR__ . '/../config/bootstrap.php'; ?>
     <link rel="stylesheet" href="<?php echo asset('css/style.css'); ?>" />
+   <link rel="stylesheet" href="../assets/css/clientstyles.css" />
     <!-- Include toast styles -->
     <link rel="stylesheet" href="<?php echo asset('css/toast_styles.css'); ?>" />
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <style>
-      /* Add padding to prevent content from being hidden under navbar */
-      .main-content {
-        padding-top: 100px;
-      }
-      
-      @media (max-width: 991px) {
-        .main-content {
-          padding-top: 80px;
-        }
-      }
-    </style>
   </head>
   <body>
 
@@ -535,23 +524,9 @@ if (isset($_COOKIE['user_img'])) {
     <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
     <?php require_once __DIR__ . '/../config/bootstrap.php'; ?>
     <script src="<?php echo asset('js/script.js'); ?>"></script>
+    <script src="./script.js"></script>
     <!-- Include toast notifications JS -->
     <script src="<?php echo asset('js/toast_notifications.js'); ?>"></script>
     
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        // Check for session messages and show toast
-        <?php if (isset($_SESSION['msg'])): $m = $_SESSION['msg']; unset($_SESSION['msg']); ?>
-          const messageType = '<?php echo $m['type']; ?>';
-          const messageText = <?php echo json_encode(htmlspecialchars($m['text'])); ?>;
-          
-          if (messageType === 'success') {
-            ToastNotifications.success(messageText);
-          } else {
-            ToastNotifications.error(messageText);
-          }
-        <?php endif; ?>
-      });
-    </script>
   </body>
 </html>

@@ -421,7 +421,6 @@ button,
   border-color: var(--secondary-color);
 }
 
-.header,
 .footer,
 .navbar {
   background-color: var(--heading-color);
@@ -470,7 +469,7 @@ body::-webkit-scrollbar-thumb {
   justify-content: center;
   align-items: center;
   flex-direction: column;
-  z-index: 12;
+  z-index: 9999; /* must be above header (9) so it fully covers the page on load */
 }
 
 .loader p {
@@ -527,15 +526,19 @@ body::-webkit-scrollbar-thumb {
 
 header {
   position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
   padding: 0;
   margin: 0;
-  /* background-color: var(--primary-color); */
-  box-shadow: 7px 5px 15px -4px rgba(0, 0, 0, 0.75);
-  -webkit-box-shadow: 7px 5px 15px -4px rgba(0, 0, 0, 0.75);
-  -moz-box-shadow: 7px 5px 15px -4px rgba(0, 0, 0, 0.75);
-  z-index: 9;
+  background-color: #fff; /* white on first load for all pages */
+  box-shadow: none;
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+  z-index: 9; /* below loader (z-index:9999) so header is hidden during loading */
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
+
 .header {
   display: flex;
   align-items: center;
@@ -543,9 +546,27 @@ header {
   background-color: transparent;
 }
 
+/* All pages: orange with shadow after scroll */
 header.scrolled {
   background-color: var(--primary-color);
-  transition: 0.3s all linear;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+  -webkit-box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+  -moz-box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+}
+
+/* Home page only: transparent at top, orange on scroll */
+body.home-page header {
+  background-color: transparent;
+  box-shadow: none;
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+}
+
+body.home-page header.scrolled {
+  background-color: var(--primary-color);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+  -webkit-box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+  -moz-box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
 }
 
 .logo h1 {
@@ -565,8 +586,6 @@ header.scrolled {
   font-size: 40px;
 }
 
-.menus > ul {
-}
 
 .menus > ul > li {
   position: relative;
@@ -918,8 +937,6 @@ header.scrolled {
   /* overflow: hidden; */
 }
 
-.banner .banner-content {
-}
 
 .banner-content h1 {
   font-weight: 800;
@@ -3162,3 +3179,345 @@ footer p {
     margin-right: 12px;
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   PAGE STYLES — consolidated from the former per-page stylesheets
+   (header.css, home.css, about.css, contact.css, footer.css,
+   menu-page.css, login.css, register.css, 404.css).
+   Rules that were duplicated across those files are declared ONCE here:
+   - .toast-success / .toast-error (bootstrap tint)  — was in 3 files
+   - .nav-button / .nav-button-outline               — was in 7 files
+   - .login-modal                                    — was in 3 files
+   Auth-page, 404-page and menu body rules are scoped with
+   .auth-page / .error-page / body.menu-page so they keep applying
+   only to their own pages.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Shared: bootstrap toast tint (was duplicated in home/header/contact) ── */
+.toast-success {
+  background-color: #0f5132 !important; /* Dark green */
+  border-color: #0f5132 !important;
+  color: white !important;
+}
+
+.toast-error {
+  background-color: #842029 !important; /* Dark red */
+  border-color: #842029 !important;
+  color: white !important;
+}
+
+/* ── Shared: nav buttons (was duplicated in home/about/header/contact/menu/login/register) ── */
+.nav-button {
+  background-color: #ff0000;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 30px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+  margin-left: 10px;
+}
+
+.nav-button:hover {
+  background-color: #cc0000;
+  color: white;
+  text-decoration: none;
+}
+
+.nav-button-outline {
+  background-color: transparent;
+  color: #ff0000;
+  border: 2px solid #ff0000;
+  padding: 6px 18px;
+  border-radius: 30px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+  margin-left: 10px;
+}
+
+.nav-button-outline:hover {
+  background-color: #ff0000;
+  color: white;
+  text-decoration: none;
+}
+
+/* ── Shared: "login required" modal (was duplicated in header/menu/contact) ── */
+.login-modal .modal-content { border-radius: 15px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
+.login-modal .modal-header { background: linear-gradient(135deg, #ff6a00, #d32f2f); color: white; border-top-left-radius: 15px; border-top-right-radius: 15px; border: none; }
+.login-modal .btn-login { background: linear-gradient(135deg, #ff6a00, #d32f2f); border: none; color: white; padding: 10px; font-weight: 600; }
+.login-modal .btn-login:hover { background: linear-gradient(135deg, #e65f00, #c62828); color: white; }
+
+/* ── Header (was assets/css/header.css). Its .header-contact-* rules already
+   exist above; its .menu .card / .btn-orange copies were older duplicates of
+   the Menu page section below; toast/nav-button/login-modal rules are shared. ── */
+/* NOTE: header transparent/scrolled rules are defined at line ~527 above. */
+header.scrolled .text-dark { color: #fff !important; }
+header.scrolled #mobile-menu .text-dark { color: #343a40 !important; /* keep mobile dropdown text dark on its white background */ }
+header.scrolled .menus > ul > li::after { background-color: #fff; }
+
+
+/* ── Home page (was assets/css/home.css). Its custom-toast block duplicates
+   the "toast animations" section above, and its .nav-button / .toast-success /
+   .toast-error / html{scroll-behavior} rules duplicate the shared ones. ── */
+.reservation .date-picker-white::-webkit-calendar-picker-indicator,
+.reservation .time-picker-white::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 1;
+}
+
+/* FAQ accordion */
+.mkj-faq-wrapper { font-family: 'Poppins', sans-serif !important; padding: 60px 20px; max-width: 900px; margin: 0 auto; color: #e5612f; }
+.mkj-faq-header { text-align: center; margin-bottom: 40px; }
+.mkj-faq-header h2 { font-family: 'Playfair Display', serif !important; color: #e5612f; font-size: 2.2rem; margin-bottom: 10px; }
+.mkj-faq-container { display: flex; flex-direction: column; gap: 15px; }
+.mkj-faq-item { background: #fffbf5; border: 1px solid #fce4cc; border-left: 5px solid #e5612f; border-radius: 10px; overflow: hidden; will-change: transform, box-shadow; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.mkj-faq-item:hover { box-shadow: 0 4px 12px rgba(255, 140, 0, 0.1); }
+.mkj-faq-question { width: 100%; padding: 22px 25px; display: flex; justify-content: space-between; align-items: center; background: none !important; border: none; cursor: pointer; text-align: left; font-weight: 600; font-size: 1.1rem; color: #2d2d2d; outline: none !important; }
+.mkj-faq-icon { transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #e5612f; font-size: 1.2rem; }
+.mkj-faq-answer-wrapper { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+.mkj-faq-item.active .mkj-faq-answer-wrapper { grid-template-rows: 1fr; }
+.mkj-faq-item.active .mkj-faq-icon { transform: rotate(180deg); }
+.mkj-faq-answer-overflow { overflow: hidden; }
+.mkj-faq-answer-inner { padding: 0px 25px 25px 25px; line-height: 1.7; color: #555; font-size: 0.95rem; opacity: 0; transform: translateY(-10px); transition: opacity 0.3s ease, transform 0.3s ease; }
+.mkj-faq-item.active .mkj-faq-answer-inner { opacity: 1; transform: translateY(0); padding-top: 10px; }
+
+/* ── About page (was assets/css/about.css) — its only rules (.nav-button*) were
+   duplicates of the shared components above; nothing unique left to add. ── */
+
+/* ── Contact page (was assets/css/contact.css) — its feedback form, star rating,
+   chips, ff-* fields, send button, success overlay and contact-info styles were
+   already merged into this file earlier (see the .feedback-* / .ff-* /
+   .btn-send-* / .form-success-* / .contact-info-* sections above); its
+   .toast-success/.toast-error, .nav-button* and .login-modal rules are the
+   shared components at the top of this consolidated block. Nothing unique left. ── */
+
+/* ── Footer (was assets/css/footer.css) ── */
+.floating-whatsapp { position: fixed; bottom: 100px; right: 25px; width: 60px; height: 60px; background-color: #25d366; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4); transition: all 0.3s ease; z-index: 9999; text-decoration: none; animation: whatsapp-pulse 2s infinite; }
+.floating-whatsapp:hover { background-color: #20ba5a; transform: scale(1.1); box-shadow: 0 6px 16px rgba(37, 211, 102, 0.6); }
+@keyframes whatsapp-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+  70%  { box-shadow: 0 0 0 15px rgba(37, 211, 102, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+}
+@media (max-width: 768px) {
+  .floating-whatsapp { width: 50px; height: 50px; bottom: 90px; right: 20px; font-size: 26px; }
+}
+
+/* ── Menu page (was assets/css/menu-page.css). Generic bootstrap rules
+   (.tab-content/.tab-pane, section-title underline, card button row,
+   small-screen card tweak, body tint) are scoped to body.menu-page — the
+   <body> of menu.php gets class="menu-page". Its .nav-button / .login-modal
+   rules are the shared components above. ── */
+:root {
+  --orange: #ff6a00;
+  --orange-dark: #e65f00;
+  --orange-glow: rgba(255, 106, 0, .22);
+  --ease-out:    cubic-bezier(.25, .8, .25, 1);
+  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+}
+body.menu-page { background: #f8f8f6; }
+body.menu-page .section-title h2 { position: relative; display: inline-block; }
+body.menu-page .section-title h2::after { content: ''; position: absolute; bottom: -6px; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--orange), transparent); border-radius: 2px; transform: scaleX(0); transform-origin: left; animation: titleLine .6s var(--ease-out) .3s forwards; }
+@keyframes titleLine { to { transform: scaleX(1); } }
+.menu-search-wrap { display: flex; justify-content: center; margin: 0 0 28px; padding: 0 16px; }
+.menu-search-bar { width: 100%; max-width: 480px; display: flex; align-items: center; background: #fff; border-radius: 50px; box-shadow: 0 4px 20px rgba(0,0,0,.09); padding: 7px 7px 7px 18px; gap: 8px; border: 2px solid transparent; transition: border-color .25s ease, box-shadow .25s ease; }
+.menu-search-bar:focus-within { border-color: var(--orange); box-shadow: 0 4px 20px var(--orange-glow); }
+.menu-search-bar i { color: #bbb; font-size: .9rem; flex-shrink: 0; }
+.menu-search-bar input { border: none; outline: none; background: transparent; flex: 1; font-size: .93rem; color: #333; }
+.menu-search-bar input::placeholder { color: #c0c0c0; }
+.menu-search-clear { display: none; border: none; border-radius: 50px; background: #f0f0f0; color: #888; padding: 7px 14px; font-size: .8rem; font-weight: 600; cursor: pointer; flex-shrink: 0; transition: background .2s, color .2s; }
+.menu-search-clear.visible { display: block; }
+.menu-search-clear:hover { background: var(--orange); color: #fff; }
+.menu-tabs-wrapper { display: flex; justify-content: center; margin-bottom: 32px; }
+#menuTab { border-bottom: none; gap: 4px; flex-wrap: wrap; padding: 5px; background: #fff; border-radius: 50px; display: inline-flex !important; box-shadow: 0 3px 16px rgba(0,0,0,.08); }
+#menuTab .nav-item { margin: 0; }
+#menuTab .nav-link { border: none; border-radius: 50px; padding: 10px 24px; font-weight: 600; font-size: .92rem; color: #666; background: transparent; transition: background .28s var(--ease-out), color .28s var(--ease-out), box-shadow .28s var(--ease-out), transform .2s var(--ease-out); white-space: nowrap; }
+#menuTab .nav-link:hover { background: rgba(255,106,0,.08); color: var(--orange); transform: translateY(-1px); }
+#menuTab .nav-link.active { background: var(--orange); color: #fff !important; box-shadow: 0 5px 18px var(--orange-glow); transform: translateY(-1px); }
+body.menu-page .tab-content { position: relative; }
+body.menu-page .tab-pane { transition: opacity .38s var(--ease-out), transform .38s var(--ease-out); opacity: 0; transform: translateY(14px); pointer-events: none; }
+body.menu-page .tab-pane.show.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.menu .card { border-radius: 18px; overflow: hidden; border: 0; background: #fff; box-shadow: 0 4px 18px rgba(0,0,0,.07); transition: transform .32s var(--ease-out), box-shadow .32s var(--ease-out); position: relative; }
+.menu .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--orange), #ff8c00); transform: scaleX(0); transform-origin: left; transition: transform .32s var(--ease-out); z-index: 2; }
+.menu .card:hover::before { transform: scaleX(1); }
+.menu .card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0,0,0,.11); }
+.card-img-wrapper { position: relative; overflow: hidden; height: 220px; }
+.menu .card-img-top { width: 100%; height: 100%; object-fit: cover; transition: transform .45s var(--ease-out); }
+.menu .card:hover .card-img-top { transform: scale(1.06); }
+.menu .card-title { font-weight: 800; color: #d32f2f; }
+.menu .card-text { color: #6c757d; font-size: .87rem; line-height: 1.55; }
+.menu .price { color: #212529; font-weight: 700; font-size: 1.05rem; }
+.wishlist-btn { background: none; border: none; padding: 0; color: #e0e0e0; font-size: 1rem; cursor: pointer; line-height: 1; transition: color .22s ease, transform .22s var(--ease-spring); }
+.wishlist-btn.liked { color: #e53935; }
+.wishlist-btn:hover { transform: scale(1.25); color: #e53935; }
+.btn-orange { background: var(--orange); color: #fff; border-radius: 10px; border: 1px solid var(--orange); white-space: nowrap; font-weight: 600; transition: background .22s ease, transform .18s var(--ease-out), box-shadow .22s ease; position: relative; overflow: hidden; }
+.btn-orange:hover { background: var(--orange-dark); color: #fff; border-color: var(--orange-dark); transform: translateY(-2px); box-shadow: 0 6px 18px var(--orange-glow); }
+.btn-orange:active { transform: translateY(0); }
+.btn.btn-orange { background: var(--orange) !important; border-color: var(--orange) !important; color: #fff !important; }
+.btn.btn-orange:hover { background: var(--orange-dark) !important; border-color: var(--orange-dark) !important; }
+@keyframes cardRise { from { opacity: 0; transform: translateY(22px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+body.menu-page .tab-pane.show.active .col { animation: cardRise .45s var(--ease-out) both; }
+body.menu-page .tab-pane.show.active .col:nth-child(1) { animation-delay: .03s; }
+body.menu-page .tab-pane.show.active .col:nth-child(2) { animation-delay: .08s; }
+body.menu-page .tab-pane.show.active .col:nth-child(3) { animation-delay: .13s; }
+body.menu-page .tab-pane.show.active .col:nth-child(4) { animation-delay: .18s; }
+body.menu-page .tab-pane.show.active .col:nth-child(5) { animation-delay: .23s; }
+body.menu-page .tab-pane.show.active .col:nth-child(6) { animation-delay: .28s; }
+body.menu-page .tab-pane.show.active .col:nth-child(7) { animation-delay: .33s; }
+body.menu-page .tab-pane.show.active .col:nth-child(n+8) { animation-delay: .38s; }
+.col.search-hidden { display: none !important; }
+.qty-stepper { display: flex; align-items: center; border: 2px solid #e8e8e8; border-radius: 12px; overflow: hidden; }
+.qty-stepper button { background: #f5f5f5; border: none; width: 38px; height: 38px; font-size: 1.15rem; font-weight: 700; color: #555; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .18s, color .18s; }
+.qty-stepper button:hover { background: var(--orange); color: #fff; }
+.qty-stepper input { width: 50px; text-align: center; border: none; outline: none; background: transparent; font-size: .95rem; font-weight: 700; color: #212529; }
+#buyModal .modal-content { border-radius: 20px; overflow: hidden; border: none; box-shadow: 0 24px 60px rgba(0,0,0,.18); }
+#buyModal .modal-header { border-bottom: 1px solid #f0f0f0; }
+#buyModal .modal-footer { border-top: 1px solid #f0f0f0; }
+#buyModal #modal-image { border-radius: 14px; width: 100%; height: 200px; object-fit: cover; }
+#buyModal .btn-success { border-radius: 10px; font-weight: 700; padding: 10px 24px; transition: transform .2s, box-shadow .2s; }
+#buyModal .btn-success:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(46,125,50,.35); }
+body.menu-page .card-body .d-flex.gap-2.mt-3 { align-items: stretch; }
+body.menu-page .card-body .d-flex.gap-2.mt-3 form, body.menu-page .card-body .d-flex.gap-2.mt-3 > .btn { flex: 1; min-width: 0; display: flex; }
+body.menu-page .card-body .d-flex.gap-2.mt-3 form .btn { width: 100%; justify-content: center; align-items: center; }
+body.menu-page .card-body .d-flex.gap-2.mt-3 > .btn { justify-content: center; align-items: center; white-space: nowrap; }
+.main-content { padding-top: 100px; }
+@media (max-width: 991px) {
+  .main-content { padding-top: 80px; }
+  body.menu-page .card.h-100.p-2 { padding: .5rem !important; }
+  #menuTab .nav-link { padding: 9px 16px; font-size: .85rem; }
+}
+
+/* ── Auth pages — login + register (were assets/css/login.css and
+   assets/css/register.css, which duplicated ~80% of each other; merged and
+   deduplicated here). Scoped to body.auth-page (the <body> of login.php and
+   register.php gets class="auth-page"). Keyframes were renamed (authShake,
+   authToast*) so they cannot clobber the identically-named keyframes above. ── */
+.auth-page .navbar-custom { background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.1); padding: 15px 0; }
+.auth-page .logo-text { font-family: 'Amatic SC', sans-serif; font-weight: 700; font-size: 28px; color: #000; text-decoration: none; }
+.auth-page .logo-text i { margin-right: 10px; color: #000; }
+.auth-page #food-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+.auth-page .page-bg-tint { position: fixed; inset: 0; background: radial-gradient(ellipse 60% 50% at 20% 40%, rgba(255,60,0,.04) 0%, transparent 70%), radial-gradient(ellipse 50% 60% at 80% 70%, rgba(255,160,0,.04) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+.auth-page .auth-section { position: relative; z-index: 1; padding: 90px 0 80px; }
+@media (max-width: 991px) {
+  .auth-page .auth-section { padding-top: 50px; }
+}
+.auth-page .auth-card-wrap { opacity: 0; transform: translateY(32px) scale(0.97); animation: cardReveal .75s cubic-bezier(.22,1,.36,1) .12s forwards; }
+@keyframes cardReveal { to { opacity: 1; transform: translateY(0) scale(1); } }
+.auth-page .auth-card { background: #fff; border-radius: 20px; border: none; box-shadow: 0 2px 8px rgba(0,0,0,.06), 0 16px 48px rgba(0,0,0,.10), 0 0 0 1px rgba(0,0,0,.04); overflow: hidden; position: relative; }
+.auth-page .auth-card::before { content: ''; position: absolute; top: 0; left: -60%; right: auto; width: 60%; height: 3px; background: linear-gradient(90deg, transparent 0%, rgba(255,80,0,.5) 20%, #ff0000 50%, rgba(255,80,0,.5) 80%, transparent 100%); animation: topLineSweep 2s cubic-bezier(.4,0,.6,1) infinite; z-index: 2; border-radius: 0 0 4px 4px; }
+@keyframes topLineSweep { 0% { left: -60%; } 100% { left: 100%; } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+.auth-page .auth-logo { opacity: 0; animation: fadeUp .6s cubic-bezier(.22,1,.36,1) .35s forwards; transition: transform .35s cubic-bezier(.22,1,.36,1); }
+.auth-page .auth-logo:hover { transform: scale(1.07) rotate(-3deg); }
+.auth-page .auth-title { opacity: 0; animation: fadeUp .6s cubic-bezier(.22,1,.36,1) .35s forwards; }
+.auth-page .auth-sub { opacity: 0; animation: fadeUp .6s cubic-bezier(.22,1,.36,1) .43s forwards; }
+.auth-page .field-animate { opacity: 0; }
+.auth-page .field-animate:nth-child(1) { animation: fadeUp .55s cubic-bezier(.22,1,.36,1) .50s forwards; }
+.auth-page .field-animate:nth-child(2) { animation: fadeUp .55s cubic-bezier(.22,1,.36,1) .60s forwards; }
+.auth-page .field-animate:nth-child(3) { animation: fadeUp .55s cubic-bezier(.22,1,.36,1) .70s forwards; }
+.auth-page .field-animate:nth-child(4) { animation: fadeUp .55s cubic-bezier(.22,1,.36,1) .78s forwards; }
+.auth-page .field-animate:nth-child(5) { animation: fadeUp .55s cubic-bezier(.22,1,.36,1) .84s forwards; }
+.auth-page .field-animate:nth-child(6) { animation: fadeUp .55s cubic-bezier(.22,1,.36,1) .92s forwards; }
+.auth-page #g_id_onload { opacity: 1 !important; transform: none !important; }
+/* Input groups */
+.auth-page .input-group .input-group-text { background: #f8f8f8; border: 1.5px solid #e5e5e5; border-right: none; color: #aaa; transition: border-color .3s ease, background .3s ease, color .3s ease; }
+.auth-page .input-group .form-control { border: 1.5px solid #e5e5e5; border-left: none; background: #fafafa; transition: border-color .3s ease, background .3s ease, box-shadow .3s ease; outline: none; box-shadow: none !important; }
+.auth-page .input-group .form-control::placeholder { color: #ccc; }
+.auth-page .input-group:focus-within .input-group-text { border-color: #ff0000; background: #fff5f5; color: #ff0000; }
+.auth-page .input-group:focus-within .form-control { border-color: #ff0000; background: #fff; box-shadow: 0 0 0 3px rgba(255,0,0,.08) !important; }
+.auth-page .input-group .btn-eye { background: #f8f8f8; border: 1.5px solid #e5e5e5; border-left: none; color: #aaa; padding: 0 12px; transition: border-color .3s, color .3s, background .3s; cursor: pointer; }
+.auth-page .input-group:focus-within .btn-eye { border-color: #ff0000; background: #fff5f5; color: #ff0000; }
+.auth-page .input-group.is-invalid-group .input-group-text, .auth-page .input-group.is-invalid-group .btn-eye { border-color: #dc3545 !important; background: #fff8f8; color: #dc3545; }
+.auth-page .input-group.is-invalid-group .form-control { border-color: #dc3545 !important; animation: authShake .4s ease; }
+@keyframes authShake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-7px); } 40% { transform: translateX(7px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
+/* Submit button */
+.auth-page .btn-gradient { background: linear-gradient(135deg, #ff0000 0%, #cc2200 100%); color: #fff; border: none; border-radius: 10px; font-weight: 600; letter-spacing: .3px; position: relative; overflow: hidden; transition: transform .25s cubic-bezier(.22,1,.36,1), box-shadow .25s ease; box-shadow: 0 4px 18px rgba(255,0,0,.28); }
+.auth-page .btn-gradient::before { content: ''; position: absolute; top: 0; left: -120%; width: 70%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.2), transparent); transform: skewX(-20deg); transition: left .55s ease; }
+.auth-page .btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(255,0,0,.4); color: #fff; }
+.auth-page .btn-gradient:hover::before { left: 160%; }
+.auth-page .btn-gradient:active { transform: scale(.97) translateY(0); box-shadow: 0 2px 8px rgba(255,0,0,.25); }
+.auth-page .btn-ripple { position: absolute; border-radius: 50%; background: rgba(255,255,255,.35); transform: scale(0); animation: btnRipple .55s linear; pointer-events: none; }
+@keyframes btnRipple { to { transform: scale(5); opacity: 0; } }
+/* Auth toasts (bootstrap) */
+.auth-page .toast-container { z-index: 9999; }
+.auth-page .toast { border-radius: 14px !important; border: none !important; box-shadow: 0 8px 32px rgba(0,0,0,.18), 0 2px 8px rgba(0,0,0,.12) !important; font-family: 'Inter', sans-serif; font-size: .875rem; min-width: 300px; overflow: hidden; backdrop-filter: blur(8px); }
+@keyframes authToastSlideIn { from { opacity: 0; transform: translateX(80px) scale(.95); } to { opacity: 1; transform: translateX(0) scale(1); } }
+@keyframes authToastSlideOut { from { opacity: 1; transform: translateX(0) scale(1); } to { opacity: 0; transform: translateX(80px) scale(.95); } }
+.auth-page .toast.show { animation: authToastSlideIn .45s cubic-bezier(.22,1,.36,1) forwards; }
+.auth-page .toast.hiding { animation: authToastSlideOut .35s ease forwards; }
+.auth-page .toast-success { background: linear-gradient(135deg, #0a7a3a, #0d5c2e) !important; color: #d4f7e4 !important; }
+.auth-page .toast-success .toast-icon { color: #6effa8; font-size: 1.2rem; }
+.auth-page .toast-success .btn-close { filter: invert(1) brightness(1.5); }
+.auth-page .toast-error { background: linear-gradient(135deg, #c0392b, #8e1a12) !important; color: #fde8e6 !important; }
+.auth-page .toast-error .toast-icon { color: #ffaaaa; font-size: 1.2rem; }
+.auth-page .toast-error .btn-close { filter: invert(1) brightness(1.5); }
+.auth-page .toast-progress { position: absolute; bottom: 0; left: 0; height: 3px; background: rgba(255,255,255,.4); border-radius: 0 0 0 14px; animation: authToastProgress 5s linear forwards; width: 100%; }
+@keyframes authToastProgress { from { width: 100%; } to { width: 0%; } }
+/* Register only: password strength + match pill + submit button */
+.auth-page .strength-bar-wrap { height: 4px; background: #f0f0f0; border-radius: 4px; margin-top: 8px; overflow: hidden; }
+.auth-page .strength-bar-fill { height: 100%; border-radius: 4px; width: 0; transition: width .45s cubic-bezier(.22,1,.36,1), background-color .45s ease; }
+.auth-page .strength-label { font-size: .75rem; margin-top: 5px; font-weight: 500; min-height: 1.1em; transition: color .4s ease; }
+.auth-page .match-pill { display: inline-flex; align-items: center; gap: 5px; font-size: .75rem; font-weight: 500; padding: 3px 10px; border-radius: 20px; margin-top: 7px; opacity: 0; transform: translateY(-4px); transition: opacity .3s ease, transform .3s ease, background .3s, color .3s; }
+.auth-page .match-pill.visible { opacity: 1; transform: translateY(0); }
+.auth-page .match-pill.ok { background: #d4f7e4; color: #0a7a3a; }
+.auth-page .match-pill.fail { background: #fde8e6; color: #c0392b; }
+.auth-page .btn-danger { background: linear-gradient(135deg, #ff0000 0%, #cc2200 100%) !important; border: none !important; border-radius: 10px !important; font-weight: 600 !important; letter-spacing: .3px; position: relative; overflow: hidden; transition: transform .25s cubic-bezier(.22,1,.36,1), box-shadow .25s ease !important; box-shadow: 0 4px 18px rgba(255,0,0,.28) !important; }
+.auth-page .btn-danger::before { content: ''; position: absolute; top: 0; left: -120%; width: 70%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.2), transparent); transform: skewX(-20deg); transition: left .55s ease; }
+.auth-page .btn-danger:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(255,0,0,.4) !important; color: #fff !important; }
+.auth-page .btn-danger:hover::before { left: 160%; }
+.auth-page .btn-danger:active { transform: scale(.97) translateY(0); }
+/* Floating food emojis */
+.auth-page .food-float { position: fixed; font-size: 1.6rem; opacity: 0; pointer-events: none; z-index: 0; user-select: none; will-change: transform, opacity; }
+@keyframes drift1 { 0% { opacity:0; transform: translateY(0) rotate(0deg) scale(.8); } 8% { opacity:.14; } 85% { opacity:.10; } 100% { opacity:0; transform: translateY(-105vh) rotate(25deg) scale(1.05); } }
+@keyframes drift2 { 0% { opacity:0; transform: translateY(0) rotate(0deg) scale(.9); } 8% { opacity:.12; } 85% { opacity:.08; } 100% { opacity:0; transform: translateY(-108vh) rotate(-20deg) scale(1.1); } }
+@keyframes drift3 { 0% { opacity:0; transform: translateY(0) rotate(0deg) scale(.75); } 8% { opacity:.16; } 85% { opacity:.10; } 100% { opacity:0; transform: translateY(-102vh) rotate(30deg) scale(1.0); } }
+
+/* ── 404 page (was assets/css/404.css), scoped to body.error-page — the <body>
+   of 404.php gets class="error-page". This also isolates its bare `a` rule so
+   it no longer restyles every link if it were loaded globally. ── */
+.error-page .button { display: flex; align-items: center; justify-content: center; padding: 10px 15px; background-color: #006aff; border: 8px solid #c0dfff; color: white; gap: 8px; border-radius: 50px; cursor: pointer; transition: all 0.3s; }
+.error-page .text { font-size: 1em; font-weight: 700; letter-spacing: 1px; }
+.error-page .svg { padding-top: 5px; height: 100%; width: fit-content; }
+.error-page .svg svg { width: 50px; height: 30px; }
+.error-page .button:hover { border: 8px solid #b1d8ff; background-color: #1b7aff; }
+.error-page .button:active { border: 5px solid #c0dfff; }
+.error-page .button:hover .svg svg { animation: jello-vertical 0.9s both; transform-origin: left; }
+.error-page .btn-box { width: 100%; display: flex; align-items: center; justify-content: center; }
+.error-page .fundo { animation: scales 3s alternate infinite; transform-origin: center; }
+.error-page .pao-baixo { animation: rotatepao 14s cubic-bezier(.1, .49, .41, .97) infinite; transform-origin: center; }
+.error-page .pao-cima { animation: rotatepao 7s 1s cubic-bezier(.1, .49, .41, .97) infinite; transform-origin: center; }
+.error-page .olhos { animation: olhos 2s alternate infinite; transform-origin: center; }
+.error-page .left-sparks { animation: left-sparks 4s alternate infinite; transform-origin: 150px 156px; }
+.error-page .right-sparks { animation: left-sparks 4s alternate infinite; transform-origin: 310px 150px; }
+.error-page .main { min-height: 600px; margin: 0px auto; width: auto; max-width: 460px; display: flex; flex-direction: column; gap: 40px; align-items: center; justify-content: center; }
+.error-page .path { stroke-dasharray: 300; stroke-dashoffset: 300; animation: dash 4s alternate infinite; }
+.error-page a { font-family: 'Arial', Courier, monospace; text-decoration-line: none; }
+@keyframes jello-vertical {
+  0% { transform: scale3d(1, 1, 1); }
+  30% { transform: scale3d(0.75, 1.25, 1); }
+  40% { transform: scale3d(1.25, 0.75, 1); }
+  50% { transform: scale3d(0.85, 1.15, 1); }
+  65% { transform: scale3d(1.05, 0.95, 1); }
+  75% { transform: scale3d(0.95, 1.05, 1); }
+  100% { transform: scale3d(1, 1, 1); }
+}
+@keyframes scales { from { transform: scale(0.98); } to { transform: scale(1); } }
+@keyframes rotatepao {
+  0% { transform: rotate(0deg); }
+  50%, 60% { transform: rotate(-20deg); }
+  100% { transform: rotate(0deg); }
+}
+@keyframes olhos {
+  0% { transform: rotateX(0deg); }
+  100% { transform: rotateX(30deg); }
+}
+@keyframes left-sparks {
+  0% { opacity: 0; }
+}
+@keyframes dash {
+  0%, 30% { fill: 4B4B62; stroke-dashoffset: 0; }
+  80%, 100% { fill: transparent; stroke-dashoffset: -200; }
+}

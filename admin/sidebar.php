@@ -119,23 +119,3 @@ if (isset($conn)) {
 
     </div>
 </aside>
-
-<style> 
-.sidebar-section-title {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    color: #999;
-    padding: 18px 15px 7px;
-    margin-top: 5px;
-}
-
-.sidebar-section-title:first-child {
-    margin-top: 0;
-}
-
-.sidebar a[href="../includes/logout.php"] {
-    margin-top: 20px;
-}
-</style>

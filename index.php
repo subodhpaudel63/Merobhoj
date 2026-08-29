@@ -5,6 +5,7 @@ session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+require_once __DIR__ . '/config/bootstrap.php';
 include_once "includes/db.php";
 
 try {
@@ -62,150 +63,10 @@ if (isset($_GET['action'])) {
       crossorigin="anonymous"
     />
     <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css"/>
-    <link rel="stylesheet" href="./assets/css/style.css" />
-    <style>
-      header.scrolled .menus > ul > li::after {
-        background-color: var(--text-color-white);
-      }
-      
-      /* Toast styling for better visibility */
-      .toast-success {
-        background-color: #0f5132 !important; /* Dark green */
-        border-color: #0f5132 !important;
-        color: white !important;
-      }
-      
-      .toast-error {
-        background-color: #842029 !important; /* Dark red */
-        border-color: #842029 !important;
-        color: white !important;
-      }
-      
-      /* Smooth scrolling for anchor links */
-      html {
-        scroll-behavior: smooth;
-      }
-      
-      /* Custom button styles */
-      .nav-button {
-        background-color: #ff0000;
-        color: white;
-        border: none;
-        padding: 8px 20px;
-        border-radius: 30px;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        display: inline-block;
-        margin-left: 10px;
-      }
-      
-      .nav-button:hover {
-        background-color: #cc0000;
-        color: white;
-        text-decoration: none;
-      }
-      
-      .nav-button-outline {
-        background-color: transparent;
-        color: #ff0000;
-        border: 2px solid #ff0000;
-        padding: 6px 18px;
-        border-radius: 30px;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        display: inline-block;
-        margin-left: 10px;
-      }
-      
-      .nav-button-outline:hover {
-        background-color: #ff0000;
-        color: white;
-        text-decoration: none;
-      }
-      /*toast animations  */
-#toast-container {
-    position: fixed;
-    top: 30px;
-    right: 30px;
-    z-index: 9999;
-}
-
-.custom-toast {
-    min-width: 320px;
-    padding: 18px 25px;
-    margin-bottom: 15px;
-    border-radius: 15px;
-    display: flex;
-    align-items: center;
-    color: #fff;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-    animation: toastSlideIn 0.7s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-    position: relative;
-    overflow: hidden;
-}
-
-.toast-success {
-    background: rgba(16, 185, 129, 0.95);
-    border-left: 6px solid #047857;
-}
-
-.toast-error {
-    background: rgba(239, 68, 68, 0.95);
-    border-left: 6px solid #b91c1c;
-}
-
-.toast-icon {
-    font-size: 1.5rem;
-    margin-right: 15px;
-}
-
-.toast-content strong {
-    display: block;
-    font-size: 1.1rem;
-    margin-bottom: 2px;
-}
-
-.toast-content span {
-    font-size: 0.9rem;
-    opacity: 0.9;
-}
-
-.toast-progress {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    height: 3px;
-    background: rgba(255,255,255,0.5);
-    width: 100%;
-    animation: progress linear forwards;
-}
-
-@keyframes progress {
-    from { width: 100%; }
-    to { width: 0%; }
-}
-
-@keyframes toastSlideIn {
-    0% { transform: translateX(120%); opacity: 0; }
-    100% { transform: translateX(0); opacity: 1; }
-}
-
-@keyframes toastSlideOut {
-    0% { transform: translateX(0); opacity: 1; }
-    100% { transform: translateX(150%); opacity: 0; }
-}
-
-.toast-fade-out {
-    animation: toastSlideOut 0.8s ease-in forwards !important;
-}
-    </style>
+    <link rel="stylesheet" href="<?php echo asset('css/style.css'); ?>" />
+    
   </head>
-  <body>
+  <body class="home-page">
     
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:2000;">
       <?php if (isset($_SESSION['msg'])): $m=$_SESSION['msg']; unset($_SESSION['msg']); ?>
@@ -818,115 +679,6 @@ Want to explore that next?
           </div>
         </div>
         
-        <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('bookingForm');
-            if (!form) return;
-            
-            const dateInput = form.querySelector('input[name="date"]');
-            const startTimeInput = form.querySelector('input[name="start_time"]');
-            const endTimeInput = form.querySelector('input[name="end_time"]');
-            const peopleInput = form.querySelector('input[name="people"]');
-            const tableSelect = document.getElementById('tableSelect');
-            
-            function updateTables() {
-                const date = dateInput.value;
-                const startTime = startTimeInput.value;
-                const endTime = endTimeInput.value;
-                const people = peopleInput.value;
-                
-                if (date && startTime && endTime && people > 0) {
-                    tableSelect.innerHTML = '<option value="" style="color: white; background-color: #212529;">Loading available tables...</option>';
-                    
-                    const formData = new FormData();
-                    formData.append('date', date);
-                    formData.append('start_time', startTime);
-                    formData.append('end_time', endTime);
-                    formData.append('people', people);
-                    
-                    fetch('./includes/get_available_tables.php', {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        tableSelect.innerHTML = '<option value="" style="color: white; background-color: #212529;">Select a Table</option>';
-                        if (data.success && data.tables.length > 0) {
-                            data.tables.forEach(table => {
-                                const option = document.createElement('option');
-                                option.value = table.id;
-                                option.textContent = `${table.name} - ${table.capacity} Seats`;
-                                option.style.color = 'white';
-                                option.style.backgroundColor = '#212529';
-                                tableSelect.appendChild(option);
-                            });
-                        } else if (data.success && data.tables.length === 0) {
-                            tableSelect.innerHTML = '<option value="" style="color: white; background-color: #212529;">No tables available for this time and group size</option>';
-                        } else {
-                            tableSelect.innerHTML = '<option value="" style="color: white; background-color: #212529;">Error loading tables</option>';
-                        }
-                    })
-                    .catch(err => {
-                        tableSelect.innerHTML = '<option value="" style="color: white; background-color: #212529;">Error loading tables</option>';
-                    });
-                } else {
-                    tableSelect.innerHTML = '<option value="" style="color: white; background-color: #212529;">Select a Date, Start & End Time, and People first</option>';
-                }
-            }
-            
-            dateInput.addEventListener('change', updateTables);
-            startTimeInput.addEventListener('change', updateTables);
-            endTimeInput.addEventListener('change', updateTables);
-            peopleInput.addEventListener('change', updateTables);
-            peopleInput.addEventListener('keyup', updateTables);
-            
-            form.addEventListener('submit', function(e) {
-                // Phone validation: +977 or 977 followed by 96/97/98 + 8 digits
-                const phone = form.querySelector('input[name="phone"]').value.replace(/[\s\-]/g, '');
-                if (phone && !/^(\+?977)?9[6-8]\d{8}$/.test(phone)) {
-                    e.preventDefault();
-                    alert('Please enter a valid Nepal phone number (e.g., 98XXXXXXXX or +977-98XXXXXXXX).');
-                    return;
-                }
-                
-                // Opening hours validation
-                const startTime = startTimeInput.value;
-                const endTime = endTimeInput.value;
-                if (startTime) {
-                    const startHour = parseInt(startTime.split(':')[0], 10);
-                    if (startHour < 7 || startHour >= 23) {
-                        e.preventDefault();
-                        alert('We are open from 7:00 AM to 11:00 PM. Please choose a valid start time.');
-                        return;
-                    }
-                }
-                if (endTime) {
-                    const endHour = parseInt(endTime.split(':')[0], 10);
-                    const endMin = parseInt(endTime.split(':')[1], 10);
-                    if (endHour < 7 || endHour > 23 || (endHour === 23 && endMin > 0)) {
-                        e.preventDefault();
-                        alert('We are open from 7:00 AM to 11:00 PM. Please choose a valid end time.');
-                        return;
-                    }
-                }
-                if (startTime && endTime) {
-                    if (startTime >= endTime) {
-                        e.preventDefault();
-                        alert('End time must be after start time.');
-                        return;
-                    }
-                }
-                
-                // Max people validation
-                const people = parseInt(peopleInput.value, 10);
-                if (people > 8) {
-                    e.preventDefault();
-                    alert('The maximum capacity for a single table is 8 people.');
-                    return;
-                }
-            });
-        });
-        </script>
       </section>
       <section class="our-services py-5 my-5">
         <div class="container">
@@ -1025,106 +777,6 @@ Want to explore that next?
   Optimized for smooth, high-performance animations.
 -->
 <section class="mkj-faq-wrapper">
-    <style>
-        .mkj-faq-wrapper {
-            font-family: 'Poppins', sans-serif !important;
-            padding: 60px 20px;
-            max-width: 900px;
-            margin: 0 auto;
-            color: #e5612f;
-        }
-
-        .mkj-faq-header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .mkj-faq-header h2 {
-            font-family: 'Playfair Display', serif !important;
-            color: #e5612f;
-            font-size: 2.2rem;
-            margin-bottom: 10px;
-        }
-
-        .mkj-faq-container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .mkj-faq-item {
-            background: #fffbf5;
-            border: 1px solid #fce4cc;
-            border-left: 5px solid #e5612f;
-            border-radius: 10px;
-            overflow: hidden;
-            /* Using hardware acceleration for smoother shadow/transform */
-            will-change: transform, box-shadow;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .mkj-faq-item:hover {
-            box-shadow: 0 4px 12px rgba(255, 140, 0, 0.1);
-        }
-
-        .mkj-faq-question {
-            width: 100%;
-            padding: 22px 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: none !important;
-            border: none;
-            cursor: pointer;
-            text-align: left;
-            font-weight: 600;
-            font-size: 1.1rem;
-            color: #2d2d2d;
-            outline: none !important;
-        }
-
-        .mkj-faq-icon {
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            color: #e5612f;
-            font-size: 1.2rem;
-        }
-
-        /* --- THE LAG-FREE TRANSITION ENGINE --- */
-        .mkj-faq-answer-wrapper {
-            display: grid;
-            grid-template-rows: 0fr; /* Initial state */
-            transition: grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .mkj-faq-item.active .mkj-faq-answer-wrapper {
-            grid-template-rows: 1fr; /* Target state */
-        }
-
-        .mkj-faq-item.active .mkj-faq-icon {
-            transform: rotate(180deg);
-        }
-
-        /* Container for the content inside the grid */
-        .mkj-faq-answer-overflow {
-            overflow: hidden;
-        }
-
-        .mkj-faq-answer-inner {
-            padding: 0px 25px 25px 25px;
-            line-height: 1.7;
-            color: #555;
-            font-size: 0.95rem;
-            opacity: 0;
-            transform: translateY(-10px);
-            transition: opacity 0.3s ease, transform 0.3s ease;
-        }
-
-        .mkj-faq-item.active .mkj-faq-answer-inner {
-            opacity: 1;
-            transform: translateY(0);
-            padding-top: 10px; /* Spacing appears only when open */
-        }
-    </style>
 
     <div class="mkj-faq-header">
         <h2>Our Culinary Heritage & Services</h2>
@@ -1180,12 +832,10 @@ Want to explore that next?
                 How do I make a reservation?
                 <span class="mkj-faq-icon">▾</span>
             </button>
-            <div class="mkj-faq-wrapper-grid"> <!-- Wrapper names adjusted for stability -->
-                <div class="mkj-faq-answer-wrapper">
-                    <div class="mkj-faq-answer-overflow">
-                        <div class="mkj-faq-answer-inner">
-                            You can book a table via our website portal or call us. For groups larger than 8, we recommend booking 24 hours in advance.
-                        </div>
+            <div class="mkj-faq-answer-wrapper">
+                <div class="mkj-faq-answer-overflow">
+                    <div class="mkj-faq-answer-inner">
+                        You can book a table via our website portal or call us. For groups larger than 8, we recommend booking 24 hours in advance.
                     </div>
                 </div>
             </div>
@@ -1221,30 +871,9 @@ Want to explore that next?
 
     </div>
 
-    <script>
-        function mkjToggle(btn) {
-            const item = btn.parentElement;
-            const container = document.getElementById('mkjFaqContainer');
-            const isActive = item.classList.contains('active');
-
-            // Force reflow for smoother performance
-            container.querySelectorAll('.mkj-faq-item').forEach(el => {
-                if(el !== item) el.classList.remove('active');
-            });
-
-            item.classList.toggle('active');
-        }
-    </script>
 </section>
-      
-     
-  
-      
 
-
-
-
-      <section class="subscribe-us pb-5 mb-5">
+    <section class="subscribe-us pb-5 mb-5">
   <img class="d-none d-lg-block" src="./assets/images/subscribe-us.png" alt="" data-aos="fade-down-right">
   <div class="container">
     <div class="row">
@@ -1280,158 +909,7 @@ Want to explore that next?
 
     
     <?php include_once __DIR__ . '/footer.php'; ?>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-    <script type="text/javascript" src="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
-      crossorigin="anonymous"
-    ></script>
-    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
-    <script src="./assets/js/script.js"></script>
-    
-    <!-- Enhanced Toast and Form Submission Script -->
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        // Auto hide toast notifications after 5 seconds
-        var toasts = document.querySelectorAll('.toast');
-        toasts.forEach(function(toast) {
-          var bsToast = new bootstrap.Toast(toast, {
-            delay: 5000
-          });
-          bsToast.show();
-        });
-        
-        // Form submission handling
-        var bookingForm = document.getElementById('bookingForm');
-        if (bookingForm) {
-          bookingForm.addEventListener('submit', function(e) {
-            // Form will submit normally, but we show a loading state
-            var submitBtn = bookingForm.querySelector('button[type="submit"]');
-            submitBtn.innerHTML = 'Booking...';
-            submitBtn.disabled = true;
-          });
-        }
-      });
 
-      // toast js
-      
-    /**
-     * Function to generate the toast HTML and trigger animations
-     */
-    function showToast(status) {
-        const container = document.getElementById('toast-container');
-        const toast = document.createElement('div');
-        toast.className = 'custom-toast';
-        const duration = 5000; // Matches the CSS progress bar animation
-
-        if (status === 'success') {
-            toast.classList.add('toast-success');
-            toast.innerHTML = `
-                <i class="fa fa-check-circle toast-icon"></i>
-                <div class="toast-content">
-                    <strong>Subscription Active!</strong>
-                    <span>You've been added to our food tribe.</span>
-                </div>
-                <div class="toast-progress" style="animation-duration: ${duration}ms"></div>
-            `;
-        } else {
-            toast.classList.add('toast-error');
-            toast.innerHTML = `
-                <i class="fa fa-circle-exclamation toast-icon"></i>
-                <div class="toast-content">
-                    <strong>Oops!</strong>
-                    <span>Something went wrong. Please try again.</span>
-                </div>
-                <div class="toast-progress" style="animation-duration: ${duration}ms"></div>
-            `;
-        }
-
-        container.appendChild(toast);
-
-        // Remove the toast after the duration
-        setTimeout(() => {
-            toast.classList.add('toast-fade-out');
-            setTimeout(() => {
-                toast.remove();
-            }, 800); // Wait for the slide-out animation to finish
-        }, duration - 800);
-    }
-
-    /**
-     * Check the URL for status parameters when the page loads
-     */
-    window.onload = function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const status = urlParams.get('status');
-        
-        if (status) {
-            showToast(status);
-            // Clean the URL so the toast doesn't reappear if the user refreshes
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }
-    };
-
-    /**
-     * Function to generate the toast HTML and trigger animations
-     */
-    function showToast(status) {
-        const container = document.getElementById('toast-container');
-        const toast = document.createElement('div');
-        toast.className = 'custom-toast';
-        const duration = 5000; // Matches the CSS progress bar animation
-
-        if (status === 'success') {
-            toast.classList.add('toast-success');
-            toast.innerHTML = `
-                <i class="fa fa-check-circle toast-icon"></i>
-                <div class="toast-content">
-                    <strong>Subscription Active!</strong>
-                    <span>You've been added to our food tribe.</span>
-                </div>
-                <div class="toast-progress" style="animation-duration: ${duration}ms"></div>
-            `;
-        } else {
-            toast.classList.add('toast-error');
-            toast.innerHTML = `
-                <i class="fa fa-circle-exclamation toast-icon"></i>
-                <div class="toast-content">
-                    <strong>Oops!</strong>
-                    <span>Something went wrong. Please try again.</span>
-                </div>
-                <div class="toast-progress" style="animation-duration: ${duration}ms"></div>
-            `;
-        }
-
-        container.appendChild(toast);
-
-        // Remove the toast after the duration
-        setTimeout(() => {
-            toast.classList.add('toast-fade-out');
-            setTimeout(() => {
-                toast.remove();
-            }, 800); // Wait for the slide-out animation to finish
-        }, duration - 800);
-    }
-
-    /**
-     * Check the URL for status parameters when the page loads
-     */
-    window.onload = function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const status = urlParams.get('status');
-        
-        if (status) {
-            showToast(status);
-            // Clean the URL so the toast doesn't reappear if the user refreshes
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }
-    };
-
-
-
-
-    </script>
     <div id="toast-container"></div>
   </body>
 </html>
