@@ -1,3 +1,5 @@
+// Client-side shared behaviors
+// Used by: client/index.php, client/aboutus.php, client/contactus.php, client/menu.php, client/myorder.php, client/cart.php
 if (window.AOS) {
   AOS.init({
     offset: '140', // 50% viewport height ko offset
@@ -212,7 +214,6 @@ document.addEventListener("DOMContentLoaded", function() {
   if (shoppingbtn) {
     shoppingbtn.addEventListener('click', function(event) {
       event.preventDefault();
-      console.log('chl');
       if (shoppingCart) {
         shoppingCart.style.right = "0";
       }
@@ -222,7 +223,6 @@ document.addEventListener("DOMContentLoaded", function() {
   if (shoppingbtnMobile) {
     shoppingbtnMobile.addEventListener('click', function(event) {
       event.preventDefault();
-      console.log('chl');
       if (shoppingCart) {
         shoppingCart.style.right = "0";
       }
@@ -270,9 +270,6 @@ if (sessionStorage.getItem('scrolled') === 'true') {
 }
 window.addEventListener('scroll', checkScroll);  
 checkScroll(); // Initial check
-
-// Update copyright year
-// document.getElementById('copyrightCurrentYear').textContent = new Date().getFullYear();
 
 const copyright = document.getElementById('copyrightCurrentYear');
 
@@ -731,18 +728,13 @@ if(msgArea){
    PAGE SCRIPTS — consolidated from the former per-page script files
    (home.js, home-faq.js, home-toast.js, menu-page.js, login.js,
    register.js, formvalidation.js).
-   Blocks that were duplicated across those files now exist only once:
-   - showToast()/URL ?status= handler (was ×2 in script.js AND ×2 in
-     home-toast.js — the copy above is the single remaining one)
-   - bootstrap .toast auto-show (was in home-toast/menu-page/login/register)
-   - Google Sign-In GIS block (was identical in login.js and register.js)
-   - floating food emojis (was identical in login.js and register.js)
-   Everything is guarded so this file stays safe on every page.
+   Each block below is guarded so it only runs on the page(s) that
+   include the matching markup.
    ═══════════════════════════════════════════════════════════════════ */
 
-/* ── Home page (index.php): table-booking form (was assets/js/home.js).
-   Its "Booking..." submit-loading state duplicates mkjInitBookingForm /
-   mkjBindFormBusyState above, so it is not repeated here. ── */
+/* ── Home page only (client/index.php): table-booking form behavior.
+   The submit-loading state is shared by mkjInitBookingForm / mkjBindFormBusyState
+   above, so that part is not repeated here. ── */
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('bookingForm');
     if (!form) return;
@@ -768,7 +760,7 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('end_time', endTime);
             formData.append('people', people);
 
-            fetch('./includes/get_available_tables.php', {
+            fetch('../includes/get_available_tables.php', {
                 method: 'POST',
                 body: formData
             })
@@ -802,6 +794,10 @@ document.addEventListener('DOMContentLoaded', function() {
     startTimeInput.addEventListener('change', updateTables);
     endTimeInput.addEventListener('change', updateTables);
     peopleInput.addEventListener('change', updateTables);
+    dateInput.addEventListener('input', updateTables);
+    startTimeInput.addEventListener('input', updateTables);
+    endTimeInput.addEventListener('input', updateTables);
+    peopleInput.addEventListener('input', updateTables);
     peopleInput.addEventListener('keyup', updateTables);
 
     form.addEventListener('submit', function(e) {
@@ -851,8 +847,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-/* ── Home page (index.php): FAQ accordion toggle (was assets/js/home-faq.js).
-   Global on purpose — index.php calls it from inline onclick handlers. ── */
+/* ── Home page only (client/index.php): FAQ accordion toggle.
+   Global on purpose because index.php calls it from inline onclick handlers. ── */
 function mkjToggle(btn) {
     const item = btn.parentElement;
     const container = document.getElementById('mkjFaqContainer');
@@ -866,8 +862,8 @@ function mkjToggle(btn) {
     item.classList.toggle('active');
 }
 
-/* ── Shared: bootstrap toast auto-show (was duplicated in home-toast.js,
-   menu-page.js, login.js and register.js) ── */
+/* ── Shared across client pages that render Bootstrap toasts
+   (was duplicated in home-toast.js, menu-page.js, login.js and register.js) ── */
 document.addEventListener('DOMContentLoaded', function () {
   document.querySelectorAll('.toast').forEach(function (t) {
     if (window.bootstrap && window.bootstrap.Toast) {
@@ -876,7 +872,8 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
-/* ── Menu page (menu.php) (was assets/js/menu-page.js). The bootstrap-toast
+/* ── Menu page only (client/menu.php): interaction helpers
+   (was assets/js/menu-page.js). The bootstrap-toast
    block at the top of this file replaced its duplicate, and the guest modal is
    now guarded so the code cannot throw on pages without the modal. ── */
 document.addEventListener('DOMContentLoaded', () => {
@@ -998,7 +995,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-/* ── Auth pages: Google Sign-In (was duplicated verbatim in login.js and
+/* ── Auth pages only (client/login.php and client/register.php):
+   Google Sign-In shared logic (was duplicated verbatim in login.js and
    register.js). The #gisConfig JSON island only exists on login.php and
    register.php, so GIS_CONFIG is guarded. ── */
 var GIS_CONFIG = (function () {
@@ -1008,8 +1006,7 @@ var GIS_CONFIG = (function () {
 })();
 
 function handleGoogleCredentialResponse(response) {
-    console.log('Google credential response received');
-    fetch('includes/google_auth.php', {
+        fetch('includes/google_auth.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -1017,11 +1014,9 @@ function handleGoogleCredentialResponse(response) {
         body: JSON.stringify({ id_token: response.credential })
     })
     .then(function(res) {
-        console.log('Auth response status:', res.status);
         return res.json();
     })
     .then(function(data) {
-        console.log('Auth response data:', data);
         if (data.success) {
             window.location.href = data.redirect || '/Merobhoj/client/index.php';
         } else {
@@ -1039,39 +1034,31 @@ function handleGoogleFallback() {
 }
 
 function renderGoogleButton() {
-    console.log('renderGoogleButton called, google object:', typeof google);
-
     if (!GIS_CONFIG.useFallback) {
     if (typeof google === 'undefined' || !google.accounts) {
-        console.log('Google accounts not ready, retrying in 200ms...');
         setTimeout(renderGoogleButton, 200);
         return;
     }
     try {
-        console.log('Initializing Google Sign-In with client_id:', GIS_CONFIG.clientId);
         google.accounts.id.initialize({
             client_id: GIS_CONFIG.clientId,
             callback: handleGoogleCredentialResponse,
             auto_select: false,
             cancel_on_tap_outside: false,
         });
-        console.log('Rendering Google button...');
         google.accounts.id.renderButton(
             document.getElementById('g_id_onload'),
             { theme: 'outline', size: 'large', width: '100%' }
         );
-        console.log('Google button rendered successfully');
     } catch (e) {
         console.error('GIS render failed:', e);
     }
     } else {
-    console.log('Using fallback button (GOOGLE_USE_FALLBACK is true)');
     }
 }
 
 // Try to render immediately and also on DOMContentLoaded
 if (GIS_CONFIG) {
-  console.log('GIS page loaded, GOOGLE_USE_FALLBACK:', GIS_CONFIG.useFallback);
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', renderGoogleButton);
   } else {
@@ -1079,7 +1066,7 @@ if (GIS_CONFIG) {
   }
 }
 
-/* ── Login page (login.php) (was assets/js/login.js) ── */
+/* ── Login page only (client/login.php): password toggle, ripple, and validation ── */
 
 /* Eye toggle — global, used by the inline onclick handlers in login.php */
 function togglePw(id, iconId) {
@@ -1162,8 +1149,7 @@ function togglePw(id, iconId) {
   });
 })();
 
-/* ── Register page (register.php) (was assets/js/register.js).
-   Guarded on register-specific elements so it only runs there. ── */
+/* ── Register page only (client/register.php): password strength, match state, and validation ── */
 (function () {
   const pwInp     = document.getElementById('password');
   const cpInp     = document.getElementById('confirmPassword');
@@ -1298,8 +1284,8 @@ function togglePw(id, iconId) {
   });
 })();
 
-/* ── Shared: floating food emojis (was duplicated in login.js and
-   register.js). Only runs where the #food-floaters container exists. ── */
+/* ── Shared across auth pages that include #food-floaters
+   (was duplicated in login.js and register.js). ── */
 (function () {
   const container = document.getElementById('food-floaters');
   if (!container) return;
@@ -1324,7 +1310,7 @@ function togglePw(id, iconId) {
   });
 })();
 
-/* ── Bootstrap custom validation (was assets/js/formvalidation.js) ── */
+/* ── Shared Bootstrap validation helper for any form using .needs-validation ── */
 (() => {
     'use strict';
     const forms = document.querySelectorAll('.needs-validation');

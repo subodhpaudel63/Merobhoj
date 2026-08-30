@@ -20,6 +20,10 @@ if (isset($conn)) {
     }
 }
 ?>
+<!-- Notification System Asset Injection -->
+<link rel="stylesheet" href="../assets/css/notifications.css?v=<?= filemtime(__DIR__ . '/../assets/css/notifications.css') ?>">
+<script src="../assets/js/notifications.js?v=<?= filemtime(__DIR__ . '/../assets/js/notifications.js') ?>" defer></script>
+
 <aside>
     <div class="top">
         <div class="logo">

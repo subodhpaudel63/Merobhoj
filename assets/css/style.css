@@ -1196,16 +1196,6 @@ body.home-page header.scrolled {
     overflow: hidden;
 }
 
-.toast-success {
-    background: rgba(16, 185, 129, 0.95);
-    border-left: 6px solid #047857;
-}
-
-.toast-error {
-    background: rgba(239, 68, 68, 0.95);
-    border-left: 6px solid #b91c1c;
-}
-
 .toast-icon {
     font-size: 1.5rem;
     margin-right: 15px;
@@ -3153,9 +3143,6 @@ footer p {
     width: 16px;
     height: 16px;
     cursor: pointer;
-}
-.mkj-hidden {
-    display: none !important;
 }
 .mkj-control:focus {
     box-shadow: none !important;

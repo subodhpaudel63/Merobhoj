@@ -1925,93 +1925,6 @@ MEDIA QUERY PHONE
   margin: 0 0 1rem 0;
 }
 
-/* New order notification UI
-   The admin script injects this popup when a new order arrives. */
-.order-notification-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.45);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 15000;
-  animation: orderOverlayIn 180ms ease-out;
-}
-
-.order-notification-card {
-  width: min(92vw, 460px);
-  background: var(--clr-white);
-  color: var(--clr-dark);
-  border-radius: 18px;
-  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.28);
-  padding: 1.5rem;
-  animation: orderCardIn 220ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.order-notification-badge {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1rem;
-  background: linear-gradient(135deg, #f97316, #ef4444);
-  color: #fff;
-  font-size: 1.2rem;
-  box-shadow: 0 12px 24px rgba(249, 115, 22, 0.28);
-}
-
-.order-notification-card h3 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.35rem;
-  color: var(--clr-dark);
-}
-
-.order-notification-card p {
-  margin: 0.35rem 0;
-  color: var(--clr-dark-variant);
-  line-height: 1.55;
-}
-
-.order-notification-actions {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: flex-end;
-  margin-top: 1.25rem;
-}
-
-.order-notification-actions button,
-.order-notification-actions a {
-  border: none;
-  border-radius: 999px;
-  padding: 0.8rem 1.1rem;
-  font-weight: 600;
-  cursor: pointer;
-  text-decoration: none;
-}
-
-.order-notification-primary {
-  background: var(--clr-primary);
-  color: #fff;
-}
-
-.order-notification-secondary {
-  background: var(--clr-light);
-  color: var(--clr-dark);
-}
-
-@keyframes orderOverlayIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes orderCardIn {
-  from { transform: translateY(14px) scale(0.98); opacity: 0; }
-  to { transform: translateY(0) scale(1); opacity: 1; }
-}
-
 /* Order Status Badge Colors */
 .status-pending   { background: #FEF3C7 !important; color: #B45309 !important; border-radius: 20px; padding: 0.2rem 0.6rem; font-weight: 600; font-size: 0.75rem; }
 .status-confirmed { background: #DBEAFE !important; color: #1D4ED8 !important; border-radius: 20px; padding: 0.2rem 0.6rem; font-weight: 600; font-size: 0.75rem; }
@@ -2298,3 +2211,150 @@ aside .sidebar a[href="../includes/logout.php"] {
 
 
 
+/* ===== Admin notification bell + dropdown (orders & bookings) ===== */
+.admin-notification-wrap {
+  position: relative;
+  display: inline-block;
+}
+.admin-notification-bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--clr-dark-variant);
+  cursor: pointer;
+  font-size: 1.5rem;
+  line-height: 0;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.admin-notification-bell:hover,
+.admin-notification-bell:focus-visible {
+  background: rgba(100, 116, 139, 0.08);
+  color: var(--clr-dark);
+  outline: none;
+}
+.admin-notification-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  display: none;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 50%;
+  background: var(--clr-danger);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  border: 2px solid var(--clr-card-background);
+}
+.admin-notification-badge.has-unread {
+  display: inline-flex;
+}
+.admin-notification-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 13000;
+  display: none;
+  width: min(90vw, 360px);
+  max-height: min(60vh, 420px);
+  overflow-y: auto;
+  background: var(--clr-card-background);
+  border: 1px solid var(--clr-border);
+  border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
+  backdrop-filter: blur(8px);
+  padding: 0.25rem 0;
+}
+.admin-notification-wrap.show-dropdown .admin-notification-dropdown {
+  display: block;
+}
+.admin-notification-dropdown-header {
+  padding: 0.65rem 1rem 0.55rem;
+  border-bottom: 1px solid var(--clr-border);
+  font-weight: 600;
+  color: #0f172a;
+}
+.admin-notification-dropdown-header h4 {
+  margin: 0;
+  font-size: 0.85rem;
+}
+.admin-notification-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.admin-notification-row {
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--clr-border);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.admin-notification-row:hover {
+  background: rgba(100, 116, 139, 0.05);
+}
+.admin-notification-row:last-child {
+  border-bottom: none;
+}
+.admin-notification-row.admin-notif-unread {
+  background: rgba(100, 116, 139, 0.03);
+}
+.admin-notif-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  font-size: 1.2rem;
+}
+.admin-notif-icon.order {
+  background: rgba(249, 115, 22, 0.1);
+  color: #f97316;
+}
+.admin-notif-icon.booking {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+}
+.admin-notification-item {
+  flex: 1;
+  min-width: 0;
+}
+.admin-notif-title {
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.admin-notif-sub {
+  font-size: 0.72rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.admin-notif-time {
+  margin-left: auto;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+.admin-notification-empty,
+.admin-notification-loading {
+  padding: 1rem;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.85rem;
+}

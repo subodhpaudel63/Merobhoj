@@ -563,9 +563,7 @@ if ($catResult) {
     <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
     <?php require_once __DIR__ . '/../config/bootstrap.php'; ?>
     <script src="<?php echo asset('js/script.js'); ?>"></script>
-    <script src="<?php echo asset('js/order_ui.js'); ?>"></script>
-    <script src="./script.js"></script>
-    <script src="<?php echo asset('js/toast_notifications.js'); ?>"></script>
+    <script src="<?php echo asset('js/clientscript.js'); ?>"></script>
     <script src="<?php echo asset('js/toast_notifications.js'); ?>"></script>
   </body>
 </html>
