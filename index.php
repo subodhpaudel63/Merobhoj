@@ -636,13 +636,35 @@ Want to explore that next?
                       <div class="col-12 col-lg-4 mb-3">
                         <div class="input d-flex align-items-center">
                           <i class="fa fa-clock py-2 px-3"></i>
-                          <input class="form-control bg-transparent border-0 px-3 text-white" type="time" name="start_time" placeholder="Start Time" required>
+                          <select class="form-control bg-transparent border-0 px-3 text-white" name="start_time" required>
+                            <option value="" style="color: #111;">Select Start Time</option>
+                            <?php
+                              for ($hour = 7; $hour <= 22; $hour++) {
+                                foreach ([0, 30] as $minute) {
+                                  if ($hour === 23 && $minute > 0) continue;
+                                  $time = sprintf('%02d:%02d', $hour, $minute);
+                                  echo '<option value="' . htmlspecialchars($time) . '" style="color: #111;">' . htmlspecialchars(date('g:i A', strtotime($time))) . '</option>';
+                                }
+                              }
+                            ?>
+                          </select>
                         </div>
                       </div>
                       <div class="col-12 col-lg-4 mb-3">
                         <div class="input d-flex align-items-center">
                           <i class="fa fa-clock py-2 px-3"></i>
-                          <input class="form-control bg-transparent border-0 px-3 text-white" type="time" name="end_time" placeholder="End Time" required>
+                          <select class="form-control bg-transparent border-0 px-3 text-white" name="end_time" required>
+                            <option value="" style="color: #111;">Select End Time</option>
+                            <?php
+                              for ($hour = 8; $hour <= 23; $hour++) {
+                                foreach ([0, 30] as $minute) {
+                                  if ($hour === 23 && $minute > 0) continue;
+                                  $time = sprintf('%02d:%02d', $hour, $minute);
+                                  echo '<option value="' . htmlspecialchars($time) . '" style="color: #111;">' . htmlspecialchars(date('g:i A', strtotime($time))) . '</option>';
+                                }
+                              }
+                            ?>
+                          </select>
                         </div>
                       </div>
                     </div>

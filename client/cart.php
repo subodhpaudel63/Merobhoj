@@ -205,7 +205,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
                         // For cash/pay-at-restaurant: clear cart and go to myorder
                         $_SESSION['cart'] = [];
                         $response['message'] = 'Order placed successfully!';
-                        $response['redirect'] = 'myorder.php';
+                        $response['redirect'] = '/Merobhoj/client/myorder.php';
                     }
                 } else {
                     $conn->rollback();

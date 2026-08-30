@@ -326,7 +326,7 @@
           cartItems = [];
           renderCart();
           setTimeout(() => {
-            window.location.href = data.redirect || 'myorder.php';
+            window.location.href = data.redirect || '/Merobhoj/client/myorder.php';
           }, 1200);
         } else {
           showError(data.message || 'Could not place order.', 'Checkout failed');

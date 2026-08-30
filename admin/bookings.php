@@ -182,6 +182,17 @@ $total_path = generateSparklinePath($total_spark);
 $pending_path = generateSparklinePath($pending_spark);
 $active_path = generateSparklinePath($active_spark);
 $avail_path = generateSparklinePath($avail_spark);
+
+if (isset($_GET['ajax']) && $_GET['ajax'] === 'bookings') {
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => true,
+        'bookings' => $bookings_json,
+        'tables' => $tables,
+        'timestamp' => time(),
+    ]);
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -695,7 +706,8 @@ $avail_path = generateSparklinePath($avail_spark);
        
        // Grace timers
        setInterval(updateGraceTimers, 1000);
-       
+       setInterval(refreshBookingsRealtime, 15000);
+        
        // Window click to close dropdowns
        window.addEventListener('click', (e) => {
            if (!e.target.closest('.dots-menu-container')) {
@@ -776,24 +788,31 @@ $avail_path = generateSparklinePath($avail_spark);
        }
    }
 
+   function formatAvailabilityNumber(value) {
+       if (value < 0) {
+           return '-' + Math.abs(value).toString().padStart(2, '0');
+       }
+       return value.toString().padStart(2, '0');
+   }
+
    // updateInsights
    function updateInsights() {
        // Total Bookings
        document.getElementById('stat-total-count').textContent = bookings.length;
-       
+        
        // Pending Bookings
        const pending = bookings.filter(b => b.status === 'Pending').length;
        document.getElementById('stat-pending-count').textContent = pending;
-       
+        
        // Today's Active Bookings
        const todayStr = new Date().toISOString().split('T')[0];
        const activeToday = bookings.filter(b => b.booking_date === todayStr && (b.status === 'Confirmed' || b.status === 'Checked-in')).length;
        document.getElementById('stat-active-count').textContent = activeToday;
-       
+        
        // Available Tables for the Selected Carousel Hour & Selected Date
        const actDate = activeDate || todayStr;
        const activeHourStr = hoursList.find(h => h.id === activeHourId).val;
-       
+        
        // Count occupied tables at this hour
        const occupiedTables = new Set();
        bookings.forEach(b => {
@@ -803,10 +822,12 @@ $avail_path = generateSparklinePath($avail_spark);
                }
            }
        });
-       
-       const availableCount = Math.max(0, tables.length - occupiedTables.size);
-       document.getElementById('stat-available-count').textContent = availableCount.toString().padStart(2, '0');
-       
+        
+       const availableCount = tables.length - occupiedTables.size;
+       const availableNode = document.getElementById('stat-available-count');
+       availableNode.textContent = formatAvailabilityNumber(availableCount);
+       availableNode.style.color = availableCount < 0 ? '#dc2626' : '#0f172a';
+        
        const hourLabel = hoursList.find(h => h.id === activeHourId).label;
        const dateLabel = actDate ? new Date(actDate).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'Today';
        document.getElementById('stat-available-desc').textContent = `${hourLabel} slot on ${dateLabel}`;
@@ -1127,6 +1148,27 @@ $avail_path = generateSparklinePath($avail_spark);
        document.getElementById('viewDetailsModal').style.display = 'none';
    }
 
+   function openTableAvailabilityModal(tableId, dateStr, startTime) {
+       const endTime = addMinutesToTime(startTime, 60);
+       openNewBookingModal();
+       document.getElementById('new-booking-date').value = dateStr;
+       document.getElementById('new-booking-start').value = startTime;
+       document.getElementById('new-booking-end').value = endTime;
+       const tableSelect = document.getElementById('new-booking-table-select');
+       tableSelect.value = String(tableId);
+       setTimeout(() => {
+           const event = new Event('change', { bubbles: true });
+           document.getElementById('new-booking-start').dispatchEvent(event);
+       }, 50);
+   }
+
+   function addMinutesToTime(timeValue, minutes) {
+       const [hours, mins] = timeValue.split(':').map(Number);
+       const date = new Date();
+       date.setHours(hours, mins + minutes, 0, 0);
+       return date.toTimeString().slice(0, 5);
+   }
+
    // Modal New Booking
    function openNewBookingModal() {
        // set default date to selected filter date, or today
@@ -1260,18 +1302,41 @@ $avail_path = generateSparklinePath($avail_spark);
 
 
    // ── Table Availability Overview Rendering Logic ────────────────────────────
+   function refreshBookingsRealtime() {
+       fetch(`bookings.php?ajax=bookings&_=${Date.now()}`, { credentials: 'same-origin' })
+           .then(response => response.json())
+           .then(data => {
+               if (!data || !data.success || !Array.isArray(data.bookings)) {
+                   return;
+               }
+
+               bookings.splice(0, bookings.length, ...data.bookings);
+               tables.splice(0, tables.length, ...data.tables);
+
+               applyBookingFilters();
+               renderAvailability();
+               updateInsights();
+               if (currentView === 'calendar') {
+                   renderCalendar();
+               }
+           })
+           .catch(() => {
+               // Do nothing; scheduler will retry
+           });
+   }
+
    function renderAvailability() {
        const actDate = activeDate || new Date().toISOString().split('T')[0];
        const dateObj = new Date(actDate);
        const dateLabel = dateObj.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
        const dayOfWeekLabel = dateObj.toLocaleDateString([], { weekday: 'long' });
-       
+        
        document.getElementById('availability-subtitle').textContent = `${dateLabel} (${dayOfWeekLabel})`;
-       
+        
        // Render Hour Carousel items
        const carouselContainer = document.getElementById('carousel-hours-container');
        carouselContainer.innerHTML = '';
-       
+        
        hoursList.forEach(h => {
            const isActive = (h.id === activeHourId);
            carouselContainer.innerHTML += `
@@ -1280,7 +1345,7 @@ $avail_path = generateSparklinePath($avail_spark);
                </div>
            `;
        });
-       
+        
        // Render Table Headers
        const tableHeader = document.getElementById('availability-table-header');
        tableHeader.innerHTML = `<th style="width: 20%; background-color:#f8fafc; color:#475569;">Tables</th>`;
@@ -1290,11 +1355,11 @@ $avail_path = generateSparklinePath($avail_spark);
            if (isColActive) styleStr += ' border-bottom: 2px solid #c2410c; background-color: rgba(194,65,12,0.03); color:#c2410c;';
            tableHeader.innerHTML += `<th style="${styleStr}">${h.label}</th>`;
        });
-       
+        
        // Render Grid Body
        const tableBody = document.getElementById('availability-table-body');
        tableBody.innerHTML = '';
-       
+        
        tables.forEach(table => {
            let rowHtml = `
                <tr>
@@ -1303,11 +1368,11 @@ $avail_path = generateSparklinePath($avail_spark);
                        <span>${escapeHtml(table.table_name)}</span>
                    </td>
            `;
-           
+            
            hoursList.forEach(h => {
                const hourStr = h.val;
                const isColActive = (h.id === activeHourId);
-               
+                
                // Check if there is an overlapping active booking
                let matchBooking = null;
                bookings.forEach(b => {
@@ -1317,11 +1382,13 @@ $avail_path = generateSparklinePath($avail_spark);
                        }
                    }
                });
-               
+                
                let cardClass = 'available';
                let icon = 'check_circle';
                let label = 'Available';
-               
+               let onClick = `onclick="openTableAvailabilityModal(${table.id}, '${actDate}', '${hourStr}')"`;
+               let titleText = `title="Available table - ${escapeHtml(table.table_name)} at ${h.label}"`;
+                
                if (matchBooking) {
                    if (matchBooking.status === 'Pending') {
                        cardClass = 'pending';
@@ -1332,21 +1399,23 @@ $avail_path = generateSparklinePath($avail_spark);
                        icon = 'person';
                        label = 'Booked';
                    }
+                   onClick = `onclick="openDetailsModal(${matchBooking.id})"`;
+                   titleText = `title="Booking #${matchBooking.id} - ${escapeHtml(matchBooking.name)}"`;
                }
-               
+                
                let activeClass = isColActive ? 'active-col' : '';
-               
+                
                rowHtml += `
                    <td>
                        <div class="availability-slot-card ${cardClass} ${activeClass}" 
-                            ${matchBooking ? `onclick="openDetailsModal(${matchBooking.id})" style="cursor:pointer;" title="Booking #${matchBooking.id} - ${escapeHtml(matchBooking.name)}"` : ''}>
+                            ${onClick} style="cursor:pointer;" ${titleText}>
                            <span class="material-symbols-sharp" style="font-size: 1rem;">${icon}</span>
                            <span>${label}</span>
                        </div>
                    </td>
                `;
            });
-           
+            
            rowHtml += `</tr>`;
            tableBody.innerHTML += rowHtml;
        });

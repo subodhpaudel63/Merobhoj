@@ -607,7 +607,7 @@ Want to explore that next?
                     <div class="col-12 col-lg-6 mb-3">
                       <div class="input d-flex align-items-center">
                         <i class="fa fa-envelope py-2 px-3"></i>
-                        <input class="form-control bg-transparent border-0 px-3 text-white" type="email" name="email" placeholder="Email" required>
+                        <input class="form-control bg-transparent border-0 px-3 text-white" type="email" name="email" placeholder="Email" value="<?php echo htmlspecialchars($currentUser['email'] ?? ''); ?>" readonly required>
                       </div>
                     </div>
                   </div>
@@ -631,19 +631,47 @@ Want to explore that next?
     <div class="col-12 col-lg-4 mb-3">
         <div class="input d-flex align-items-center bg-dark rounded">
             <i class="fa fa-calendar py-2 px-3 text-white-50"></i>
-            <input class="form-control bg-transparent border-0 text-white shadow-none" type="text" name="date" placeholder="Select Date" onfocus="this.type='date'" onblur="if(!this.value)this.type='text'" required>
+            <input class="form-control bg-transparent border-0 text-white shadow-none" type="date" name="date" required>
         </div>
     </div>
     <div class="col-12 col-lg-4 mb-3">
         <div class="input d-flex align-items-center bg-dark rounded">
             <i class="fa fa-clock py-2 px-3 text-white-50"></i>
-            <input class="form-control bg-transparent border-0 text-white shadow-none" type="text" name="start_time" placeholder="Start Time" onfocus="this.type='time'" onblur="if(!this.value)this.type='text'" required>
+            <select class="form-control booking-time-select bg-transparent border-0 text-white shadow-none" name="start_time" required>
+                <option value="" class="booking-time-option">Select Start Time</option>
+                <?php
+                    $startTimes = [];
+                    for ($hour = 7; $hour <= 22; $hour++) {
+                        foreach ([0, 30] as $minute) {
+                            if ($hour === 23 && $minute > 0) continue;
+                            $startTimes[] = sprintf('%02d:%02d', $hour, $minute);
+                        }
+                    }
+                    foreach ($startTimes as $time) {
+                        echo '<option value="' . htmlspecialchars($time) . '" class="booking-time-option">' . htmlspecialchars(date('g:i A', strtotime($time))) . '</option>';
+                    }
+                ?>
+            </select>
         </div>
     </div>
     <div class="col-12 col-lg-4 mb-3">
         <div class="input d-flex align-items-center bg-dark rounded">
             <i class="fa fa-clock py-2 px-3 text-white-50"></i>
-            <input class="form-control bg-transparent border-0 text-white shadow-none" type="text" name="end_time" placeholder="End Time" onfocus="this.type='time'" onblur="if(!this.value)this.type='text'" required>
+            <select class="form-control booking-time-select bg-transparent border-0 text-white shadow-none" name="end_time" required>
+                <option value="" class="booking-time-option">Select End Time</option>
+                <?php
+                    $endTimes = [];
+                    for ($hour = 8; $hour <= 23; $hour++) {
+                        foreach ([0, 30] as $minute) {
+                            if ($hour === 23 && $minute > 0) continue;
+                            $endTimes[] = sprintf('%02d:%02d', $hour, $minute);
+                        }
+                    }
+                    foreach ($endTimes as $time) {
+                        echo '<option value="' . htmlspecialchars($time) . '" class="booking-time-option">' . htmlspecialchars(date('g:i A', strtotime($time))) . '</option>';
+                    }
+                ?>
+            </select>
         </div>
     </div>
 </div>
@@ -809,6 +837,18 @@ Want to explore that next?
 
     <?php include_once __DIR__ . '/../includes/cart_drawer.php'; ?>
     <?php include_once __DIR__ . '/../footer.php'; ?>
+    <style>
+      .booking-time-select,
+      .booking-time-select option,
+      .booking-time-select optgroup {
+        color: #fff !important;
+        background-color: #212529 !important;
+      }
+      .booking-time-select {
+        -webkit-appearance: menulist;
+        appearance: menulist;
+      }
+    </style>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
     <script type="text/javascript" src="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
     <script

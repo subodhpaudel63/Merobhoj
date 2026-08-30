@@ -6,14 +6,23 @@ require_once __DIR__ . '/auth_check.php';
 $isAjax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
 
 function respond_menu_order(array $payload, bool $isAjax): void {
+    $message = $payload['message'] ?? ($payload['success'] ? 'Order placed successfully!' : 'Order failed. Please try again.');
+
     if ($isAjax) {
         header('Content-Type: application/json');
         echo json_encode($payload);
-    } else {
-        $_SESSION['msg'] = [
-            'type' => $payload['success'] ? 'success' : 'error',
-            'text' => $payload['message'] ?? ($payload['success'] ? 'Order placed successfully!' : 'Order failed. Please try again.'),
-        ];
+        exit;
+    }
+
+    $_SESSION['msg'] = [
+        'type' => $payload['success'] ? 'success' : 'error',
+        'text' => $message,
+    ];
+
+    if (!empty($payload['redirect'])) {
+        header('Location: ' . $payload['redirect']);
+    } elseif ($payload['success']) {
+        header('Location: /Merobhoj/client/myorder.php');
     }
     exit;
 }
@@ -114,6 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'order_id' => $insert_id,
             'order_number' => $order_number,
             'payment_method' => $payment_method,
+            'redirect' => '/Merobhoj/client/myorder.php',
         ], $isAjax);
     } else {
         respond_menu_order([

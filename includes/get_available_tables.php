@@ -19,20 +19,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $start_time = trim($_POST['start_time'] ?? $_POST['time'] ?? '');
     $end_time = trim($_POST['end_time'] ?? '');
     $people = (int)($_POST['people'] ?? 0);
-    
+
+    if (preg_match('/\b(?:AM|PM)\b/i', $start_time)) {
+        $start_time = date('H:i', strtotime($start_time));
+    }
+    if (!empty($end_time) && preg_match('/\b(?:AM|PM)\b/i', $end_time)) {
+        $end_time = date('H:i', strtotime($end_time));
+    }
+
     if (empty($date) || empty($start_time) || $people <= 0) {
-        echo json_encode(['error' => 'Missing required fields']);
+        echo json_encode(['success' => false, 'error' => 'Missing required fields']);
         exit;
     }
 
     if (empty($end_time)) {
-        $end_time = date('H:i', strtotime($start_time) + 7200);
+        $defaultEnd = strtotime($start_time) + 7200;
+        $end_time = date('H:i', $defaultEnd);
+    }
+
+    if (!preg_match('/^\d{2}:\d{2}$/', $start_time) || !preg_match('/^\d{2}:\d{2}$/', $end_time)) {
+        echo json_encode(['success' => false, 'error' => 'Invalid time format']);
+        exit;
+    }
+
+    if ($start_time >= $end_time) {
+        echo json_encode(['success' => false, 'error' => 'End time must be later than start time']);
+        exit;
     }
 
     // ── Validate opening hours ───────────────────────────────────────────────
     if (preg_match('/^(\d{2}):(\d{2})/', $start_time, $m)) {
         $hour = (int)$m[1];
         if ($hour < RESTAURANT_OPEN_HOUR || $hour >= RESTAURANT_CLOSE_HOUR) {
+            $openFmt  = date('g:i A', mktime(RESTAURANT_OPEN_HOUR, 0));
+            $closeFmt = date('g:i A', mktime(RESTAURANT_CLOSE_HOUR, 0));
+            echo json_encode([
+                'success' => true,
+                'tables'  => [],
+                'message' => "Restaurant is open from $openFmt to $closeFmt only."
+            ]);
+            exit;
+        }
+    }
+
+    if (preg_match('/^(\d{2}):(\d{2})/', $end_time, $m)) {
+        $endHour = (int)$m[1];
+        $endMin  = (int)$m[2];
+        if ($endHour < RESTAURANT_OPEN_HOUR || $endHour > RESTAURANT_CLOSE_HOUR || ($endHour === RESTAURANT_CLOSE_HOUR && $endMin > 0)) {
             $openFmt  = date('g:i A', mktime(RESTAURANT_OPEN_HOUR, 0));
             $closeFmt = date('g:i A', mktime(RESTAURANT_CLOSE_HOUR, 0));
             echo json_encode([

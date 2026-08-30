@@ -58,6 +58,11 @@ while ($row = $result->fetch_assoc()) {
         }
     }
 
+    $tableLabel = $row['table_name'] ?? '';
+    if ($tableLabel === '') {
+        $tableLabel = 'Table ' . ((int)($row['table_id'] ?? 0) > 0 ? (int)$row['table_id'] : 'N/A');
+    }
+
     $bookings[] = [
         'id'                     => (int)$row['id'],
         'name'                   => $row['name'],
@@ -66,7 +71,9 @@ while ($row = $result->fetch_assoc()) {
         'formatted_date'         => $formattedDate,
         'formatted_time'         => $formattedTime,
         'people'                 => (int)$row['people'],
-        'table_name'             => $row['table_name'] ?? 'N/A',
+        'table_id'               => (int)($row['table_id'] ?? 0),
+        'table_name'             => $tableLabel,
+        'table_number'           => $tableLabel,
         'capacity'               => (int)($row['capacity'] ?? 0),
         'status'                 => $row['status'],
         'grace_end_at'           => $row['grace_end_at'],

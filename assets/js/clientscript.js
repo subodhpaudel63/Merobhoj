@@ -15,21 +15,99 @@ document.addEventListener('DOMContentLoaded', function () {
     reservationDate.min = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   }
 
-  const bookingForm = document.getElementById('bookingForm');
-  if (bookingForm) {
-    const dateInput = bookingForm.querySelector('input[name="date"]');
-    const timeInput = bookingForm.querySelector('input[name="time"]');
+  const normalizeTime12To24 = (value) => {
+    if (!value || typeof value !== 'string') return null;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    const match = trimmed.match(/^([1-9]|1[0-2]|0?[0-9]):([0-5][0-9])\s*([AaPp][Mm])$/);
+    if (!match) {
+      const militaryMatch = trimmed.match(/^([0-9]|1[0-9]|2[0-3]):([0-5][0-9])$/);
+      if (!militaryMatch) return null;
+      return `${String(parseInt(militaryMatch[1], 10)).padStart(2, '0')}:${militaryMatch[2]}`;
+    }
+
+    let hours = parseInt(match[1], 10);
+    const minutes = match[2];
+    const suffix = match[3].toUpperCase();
+    if (suffix === 'AM' && hours === 12) hours = 0;
+    if (suffix === 'PM' && hours !== 12) hours += 12;
+    return `${String(hours).padStart(2, '0')}:${minutes}`;
+  };
+
+  const initBookingForm = (bookingForm) => {
+    if (!bookingForm) return;
+
+    const dateInput = bookingForm.querySelector('input[name="date"], input#reservationDate');
+    const startTimeInput = bookingForm.querySelector('[name="start_time"]');
+    const endTimeInput = bookingForm.querySelector('[name="end_time"]');
     const peopleInput = bookingForm.querySelector('input[name="people"]');
-    const tableSelect = document.getElementById('tableSelect');
+    const tableSelect = bookingForm.querySelector('#tableSelect');
+    const currentPath = window.location.pathname || '/';
+    const availabilityApiUrl = currentPath.includes('/client/')
+      ? '../includes/get_available_tables.php'
+      : (currentPath.includes('/Merobhoj/') ? './includes/get_available_tables.php' : '/Merobhoj/includes/get_available_tables.php');
+
+    const getAllTimeSlots = () => {
+      const slots = [];
+      for (let hour = 7; hour <= 23; hour++) {
+        for (const minute of [0, 30]) {
+          if (hour === 23 && minute > 0) continue;
+          slots.push(`${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`);
+        }
+      }
+      return slots;
+    };
+
+    const applyTimeSelectOptions = () => {
+      if (!startTimeInput || !endTimeInput) return;
+      const allSlots = getAllTimeSlots();
+      const buildOptions = (select, selectedValue, slots) => {
+        const currentValue = selectedValue || '';
+        const options = ['<option value="">Select Time</option>'];
+        slots.forEach(slot => {
+          const label = new Date(`2024-01-01T${slot}:00`).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+          const selected = currentValue === slot ? ' selected' : '';
+          options.push(`<option value="${slot}"${selected}>${label}</option>`);
+        });
+        select.innerHTML = options.join('');
+      };
+
+      const startValue = normalizeTime12To24(startTimeInput.value || '');
+      const endValue = normalizeTime12To24(endTimeInput.value || '');
+
+      if (startTimeInput.tagName === 'SELECT') {
+        buildOptions(startTimeInput, startValue || '', allSlots);
+      }
+
+      let endSlots = allSlots.filter(slot => slot > (startValue || '00:00'));
+      if (endSlots.length === 0) {
+        endSlots = allSlots.filter(slot => slot > '07:00');
+      }
+      if (endTimeInput.tagName === 'SELECT') {
+        buildOptions(endTimeInput, endValue || '', endSlots);
+      }
+    };
+
     const updateTables = () => {
-      const date = dateInput.value, time = timeInput.value, people = peopleInput.value;
-      if (date && time && people > 0) {
-        tableSelect.innerHTML = '<option value="" style="color: white; background-color: #212529;">Loading available tables...</option>';
+      const date = dateInput?.value || '';
+      const startTime = normalizeTime12To24(startTimeInput?.value || '');
+      const endTime = normalizeTime12To24(endTimeInput?.value || '');
+      const people = parseInt(peopleInput?.value || '0', 10);
+
+      if (date && startTime && people > 0) {
+        if (tableSelect) {
+          tableSelect.innerHTML = '<option value="" style="color: white; background-color: #212529;">Loading available tables...</option>';
+        }
         const fd = new FormData();
-        fd.append('date', date); fd.append('time', time); fd.append('people', people);
-        fetch('../includes/get_available_tables.php', { method: 'POST', body: fd })
+        fd.append('date', date);
+        fd.append('start_time', startTime);
+        if (endTime) fd.append('end_time', endTime);
+        fd.append('people', people);
+        fetch(availabilityApiUrl, { method: 'POST', body: fd })
           .then(r => r.json())
           .then(data => {
+            if (!tableSelect) return;
             tableSelect.innerHTML = '<option value="" style="color: white; background-color: #212529;">Select a Table</option>';
             if (data.success && data.tables.length > 0) {
               data.tables.forEach(table => {
@@ -47,26 +125,82 @@ document.addEventListener('DOMContentLoaded', function () {
             }
           })
           .catch(() => {
-            tableSelect.innerHTML = '<option value="" style="color: white; background-color: #212529;">Error loading tables</option>';
+            if (tableSelect) {
+              tableSelect.innerHTML = '<option value="" style="color: white; background-color: #212529;">Error loading tables</option>';
+            }
           });
-      } else {
+      } else if (tableSelect) {
         tableSelect.innerHTML = '<option value="" style="color: white; background-color: #212529;">Select a Date, Time, and People first</option>';
       }
     };
-    dateInput.addEventListener('change', updateTables);
-    timeInput.addEventListener('change', updateTables);
-    peopleInput.addEventListener('change', updateTables);
-    peopleInput.addEventListener('keyup', updateTables);
+
+    const normalizeAndValidateBookingTimes = () => {
+      const startNormalized = normalizeTime12To24(startTimeInput?.value || '');
+      const endNormalized = normalizeTime12To24(endTimeInput?.value || '');
+      if (!startNormalized || !endNormalized) {
+        return { valid: false, message: 'Please select a valid start and end time.' };
+      }
+
+      const startHour = parseInt(startNormalized.split(':')[0], 10);
+      const endHour = parseInt(endNormalized.split(':')[0], 10);
+      const startMin = parseInt(startNormalized.split(':')[1], 10);
+      const endMin = parseInt(endNormalized.split(':')[1], 10);
+
+      if (startHour < 7 || startHour >= 23 || (startHour === 23 && startMin > 0)) {
+        return { valid: false, message: 'Start time must be between 7:00 AM and 10:59 PM.' };
+      }
+      if (endHour < 7 || endHour > 23 || (endHour === 23 && endMin > 0) || endNormalized <= startNormalized) {
+        return { valid: false, message: 'End time must be later than start time and no later than 11:00 PM.' };
+      }
+
+      if (startTimeInput) startTimeInput.value = startNormalized;
+      if (endTimeInput) endTimeInput.value = endNormalized;
+      return { valid: true };
+    };
+
+    if (startTimeInput && endTimeInput) {
+      startTimeInput.addEventListener('change', () => {
+        applyTimeSelectOptions();
+        requestAnimationFrame(updateTables);
+      });
+      endTimeInput.addEventListener('change', () => requestAnimationFrame(updateTables));
+      startTimeInput.addEventListener('input', () => {
+        applyTimeSelectOptions();
+        requestAnimationFrame(updateTables);
+      });
+      endTimeInput.addEventListener('input', () => requestAnimationFrame(updateTables));
+    }
+
+    dateInput?.addEventListener('change', () => requestAnimationFrame(updateTables));
+    dateInput?.addEventListener('input', () => requestAnimationFrame(updateTables));
+    peopleInput?.addEventListener('change', () => requestAnimationFrame(updateTables));
+    peopleInput?.addEventListener('input', () => requestAnimationFrame(updateTables));
+    peopleInput?.addEventListener('keyup', () => requestAnimationFrame(updateTables));
+
     bookingForm.addEventListener('submit', function (e) {
-      const phone = bookingForm.querySelector('input[name="phone"]').value.replace(/[\s\-]/g, '');
+      const phoneField = bookingForm.querySelector('input[name="phone"]');
+      const phone = phoneField ? phoneField.value.replace(/[\s\-]/g, '') : '';
       if (phone && !/^(\+?977)?9[6-8]\d{8}$/.test(phone)) {
         e.preventDefault(); alert('Please enter a valid Nepal phone number (e.g., 98XXXXXXXX or +977-98XXXXXXXX).'); return;
       }
-      const time = timeInput.value;
-      if (time) { const hour = parseInt(time.split(':')[0], 10); if (hour < 7 || hour >= 23) { e.preventDefault(); alert('We are open from 7:00 AM to 11:00 PM. Please choose a valid time.'); return; } }
-      if (parseInt(peopleInput.value, 10) > 8) { e.preventDefault(); alert('The maximum capacity for a single table is 8 people.'); }
+
+      const timeValidation = normalizeAndValidateBookingTimes();
+      if (!timeValidation.valid) {
+        e.preventDefault();
+        alert(timeValidation.message);
+        return;
+      }
+
+      if (peopleInput && parseInt(peopleInput.value, 10) > 8) {
+        e.preventDefault(); alert('The maximum capacity for a single table is 8 people.');
+      }
     });
-  }
+
+    applyTimeSelectOptions();
+    requestAnimationFrame(updateTables);
+  };
+
+  document.querySelectorAll('#bookingForm').forEach(initBookingForm);
 
   const menuSearchInput = document.getElementById('menuSearchInput');
   const menuSearchClear = document.getElementById('menuSearchClear');
@@ -217,9 +351,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (data.server_now) initTimeOffset(data.server_now);
         if (!data.bookings || data.bookings.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No table bookings found.</td></tr>`; return; }
         tbody.innerHTML = data.bookings.map(b => {
+          const tableLabel = b.table_number || b.table_name || ('Table ' + (b.table_id || 'N/A'));
           const statusClass = `status-${b.status.toLowerCase()}`;
           const timerHtml = b.status === 'Confirmed' && b.grace_end_at ? `<div class="countdown-container" data-grace-end="${b.grace_end_at}">--:--</div>` : `<span class="text-muted">-</span>`;
-          return `<tr><td><strong style="color: #0d47a1;">${b.table_name}</strong><br><small class="text-muted">Capacity: ${b.capacity}</small></td><td><strong>${b.formatted_date}</strong><br><span class="text-muted">${b.formatted_time}</span></td><td style="font-weight: 700;">${b.people}</td><td><div class="status-container"><span class="status-badge ${statusClass}">${b.status}</span><div style="margin-top: 5px;">${timerHtml}</div></div></td></tr>`;
+          return `<tr><td><strong style="color: #0d47a1;">${tableLabel}</strong><br><small class="text-muted">Capacity: ${b.capacity}</small></td><td><strong>${b.formatted_date}</strong><br><span class="text-muted">${b.formatted_time}</span></td><td style="font-weight: 700;">${b.people}</td><td><div class="status-container"><span class="status-badge ${statusClass}">${b.status}</span><div style="margin-top: 5px;">${timerHtml}</div></div></td></tr>`;
         }).join('');
       } catch (e) { console.error(e); }
     };

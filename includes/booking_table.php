@@ -20,13 +20,21 @@ if (!$user) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Sanitize and validate inputs
+    // Prefer the currently logged-in user's email so the booking is attached to the account
+    // that is viewing the reservation form. This prevents bookings from being hidden in
+    // the "My Bookings" list when a different email is typed in the form.
     $name       = trim($_POST['name'] ?? '');
-    $email      = trim($_POST['email'] ?? '');
+    $email      = trim($user['email'] ?? ($_POST['email'] ?? ''));
     $phone      = trim($_POST['phone'] ?? '');
     $date       = trim($_POST['date'] ?? '');
     $start_time = trim($_POST['start_time'] ?? $_POST['time'] ?? '');
     $end_time   = trim($_POST['end_time'] ?? '');
+    if (preg_match('/\b(?:AM|PM)\b/i', $start_time)) {
+        $start_time = date('H:i', strtotime($start_time));
+    }
+    if (!empty($end_time) && preg_match('/\b(?:AM|PM)\b/i', $end_time)) {
+        $end_time = date('H:i', strtotime($end_time));
+    }
     $people     = (int)($_POST['people'] ?? 0);
     $message    = trim($_POST['message'] ?? '');
     $table_id   = (int)($_POST['table_id'] ?? 0);
@@ -97,17 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $timeParts = explode(':', $start_time);
-    $hour = (int)$timeParts[0];
-
-    if ($hour < RESTAURANT_OPEN_HOUR || $hour >= RESTAURANT_CLOSE_HOUR) {
-        $openFormatted = date('g:i A', mktime(RESTAURANT_OPEN_HOUR, 0));
-        $closeFormatted = date('g:i A', mktime(RESTAURANT_CLOSE_HOUR, 0));
-        $_SESSION['msg'] = ['type' => 'error', 'text' => "We are open from $openFormatted to $closeFormatted. Please choose a start time within these hours."];
-        redirect_user();
-        exit;
-    }
-
+    // Prevent midnight rollover bookings; restaurant reservations are same-day only.
     $endTimeParts = explode(':', $end_time);
     $endHour = (int)$endTimeParts[0];
     $endMin = (int)$endTimeParts[1];
@@ -115,6 +113,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $openFormatted = date('g:i A', mktime(RESTAURANT_OPEN_HOUR, 0));
         $closeFormatted = date('g:i A', mktime(RESTAURANT_CLOSE_HOUR, 0));
         $_SESSION['msg'] = ['type' => 'error', 'text' => "We are open from $openFormatted to $closeFormatted. Please choose an end time within these hours."];
+        redirect_user();
+        exit;
+    }
+
+    $timeParts = explode(':', $start_time);
+    $hour = (int)$timeParts[0];
+
+    if ($hour < RESTAURANT_OPEN_HOUR || $hour >= RESTAURANT_CLOSE_HOUR) {
+        $openFormatted = date('g:i A', mktime(RESTAURANT_OPEN_HOUR, 0));
+        $closeFormatted = date('g:i A', mktime(RESTAURANT_CLOSE_HOUR, 0));
+        $_SESSION['msg'] = ['type' => 'error', 'text' => "We are open from $openFormatted to $closeFormatted. Please choose a start time within these hours."];
         redirect_user();
         exit;
     }

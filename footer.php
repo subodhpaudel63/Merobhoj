@@ -130,6 +130,8 @@ $isStandalone = isset($_SERVER['SCRIPT_FILENAME'])
     ></script>
     <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
     <script src="<?php echo asset('js/script.js'); ?>"></script>
+    <script src="<?php echo asset('js/clientscript.js'); ?>"></script>
+    <script src="<?php echo asset('js/toast_notifications.js'); ?>"></script>
     
     <!-- Floating WhatsApp Button -->
     <a href="https://wa.me/9779748759699" class="floating-whatsapp" target="_blank" rel="noopener noreferrer">
