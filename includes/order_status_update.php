@@ -46,15 +46,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ];
             } else {
                 if (!empty($order['order_number'])) {
-                    $stmt = $conn->prepare("UPDATE orders SET status = ? WHERE order_number = ?");
+                    $stmt = $conn->prepare("UPDATE orders SET status = ?, status_updated_at = NOW() WHERE order_number = ?");
                     $stmt->bind_param("ss", $status, $order['order_number']);
                 } else {
-                    $stmt = $conn->prepare("UPDATE orders SET status = ? WHERE order_id = ?");
+                    $stmt = $conn->prepare("UPDATE orders SET status = ?, status_updated_at = NOW() WHERE order_id = ?");
                     $stmt->bind_param("si", $status, $order_id);
                 }
 
                 if ($stmt->execute()) {
                     error_log("Update success for order $order_id to status $status");
+
+                    // Permanent per-status history: record the exact time THIS
+                    // status was set. Re-setting the same status refreshes its
+                    // time (latest wins); every status keeps its own entry.
+                    $historyKey = !empty($order['order_number'])
+                        ? $order['order_number']
+                        : 'ORD-' . str_pad((string)$order_id, 4, '0', STR_PAD_LEFT);
+                    $hstmt = $conn->prepare("INSERT INTO order_status_history (order_number, status) VALUES (?, ?) ON DUPLICATE KEY UPDATE changed_at = NOW()");
+                    if ($hstmt) {
+                        $hstmt->bind_param('ss', $historyKey, $status);
+                        $hstmt->execute();
+                        $hstmt->close();
+                    }
+
                     $_SESSION['msg'] = [
                         'type' => 'success',
                         'text' => 'Order status updated successfully.'

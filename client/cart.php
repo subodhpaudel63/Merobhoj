@@ -139,8 +139,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
                 $last_insert_id = 0;
                 
                 $stmt = $conn->prepare(
-                    "INSERT INTO orders (order_number, menu_id, email, menu_name, quantity, price, total_price, mobile, address, payment_method, payment_status, status, order_time, order_date) "
-                    . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW(), CURDATE())"
+                    "INSERT INTO orders (order_number, menu_id, email, menu_name, quantity, price, total_price, mobile, address, payment_method, payment_status, status, order_time, order_date, status_updated_at) "
+                    . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW(), CURDATE(), NOW())"
                 );
                 
                 if (!$stmt) {
@@ -192,6 +192,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
                 
                 if ($success_count > 0 && !$error_occurred) {
                     $conn->commit();
+                    $_SESSION['cart'] = [];
+
+                    // Permanent status history: the order starts at Pending
+                    // with this moment as its timestamp
+                    $hstmt = $conn->prepare("INSERT IGNORE INTO order_status_history (order_number, status) VALUES (?, 'Pending')");
+                    if ($hstmt) {
+                        $hstmt->bind_param('s', $order_number);
+                        $hstmt->execute();
+                        $hstmt->close();
+                    }
+
                     $response['success'] = true;
                     
                     if ($is_esewa) {

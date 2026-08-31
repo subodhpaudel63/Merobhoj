@@ -19,6 +19,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $order_number = trim((string)($_POST['order_number'] ?? ''));
     }
     
+    // Resolve the order number so the permanent status history can be purged too
+    if (empty($order_number) && $order_id > 0) {
+        $r = $conn->prepare("SELECT order_number FROM orders WHERE order_id = ? LIMIT 1");
+        if ($r) {
+            $r->bind_param('i', $order_id);
+            $r->execute();
+            $row = $r->get_result()->fetch_assoc();
+            $order_number = $row['order_number'] ?? '';
+            $r->close();
+        }
+    }
+
     if (!empty($order_number)) {
         $stmt = $conn->prepare("DELETE FROM orders WHERE order_number = ? OR order_id = ?");
         if ($stmt) {
@@ -40,6 +52,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ];
     } else {
         if ($stmt->execute()) {
+            // Purge the permanent status history for the deleted order
+            if ($order_number !== '') {
+                $h = $conn->prepare("DELETE FROM order_status_history WHERE order_number = ?");
+                if ($h) {
+                    $h->bind_param('s', $order_number);
+                    $h->execute();
+                    $h->close();
+                }
+            }
             $response = [
                 'success' => true,
                 'message' => 'Order deleted successfully'

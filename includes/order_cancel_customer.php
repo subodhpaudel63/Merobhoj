@@ -47,9 +47,16 @@ if (!$val['valid']) {
 }
 
 // 3. Perform cancellation for all items sharing this order_number
-$stmt = $conn->prepare("UPDATE orders SET status = 'Cancelled' WHERE order_number = ?");
+$stmt = $conn->prepare("UPDATE orders SET status = 'Cancelled', status_updated_at = NOW() WHERE order_number = ?");
 $stmt->bind_param("s", $order_number);
 if ($stmt->execute()) {
+    // Permanent status history: record when the customer cancelled
+    $hstmt = $conn->prepare("INSERT INTO order_status_history (order_number, status) VALUES (?, 'Cancelled') ON DUPLICATE KEY UPDATE changed_at = NOW()");
+    if ($hstmt) {
+        $hstmt->bind_param('s', $order_number);
+        $hstmt->execute();
+        $hstmt->close();
+    }
     echo json_encode(['success' => true, 'message' => 'Order cancelled successfully.']);
 } else {
     echo json_encode(['success' => false, 'message' => 'Failed to cancel the order.']);

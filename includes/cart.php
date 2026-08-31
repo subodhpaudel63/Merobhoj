@@ -98,7 +98,7 @@ if ($action === 'checkout' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $order_number = 'ORD-' . date('Ymd') . '-' . sprintf('%04d', rand(1000, 9999));
     $conn->begin_transaction();
-    $stmt = $conn->prepare("INSERT INTO orders (order_number, menu_id, menu_name, price, quantity, total_price, email, mobile, address, status, order_time, order_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW(), CURDATE())");
+    $stmt = $conn->prepare("INSERT INTO orders (order_number, menu_id, menu_name, price, quantity, total_price, email, mobile, address, status, order_time, order_date, status_updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW(), CURDATE(), NOW())");
     $allOk = true;
     if ($stmt) {
         foreach ($_SESSION['cart'] as $item) {
@@ -129,6 +129,14 @@ if ($action === 'checkout' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $conn->commit();
         $_SESSION['cart'] = [];
         $_SESSION['msg'] = ['type' => 'success', 'text' => 'Checkout complete.'];
+
+        // Permanent status history: the order starts at Pending
+        $hstmt = $conn->prepare("INSERT IGNORE INTO order_status_history (order_number, status) VALUES (?, 'Pending')");
+        if ($hstmt) {
+            $hstmt->bind_param('s', $order_number);
+            $hstmt->execute();
+            $hstmt->close();
+        }
     } else {
         $conn->rollback();
         $_SESSION['msg'] = ['type' => 'error', 'text' => 'Error placing order.'];

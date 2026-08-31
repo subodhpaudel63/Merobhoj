@@ -352,7 +352,7 @@ unset($_SESSION['esewa_payment']);
         eSewa Ref: <strong><?= e($transactionCode) ?></strong>
     </p>
 
-    <a href="<?= e(SITE_URL) ?>/client/myorder.php" class="btn-orders">
+    <a href="<?= e(SITE_URL) ?>/client/myorder.php?payment=esewa_success" class="btn-orders">
         View My Orders
     </a>
 
@@ -361,6 +361,13 @@ unset($_SESSION['esewa_payment']);
         Return to Home
     </a>
 </div>
+
+<!-- Auto-redirect to My Orders shortly after a successful payment -->
+<script>
+    setTimeout(function () {
+        window.location.href = '<?= e(SITE_URL) ?>/client/myorder.php?payment=esewa_success';
+    }, 4000);
+</script>
 
 </body>
 </html>

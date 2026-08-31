@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // 2. The order exists (Rule 1)
         $existingOrder = null;
         if ($order_number !== '') {
-            $lookup = $conn->prepare("SELECT order_id, status, order_type FROM orders WHERE order_number = ? LIMIT 1");
+            $lookup = $conn->prepare("SELECT order_id, order_number, status, order_type FROM orders WHERE order_number = ? LIMIT 1");
             if ($lookup) {
                 $lookup->bind_param("s", $order_number);
                 $lookup->execute();
@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $lookup->close();
             }
         } else {
-            $lookup = $conn->prepare("SELECT order_id, status, order_type FROM orders WHERE order_id = ? LIMIT 1");
+            $lookup = $conn->prepare("SELECT order_id, order_number, status, order_type FROM orders WHERE order_id = ? LIMIT 1");
             if ($lookup) {
                 $lookup->bind_param("i", $order_id);
                 $lookup->execute();
@@ -58,6 +58,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$existingOrder) {
             $response = ['success' => false, 'message' => 'Order not found'];
         } else {
+            // Resolve the history key the same way the client/fetch do
+            $historyKey = !empty($existingOrder['order_number'])
+                ? $existingOrder['order_number']
+                : (!empty($order_number) ? $order_number : 'ORD-' . str_pad((string)$existingOrder['order_id'], 4, '0', STR_PAD_LEFT));
+
             // 3. Validate transition & type compatibility (Rules 4, 5, 6)
             $validation = validate_order_transition($existingOrder['order_type'] ?? 'Delivery', $existingOrder['status'], $status, true);
             if (!$validation['valid']) {
@@ -65,12 +70,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 // Update all items sharing this order number, or just this item if order_number is missing
                 if (!empty($order_number)) {
-                    $stmt = $conn->prepare("UPDATE orders SET status = ? WHERE order_number = ?");
+                    $stmt = $conn->prepare("UPDATE orders SET status = ?, status_updated_at = NOW() WHERE order_number = ?");
                     if ($stmt) {
                         $stmt->bind_param("ss", $status, $order_number);
                     }
                 } else {
-                    $stmt = $conn->prepare("UPDATE orders SET status = ? WHERE order_id = ?");
+                    $stmt = $conn->prepare("UPDATE orders SET status = ?, status_updated_at = NOW() WHERE order_id = ?");
                     if ($stmt) {
                         $stmt->bind_param("si", $status, $existingOrder['order_id']);
                     }
@@ -80,6 +85,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $response = ['success' => false, 'message' => 'Failed to prepare update statement'];
                 } else {
                     if ($stmt->execute()) {
+                        // Permanent per-status history: record the exact real time
+                        // THIS status was set. Re-setting the same status refreshes
+                        // only its own entry; every status keeps its own time.
+                        $hstmt = $conn->prepare("INSERT INTO order_status_history (order_number, status) VALUES (?, ?) ON DUPLICATE KEY UPDATE changed_at = NOW()");
+                        if ($hstmt) {
+                            $hstmt->bind_param('ss', $historyKey, $status);
+                            $hstmt->execute();
+                            $hstmt->close();
+                        }
                         $response = [
                             'success' => true,
                             'message' => 'Order updated successfully'

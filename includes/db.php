@@ -110,6 +110,36 @@ if ($lcCheck && $lcCheck->fetch_row()[0] > 0) {
     $conn->query("UPDATE `bookings` SET `status` = 'Completed'  WHERE `status` = 'completed'");
 }
 
+// ── Order status update timestamp (12-hour display on client) ────────────────
+$statusUpdatedAtCol = $conn->query("SHOW COLUMNS FROM `orders` LIKE 'status_updated_at'");
+if ($statusUpdatedAtCol && $statusUpdatedAtCol->num_rows === 0) {
+    $conn->query("ALTER TABLE `orders` ADD COLUMN `status_updated_at` DATETIME DEFAULT NULL AFTER `status`");
+    // Backfill: existing orders were last touched when they were created
+    $conn->query("UPDATE `orders` SET `status_updated_at` = `created_at` WHERE `status_updated_at` IS NULL");
+}
+
+// ── Order status history (permanent per-status update times shown to client) ─
+$conn->query("
+    CREATE TABLE IF NOT EXISTS `order_status_history` (
+      `id` int(11) NOT NULL AUTO_INCREMENT,
+      `order_number` varchar(50) NOT NULL,
+      `status` varchar(50) NOT NULL,
+      `changed_at` datetime NOT NULL DEFAULT current_timestamp(),
+      PRIMARY KEY (`id`),
+      UNIQUE KEY `uniq_order_status` (`order_number`, `status`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+");
+// One-time seed: fill ONLY when the table is still empty, so the real
+// per-status timestamps written by the admin endpoints are never overwritten
+// with approximate backfill values on later requests
+$histCount = $conn->query("SELECT COUNT(*) AS c FROM `order_status_history`");
+if ($histCount && (int)$histCount->fetch_assoc()['c'] === 0) {
+    $conn->query("INSERT IGNORE INTO `order_status_history` (`order_number`, `status`, `changed_at`)
+                  SELECT o.order_number, o.status, COALESCE(o.status_updated_at, o.created_at)
+                  FROM `orders` o
+                  WHERE o.order_number IS NOT NULL AND o.order_number <> ''");
+}
+
 // ── Payment method and status columns for orders ─────────────────────────────
 $paymentMethodCol = $conn->query("SHOW COLUMNS FROM `orders` LIKE 'payment_method'");
 if ($paymentMethodCol && $paymentMethodCol->num_rows === 0) {

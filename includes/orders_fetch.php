@@ -15,7 +15,13 @@ if (!$user) {
 }
 
 $email = $user['email'];
-$stmt = $conn->prepare("SELECT order_id, order_number, menu_id, menu_name, price, quantity, total_price, status, order_type, order_time, order_date FROM orders WHERE email = ? ORDER BY order_id DESC");
+$stmt = $conn->prepare("SELECT o.order_id, o.order_number, o.menu_id, o.menu_name, o.price, o.quantity, o.total_price,
+                               o.status, o.status_updated_at, o.order_type, o.order_time, o.order_date, o.address, o.mobile,
+                               o.payment_method, o.payment_status, m.menu_image
+                        FROM orders o
+                        LEFT JOIN menu m ON m.menu_id = o.menu_id
+                        WHERE o.email = ?
+                        ORDER BY o.created_at DESC, o.order_id DESC");
 $stmt->bind_param("s", $email);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -28,9 +34,14 @@ while ($row = $result->fetch_assoc()) {
             'order_number' => $orderNum,
             'order_id' => $row['order_id'],
             'status' => $row['status'],
+            'status_updated_at' => $row['status_updated_at'] ?? null,
             'order_type' => $row['order_type'] ?? 'Delivery',
             'order_time' => $row['order_time'],
             'order_date' => $row['order_date'],
+            'address' => $row['address'] ?? '',
+            'mobile' => $row['mobile'] ?? '',
+            'payment_method' => $row['payment_method'] ?? null,
+            'payment_status' => $row['payment_status'] ?? null,
             'total_amount' => 0.0,
             'items' => []
         ];
@@ -43,11 +54,32 @@ while ($row = $result->fetch_assoc()) {
         'menu_name' => $row['menu_name'],
         'price' => (float)$row['price'],
         'quantity' => (int)$row['quantity'],
-        'total_price' => $itemTotal
+        'total_price' => $itemTotal,
+        'menu_image' => $row['menu_image'] ?? null
     ];
 }
 $stmt->close();
 
+// Per-status update times (permanent history) for this user's orders
+$historyMap = [];
+$hstmt = $conn->prepare("SELECT h.order_number, h.status, h.changed_at
+                         FROM order_status_history h
+                         INNER JOIN orders o ON o.order_number = h.order_number
+                         WHERE o.email = ?");
+if ($hstmt) {
+    $hstmt->bind_param('s', $email);
+    $hstmt->execute();
+    $hres = $hstmt->get_result();
+    while ($hrow = $hres->fetch_assoc()) {
+        $historyMap[$hrow['order_number']][$hrow['status']] = $hrow['changed_at'];
+    }
+    $hstmt->close();
+}
+
 $orders = array_values($grouped);
+foreach ($orders as &$g) {
+    $g['status_history'] = $historyMap[$g['order_number']] ?? [];
+}
+unset($g);
 
 echo json_encode(['ok' => true, 'orders' => $orders]);

@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function () {
+﻿document.addEventListener('DOMContentLoaded', function () {
   const sessionType = document.querySelector('meta[name="mkj-session-type"]')?.content;
   const sessionText = document.querySelector('meta[name="mkj-session-text"]')?.content;
   if (sessionType && sessionText && window.ToastNotifications) {
@@ -323,7 +323,7 @@ document.addEventListener('DOMContentLoaded', function () {
           const orderRef = o.order_number || ('ORD-' + String(o.order_id).padStart(4, '0'));
           const previousStatus = previousOrders[orderRef];
           const statusChanged = previousStatus && previousStatus !== o.status;
-          const itemsHtml = o.items.map(it => `<div class="d-flex justify-content-between align-items-center py-1" style="border-bottom: 1px dashed #eee;"><span>${it.menu_name} <span class="text-muted">× ${it.quantity}</span></span><span class="text-muted" style="font-size:0.85rem;">Rs. ${Number(it.total_price).toFixed(2)}</span></div>`).join('');
+          const itemsHtml = o.items.map(it => `<div class="d-flex justify-content-between align-items-center py-1" style="border-bottom: 1px dashed #eee;"><span>${it.menu_name} <span class="text-muted">Ã— ${it.quantity}</span></span><span class="text-muted" style="font-size:0.85rem;">Rs. ${Number(it.total_price).toFixed(2)}</span></div>`).join('');
           let actionHtml = '';
           if (o.status === 'Delivered' || o.status === 'Completed') actionHtml = `<small class="text-success mt-1 fw-semibold" style="font-size:0.78rem; display:block;">Order delivered successfully.</small>`;
           else if (o.status === 'Preparing' || o.status === 'Out for delivery') actionHtml = `<small class="text-danger mt-1 fw-semibold" style="font-size:0.78rem; display:block;">Your order is already on the way and can no longer be cancelled.</small>`;
@@ -371,7 +371,7 @@ document.addEventListener('DOMContentLoaded', function () {
           const diff = graceEnd - now, mins = Math.floor(diff / 60000), secs = Math.floor((diff % 60000) / 1000);
           const timeStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
           let colorClass = 'grace-timer'; if (mins < 5) colorClass += ' grace-danger'; else if (mins < 10) colorClass += ' grace-warning';
-          container.innerHTML = `<div style="font-size:11px;color:#d97706;">⚠️ Booking started</div><div class="${colorClass}">⏳ ${timeStr} left</div>`;
+          container.innerHTML = `<div style="font-size:11px;color:#d97706;">âš ï¸ Booking started</div><div class="${colorClass}">â³ ${timeStr} left</div>`;
         }
       });
     };
@@ -380,3 +380,765 @@ document.addEventListener('DOMContentLoaded', function () {
     setInterval(updateCountdowns, 1000);
   }
 });
+
+
+
+
+/* =================================================================
+   MY ORDERS PAGE â€” LIVE BACKEND WIRING
+   ------------------------------------------------------------------
+   All order data on this page is fetched at runtime from the existing
+   backend endpoint includes/orders_fetch.php (JSON; prepared
+   statements; scoped to the logged-in user's email).
+     - Status / steps come straight from the DB (orders.status)
+     - Cancellations go through includes/order_cancel_customer.php
+       (server-side ownership + transition validation)
+     - "Reorder" reuses the existing cart endpoint
+       includes/cart.php?action=add
+   No hardcoded demo order data is used anywhere below.
+   ================================================================= */
+
+const MYORDER_STEP_ICONS   = ['ic-clipboard', 'ic-check', 'ic-pot', 'ic-bag', 'ic-bike', 'ic-door'];
+const STEP_ICONS           = MYORDER_STEP_ICONS; // kept for the mini stepper renderer
+const MYORDER_STEP_LABELS  = ['Order Placed', 'Confirmed', 'Preparing', 'Ready', 'Out for Delivery', 'Delivered'];
+const MYORDER_STATUS_STEP  = { Pending: 0, Confirmed: 1, Preparing: 2, Ready: 3, Delivering: 4, Completed: 5, Cancelled: -1 };
+// Stepper index -> DB status, used to look up each step's time in the
+// permanent per-status history returned by orders_fetch.php
+const MYORDER_STEP_DB_STATUS = ['Pending', 'Confirmed', 'Preparing', 'Ready', 'Delivering', 'Completed'];
+const MYORDER_STATUS_LABEL = {
+  Pending: 'Order Placed', Confirmed: 'Confirmed', Preparing: 'Preparing',
+  Ready: 'Ready', Delivering: 'Out for Delivery', Completed: 'Delivered', Cancelled: 'Cancelled'
+};
+const MYORDER_STATUS_SUB = {
+  Pending:    'Waiting for the restaurant to confirm your order.',
+  Confirmed:  'The restaurant has confirmed your order.',
+  Preparing:  'Your food is being prepared right now.',
+  Ready:      'Your order is ready and will be on its way shortly.',
+  Delivering: 'Your order is on the way!',
+  Completed:  'Your order has been delivered. Enjoy your meal!',
+  Cancelled:  'This order has been cancelled.'
+};
+/* Must mirror the customer-cancellation rules in includes/order_validation.php
+   (customers may cancel only while the order has not left the restaurant) */
+const MYORDER_CANCELLABLE   = ['Pending', 'Confirmed', 'Preparing', 'Ready'];
+const MYORDER_LIVE_STATUSES = ['Pending', 'Confirmed', 'Preparing', 'Ready', 'Delivering'];
+const MYORDER_DEFAULT_THUMB = '../assets/images/NangloSet.png';
+const MYORDER_POLL_MS       = 5000;
+
+let CONFIG = null;   // order currently shown on the tracking page (read by myorder.php inline handlers)
+let orders = [];     // orders list for page 2
+let currentOrdersFilter = 'all';
+let mapBooted = false;
+let myorderDataSignature = null; // last fetched payload fingerprint (skip re-render when unchanged)
+let myorderInFlight = false;     // prevents overlapping poll requests
+
+const myorderEscape = (v) => String(v ?? '').replace(/[&<>"']/g, (ch) => (
+  { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+
+const myorderMoney = (n) => 'NPR ' + Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+const myorderImgSrc = (p) => {
+  if (!p) return MYORDER_DEFAULT_THUMB;
+  if (/^(https?:)?\/\//i.test(p) || p.startsWith('../') || p.startsWith('/')) return p;
+  return '../' + String(p).replace(/^\/+/, '');
+};
+
+function myorderFormatDate(value) {
+  if (!value) return 'â€”';
+  const d = new Date(String(value).replace(' ', 'T'));
+  return isNaN(d.getTime()) ? String(value) : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function myorderFormatTime(value) {
+  if (!value) return 'â€”';
+  // Accept "HH:MM:SS", "HH:MM", or full "YYYY-MM-DD HH:MM:SS" datetimes —
+  // keep only the time portion so it always renders in 12-hour format
+  const timePart = String(value).trim().split(' ').pop();
+  const d = new Date('2000-01-01T' + timePart);
+  return isNaN(d.getTime()) ? String(value) : d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+
+function myorderToast(type, text) {
+  if (window.ToastNotifications && typeof window.ToastNotifications[type] === 'function') {
+    window.ToastNotifications[type](text);
+  } else {
+    alert(text);
+  }
+}
+
+/* ---- Map one grouped API order -> the card model the UI renders ---- */
+function myorderMapOrder(g) {
+  const status = g.status || 'Pending';
+  const known = Object.prototype.hasOwnProperty.call(MYORDER_STATUS_STEP, status);
+  const stepIdx = known ? MYORDER_STATUS_STEP[status] : 0;
+  const bucket = status === 'Completed' ? 'delivered' : (status === 'Cancelled' ? 'cancelled' : 'ongoing');
+  const date = myorderFormatDate(g.order_date);
+  const time = myorderFormatTime(g.order_time);
+
+  const items = (g.items || []).map((it) => ({
+    name: it.menu_name,
+    qty: Number(it.quantity) || 1,
+    price: myorderMoney(it.price),
+    total: Number(it.total_price) || 0,
+    menuId: it.menu_id,
+    img: myorderImgSrc(it.menu_image)
+  }));
+
+  const subtotal = items.reduce((sum, it) => sum + it.total, 0);
+  const bill = {
+    subtotal: myorderMoney(subtotal),
+    deliveryFee: '--',
+    tax: '--',
+    total: myorderMoney(g.total_amount ?? subtotal)
+  };
+
+  const address = String(g.address || '').trim();
+
+  // Permanent per-status history: each step shows the exact 12-hour time the
+  // admin set that status (fetched from order_status_history). Fallbacks keep
+  // orders without history entries sensible (placed time on the current step).
+  const history = g.status_history || {};
+  const statusTimeRaw = g.status_updated_at ? String(g.status_updated_at).trim().split(' ').pop() : '';
+  const statusTime = statusTimeRaw ? myorderFormatTime(statusTimeRaw) : '';
+  const doneCount = status === 'Cancelled' ? 1 : stepIdx + 1;
+  const stepTimes = MYORDER_STEP_LABELS.map((_, i) => {
+    const histTime = history[MYORDER_STEP_DB_STATUS[i]];
+    if (histTime) return myorderFormatTime(histTime);
+    if (i === 0) return time;
+    if (i === doneCount - 1) return statusTime || time;
+    return '--:--';
+  });
+
+  return {
+    id: '#' + (g.order_number || ('ORD-' + String(g.order_id || '').padStart(4, '0'))),
+    orderNumber: g.order_number || ('ORD-' + String(g.order_id || '').padStart(4, '0')),
+    orderType: g.order_type || 'Delivery',
+    name: 'Merobhoj',
+    addr: address || 'No delivery address recorded',
+    hasAddress: !!address,
+    img: items.length ? items[0].img : MYORDER_DEFAULT_THUMB,
+    date: date + ' | ' + time,
+    placedDate: date,
+    placedTime: time,
+    items: items.length + (items.length === 1 ? ' Item' : ' Items'),
+    itemsList: items,
+    bill,
+    amount: myorderMoney(g.total_amount ?? subtotal),
+    status: bucket,
+    statusLabel: known ? MYORDER_STATUS_LABEL[status] : status,
+    statusSub: known ? MYORDER_STATUS_SUB[status] : ('Current status: ' + status),
+    payment: g.payment_method || '--',
+    steps: status === 'Cancelled' ? null : MYORDER_STEP_LABELS,
+    stepTimes,
+    doneCount,
+    statusUpdatedAt: statusTime,
+    trackable: status !== 'Cancelled',
+    live: MYORDER_LIVE_STATUSES.includes(status),
+    cancellable: MYORDER_CANCELLABLE.includes(status),
+    rawStatus: status
+  };
+}
+
+/* ---- Build CONFIG (tracking page model) for one order card ---- */
+function myorderBuildConfig(o) {
+  return {
+    ORDER: o,
+    RESTAURANT: { name: 'Merobhoj', address: 'Pokhara' },
+    ROUTE: {
+      homeQuery: o.addr,                    // the customer's real delivery address from the DB
+      mapCenter: [28.2105, 83.9565],
+      mapZoom: 14.3,
+      rideDurationMs: 5 * 60 * 1000
+    }
+  };
+}
+
+/* ---- Pick which order the tracking page shows: ?order= param, else the
+        most recent non-cancelled one, else the newest order ---- */
+function myorderPickTracked() {
+  const requested = (new URLSearchParams(window.location.search).get('order') || '').trim();
+  const safe = /^[A-Za-z0-9-]{1,50}$/.test(requested) ? requested : '';
+  if (safe) {
+    const match = orders.find((o) => o.orderNumber === safe || o.id === '#' + safe);
+    if (match) return match;
+  }
+  // Keep showing the order the user explicitly chose to track
+  if (myorderSelectedOrderNumber) {
+    const sel = orders.find((o) => o.orderNumber === myorderSelectedOrderNumber);
+    if (sel) return sel;
+  }
+  return orders.find((o) => o.trackable) || orders[0] || null;
+}
+
+/* ---- Fill every static field on the tracking page from CONFIG ---- */
+function renderTrackPage(cfg) {
+  const o = cfg.ORDER;
+  const thumb = document.getElementById('cfgRestaurantThumb');
+  if (thumb) { thumb.src = o.img; thumb.alt = o.name; }
+  const crumb = document.getElementById('cfgOrderCrumb');
+  if (crumb) { crumb.textContent = 'Order ' + o.id; crumb.title = o.statusLabel; }
+  document.getElementById('cfgOrderId').textContent = o.id;
+  document.getElementById('cfgOrderIdRepeat').textContent = o.id;
+  document.getElementById('cfgPlacedDate').textContent = o.placedDate;
+  document.getElementById('cfgPlacedTime').textContent = o.placedTime;
+  document.getElementById('cfgOrderTime').textContent = o.placedDate + ' | ' + o.placedTime;
+  document.getElementById('cfgPaymentMethod').textContent = o.payment;
+  document.getElementById('cfgTotalAmount').textContent = o.amount;
+
+  // No rider/dispatch data exists in the database yet â€” hide the demo rider card
+  const riderName = document.getElementById('cfgRiderName');
+  const riderCard = riderName ? riderName.closest('.card') : null;
+  if (riderCard) riderCard.style.display = 'none';
+
+  const itemsHtml = (o.itemsList || []).map((it) => `
+    <div class="item-row">
+      <img src="${myorderEscape(it.img)}" alt="${myorderEscape(it.name)}">
+      <div class="item-info"><div class="item-name">${myorderEscape(it.name)}</div><div class="item-qty">Qty: ${it.qty}</div></div>
+      <div class="item-price">${it.price}</div>
+    </div>`).join('') || '<div class="status-sub">No items recorded for this order.</div>';
+  document.getElementById('cfgItemsList').innerHTML = itemsHtml;
+}
+
+/* ---- Drive the status-dependent parts of the tracking page
+        (stepper, live banner, cancel button, ETA card, map) ---- */
+function renderTrackStatus(cfg) {
+  const o = cfg.ORDER;
+  const cancelled = o.rawStatus === 'Cancelled';
+  const lines = document.querySelector('#page-track .steplines');
+  const row = document.querySelector('#page-track .stepper');
+
+  if (row) {
+    if (cancelled) {
+      if (lines) lines.innerHTML = '';
+      row.innerHTML = `<div class="step current"><div class="dot"><svg class="ic" style="width:22px;height:22px"><use href="#ic-trash"/></svg></div><div class="slabel">Order Cancelled</div><div class="stime">${myorderEscape(o.placedDate)}</div></div>`;
+    } else {
+      if (lines) {
+        let segs = '';
+        for (let i = 0; i < MYORDER_STEP_LABELS.length - 1; i++) {
+          segs += `<div class="stepline-seg ${i < o.doneCount - 1 ? 'done' : 'pending'}"></div>`;
+        }
+        lines.innerHTML = segs;
+      }
+      row.innerHTML = MYORDER_STEP_LABELS.map((label, i) => {
+        const cls = i < o.doneCount - 1 ? 'done' : (i === o.doneCount - 1 ? 'current' : 'pending');
+        const icon = i < o.doneCount - 1 ? 'ic-check' : MYORDER_STEP_ICONS[i];
+        return `<div class="step ${cls}"><div class="dot"><svg class="ic" style="width:22px;height:22px"><use href="#${icon}"/></svg></div><div class="slabel">${label}</div><div class="stime">${o.stepTimes[i]}</div></div>`;
+      }).join('');
+    }
+  }
+
+  const banner = document.querySelector('#page-track .live-banner');
+  if (banner) {
+    if (o.live) {
+      banner.style.display = '';
+      const msg = banner.querySelector('.lb-left span:nth-of-type(2)');
+      if (msg) msg.textContent = o.statusSub;
+      const lu = document.getElementById('lastUpdated');
+      if (lu) lu.textContent = o.statusUpdatedAt || new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+
+  // Cancel button â€” shown only while the DB status permits cancellation
+  const cancelCol = document.querySelector('#page-track .cancel-col');
+  if (cancelCol) {
+    cancelCol.style.display = o.cancellable ? '' : 'none';
+    const note = cancelCol.querySelector('.cancel-note');
+    if (note) note.textContent = 'You can cancel until your order is out for delivery.';
+  }
+
+  // ETA card & live map only make sense for an undelivered order with an address
+  const showLogistics = o.hasAddress && !cancelled;
+  const etaMin = document.getElementById('etaMin');
+  const etaCard = etaMin ? etaMin.closest('.card') : null;
+  if (etaCard) etaCard.style.display = showLogistics ? '' : 'none';
+  const mapCard = document.querySelector('#page-track .map-card');
+  if (mapCard) mapCard.style.display = showLogistics ? '' : 'none';
+}
+
+/* ---- Cancel the tracked order via the existing backend endpoint ---- */
+async function cancelTrackedOrder() {
+  const o = CONFIG && CONFIG.ORDER;
+  if (!o || !o.cancellable) {
+    myorderToast('error', 'This order can no longer be cancelled.');
+    return;
+  }
+  if (!window.confirm('Are you sure you want to cancel order ' + o.id + '?')) return;
+  try {
+    const res = await fetch('../includes/order_cancel_customer.php', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order_number: o.orderNumber })
+    });
+    const data = await res.json();
+    if (data.success) {
+      myorderToast('success', data.message || 'Order cancelled successfully.');
+      setTimeout(() => window.location.reload(), 900);
+    } else {
+      myorderToast('error', data.message || 'Failed to cancel the order.');
+    }
+  } catch (err) {
+    console.error(err);
+    myorderToast('error', 'An error occurred while cancelling the order.');
+  }
+}
+
+/* ---- Re-order using the existing cart endpoint (includes/cart.php?action=add) ---- */
+async function reorderOrder(o) {
+  if (!o || !o.itemsList || !o.itemsList.length) {
+    myorderToast('error', 'No items to reorder.');
+    return;
+  }
+  try {
+    for (const it of o.itemsList) {
+      const body = new URLSearchParams();
+      body.append('menu_id', it.menuId ?? 0);
+      body.append('menu_name', it.name);
+      body.append('price', it.qty ? (it.total / it.qty) : 0);
+      body.append('quantity', it.qty);
+      body.append('image', it.img);
+      const res = await fetch('../includes/cart.php?action=add', {
+        method: 'POST',
+        credentials: 'same-origin',
+        body
+      });
+      if (!res.ok) throw new Error('Cart request failed');
+    }
+    myorderToast('success', 'Items added to your cart.');
+    setTimeout(() => { window.location.href = '../client/cart.php'; }, 800);
+  } catch (err) {
+    console.error(err);
+    myorderToast('error', 'Could not add the items to your cart.');
+  }
+}
+
+/* ---------------- NAVIGATION BETWEEN THE TWO "PAGES" ---------------- */
+function showPage(name) {
+  document.getElementById('page-track').classList.toggle('active', name === 'track');
+  document.getElementById('page-list').classList.toggle('active', name === 'list');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (name === 'track') setTimeout(() => { if (map) { map.invalidateSize(); } }, 80);
+}
+
+/* ---------------- TRACK A SPECIFIC ORDER ----------------
+   Rebuilds the tracking page (CONFIG) around the chosen order and
+   resets the live map, which is keyed to the previous order's address. */
+let myorderSelectedOrderNumber = null; // user-picked order, survives polling refreshes
+let riderTimer = null;                 // rider animation interval handle
+
+function resetMap() {
+  if (riderTimer) { clearInterval(riderTimer); riderTimer = null; }
+  if (map) { try { map.remove(); } catch (err) { /* already gone */ } }
+  map = null; riderMarker = null; routeLine = null; routePath = [];
+  distanceKm = 0; etaMinutes = 0;
+  mapBooted = false;
+}
+
+function trackOrder(o) {
+  if (!o) return;
+  const sameOrder = CONFIG && CONFIG.ORDER.orderNumber === o.orderNumber;
+  myorderSelectedOrderNumber = o.orderNumber;
+  CONFIG = myorderBuildConfig(o);
+  renderTrackPage(CONFIG);
+  renderTrackStatus(CONFIG);
+  if (!sameOrder) resetMap();
+  if (!mapBooted) initMap();
+  showPage('track');
+}
+
+/* "Track This Order" inside the details modal — tracks whatever order
+   the modal is currently showing (stored on the modal by openOrderDetails). */
+function trackOrderFromModal() {
+  const modal = document.getElementById('detailsModal');
+  const id = modal && modal.dataset.orderId;
+  const o = id && orders.find((x) => x.id === id);
+  if (o) trackOrder(o);
+  else showPage('track');
+}
+
+/* ---------------- ORDERS LIST (page 2) ---------------- */
+function miniStepper(o) {
+  if (!o.steps) return '';
+  let dots = '', lines = '';
+  o.steps.forEach((s, i) => {
+    const cls = i < o.doneCount - 1 ? 'done' : (i === o.doneCount - 1 ? 'current' : 'pending');
+    const iconHtml = i < o.doneCount - 1
+      ? `<svg class="ic" style="width:15px;height:15px"><use href="#ic-check"/></svg>`
+      : `<svg class="ic" style="width:15px;height:15px"><use href="#${STEP_ICONS[i]}"/></svg>`;
+    dots += `<div class="mini-step ${cls}"><div class="mini-dot">${iconHtml}</div><div class="ml">${myorderEscape(s)}</div><div class="mt">${myorderEscape(o.stepTimes[i])}</div></div>`;
+    if (i < o.steps.length - 1) {
+      lines += `<div class="mini-line-seg ${i < o.doneCount - 1 ? 'done' : 'pending'}"></div>`;
+    }
+  });
+  return `<div class="mini-steps"><div class="mini-line-track">${lines}</div>${dots}</div>`;
+}
+
+function renderOrders(filter) {
+  const wrap = document.getElementById('ordersWrap');
+  if (!wrap) return;
+  const list = orders.filter((o) => filter === 'all' ? true : o.status === filter);
+  if (!list.length) {
+    wrap.innerHTML = '<div class="card order-card"><div class="status-sub">No orders in this category yet.</div></div>';
+    return;
+  }
+  wrap.innerHTML = list.map((o) => `
+    <div class="card order-card ${o.live ? 'is-live' : ''}" data-order-id="${myorderEscape(o.id)}">
+      <div class="order-top">
+        <img class="order-thumb" src="${myorderEscape(o.img)}" alt="${myorderEscape(o.name)}">
+        <div class="order-info">
+          <div class="rname">${myorderEscape(o.name)}</div>
+          <div class="raddr">${myorderEscape(o.addr)}</div>
+          <div class="rmeta">Order ID: ${myorderEscape(o.id)}<br>${myorderEscape(o.date)}<br>${myorderEscape(o.items)}</div>
+        </div>
+        <div class="order-status-col" ${o.trackable ? 'data-action="track" title="View live tracking"' : ''}>
+          <span class="status-pill ${o.status}">${myorderEscape(o.statusLabel)}</span>
+          <div class="status-sub">${myorderEscape(o.statusSub)}</div>
+          ${miniStepper(o)}
+        </div>
+        <div class="order-amount-col">
+          <div class="amt-label">Total Amount</div>
+          <div class="amt-val">${o.amount}</div>
+          <div class="order-btn-col">
+            <button class="obtn outline" data-action="details">View Details</button>
+            ${o.trackable
+              ? '<button class="obtn solid" data-action="track">Track Order</button>'
+              : '<button class="obtn outline" data-action="reorder"><svg class="ic" style="width:13px;height:13px"><use href="#ic-reorder"/></svg> Reorder</button>'}
+          </div>
+        </div>
+      </div>
+      ${o.live ? `<div class="order-mini-live"><span class="lb-left-txt"><span class="live-pill" style="font-size:10px;"><span class="dotpulse"></span> LIVE</span> &nbsp;${myorderEscape(o.statusSub)}</span><span class="mf-sub" style="flex-shrink:0;">Last updated: just now</span></div>` : ''}
+    </div>`).join('');
+}
+
+/* Event delegation â€” no inline handlers on dynamically generated cards */
+const ordersWrapEl = document.getElementById('ordersWrap');
+if (ordersWrapEl) {
+  ordersWrapEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const card = btn.closest('.order-card');
+    const o = orders.find((x) => x.id === (card && card.dataset.orderId));
+    if (!o) return;
+    if (btn.dataset.action === 'details') openOrderDetails(o.id);
+    else if (btn.dataset.action === 'track') trackOrder(o);
+    else if (btn.dataset.action === 'reorder') reorderOrder(o);
+  });
+}
+
+document.querySelectorAll('.tab').forEach((t) => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach((x) => x.classList.remove('active'));
+    t.classList.add('active');
+    currentOrdersFilter = t.dataset.tab;
+    renderOrders(currentOrdersFilter);
+  });
+});
+
+/* =================================================================
+   VIEW DETAILS MODAL â€” looks an order up by id (the tracked CONFIG
+   order first, then the orders list) and renders it into #detailsModal
+   ================================================================= */
+function findOrderById(id) {
+  if (CONFIG && id === CONFIG.ORDER.id) {
+    return {
+      id: CONFIG.ORDER.id,
+      date: CONFIG.ORDER.placedDate + ' | ' + CONFIG.ORDER.placedTime,
+      name: CONFIG.ORDER.name, addr: CONFIG.ORDER.addr, img: CONFIG.ORDER.img,
+      statusLabel: CONFIG.ORDER.statusLabel, statusSub: CONFIG.ORDER.statusSub, status: CONFIG.ORDER.status,
+      itemsList: CONFIG.ORDER.itemsList, bill: CONFIG.ORDER.bill, payment: CONFIG.ORDER.payment
+    };
+  }
+  return orders.find((o) => o.id === id);
+}
+
+function openOrderDetails(id) {
+  const o = findOrderById(id);
+  if (!o) return;
+
+  // Remember which order this modal is showing so "Track This Order"
+  // can switch the tracking page to it
+  const modalEl = document.getElementById('detailsModal');
+  if (modalEl) modalEl.dataset.orderId = id;
+
+  document.getElementById('mOrderMeta').textContent = o.id + ' | ' + o.date;
+  const resThumb = document.getElementById('mResThumb');
+  if (resThumb) { resThumb.src = o.img; resThumb.alt = o.name; }
+  document.getElementById('mResName').textContent = o.name;
+  document.getElementById('mResAddr').textContent = o.addr;
+
+  const pill = document.getElementById('mStatusPill');
+  pill.textContent = o.statusLabel;
+  pill.className = 'status-pill ' + (o.status || 'ongoing');
+  document.getElementById('mStatusSub').textContent = o.statusSub || '';
+
+  document.getElementById('mItemsList').innerHTML = (o.itemsList || []).map((it) => `
+    <div class="item-row">
+      <img src="${myorderEscape(it.img)}" alt="${myorderEscape(it.name)}">
+      <div class="item-info"><div class="item-name">${myorderEscape(it.name)}</div><div class="item-qty">Qty: ${it.qty}</div></div>
+      <div class="item-price">${it.price}</div>
+    </div>`).join('') || '<div class="status-sub">No item details available.</div>';
+
+  const b = o.bill || {};
+  document.getElementById('mBillList').innerHTML = `
+    <div class="modal-bill-row"><span>Subtotal</span><span>${b.subtotal || '--'}</span></div>
+    <div class="modal-bill-row"><span>Delivery Fee</span><span>${b.deliveryFee || '--'}</span></div>
+    <div class="modal-bill-row"><span>Tax</span><span>${b.tax || '--'}</span></div>
+    <div class="modal-bill-row total"><span>Total</span><span>${b.total || '--'}</span></div>`;
+
+  document.getElementById('mPayment').textContent = o.payment || '--';
+  document.getElementById('mOrderTime').textContent = o.date;
+
+  document.getElementById('detailsModal').classList.add('open');
+}
+
+function closeOrderDetails() {
+  document.getElementById('detailsModal').classList.remove('open');
+}
+
+/* =================================================================
+   LIVE MAP â€” real APIs, no hardcoded route:
+   1) Nominatim Geocoding API  â†’ turns the order's delivery address into lat/lng
+   2) OSRM Routing API         â†’ returns the actual road route + real
+                                 distance & duration between those points
+   Both are free, keyless, public OpenStreetMap-ecosystem APIs.
+   ================================================================= */
+const GEOCODE_API = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=';
+const ROUTE_API   = 'https://router.project-osrm.org/route/v1/driving/';
+
+let map, riderMarker, routeLine;
+let routePath = [];
+let distanceKm = 0;
+let etaMinutes = 0;
+
+async function geocode(query) {
+  const res = await fetch(GEOCODE_API + encodeURIComponent(query), {
+    headers: { 'Accept-Language': 'en' }
+  });
+  const data = await res.json();
+  if (!data || !data[0]) throw new Error('No geocode result for ' + query);
+  return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+}
+
+async function fetchRoute(from, to) {
+  const url = `${ROUTE_API}${from.lng},${from.lat};${to.lng},${to.lat}?overview=full&geometries=geojson`;
+  const res = await fetch(url);
+  const data = await res.json();
+  if (!data.routes || !data.routes[0]) throw new Error('No route found');
+  const r = data.routes[0];
+  return {
+    coords: r.geometry.coordinates.map((c) => [c[1], c[0]]), // GeoJSON is [lng,lat] -> flip to [lat,lng]
+    distanceKm: r.distance / 1000,
+    durationMin: r.duration / 60
+  };
+}
+
+// Restaurant location (fixed) and fallback path (only if live APIs are unreachable)
+const fallbackRestaurant = [28.2110, 83.9520];
+const fallbackHome       = [28.2145, 83.9605];
+const fallbackPath = [fallbackRestaurant, [28.2088, 83.9548], [28.2065, 83.9575], [28.2100, 83.9600], [28.2128, 83.9598], fallbackHome];
+
+async function initMap() {
+  if (mapBooted || !CONFIG || !CONFIG.ORDER.hasAddress) return;
+  if (typeof L === 'undefined' || !document.getElementById('map')) return;
+  mapBooted = true;
+
+  map = L.map('map', { zoomControl: true, attributionControl: true }).setView(CONFIG.ROUTE.mapCenter, CONFIG.ROUTE.mapZoom);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    maxZoom: 20,
+    subdomains: 'abcd',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+  }).addTo(map);
+  L.control.scale({ position: 'bottomleft', imperial: false }).addTo(map);
+
+  const restIcon = L.divIcon({ className: '', html: '<div style="background:#fff;border-radius:10px;padding:7px 11px;box-shadow:0 2px 8px rgba(0,0,0,.18);font:600 12px Inter,sans-serif;white-space:nowrap;display:flex;align-items:center;gap:6px;"><span style="width:22px;height:22px;border-radius:6px;background:#fdf0e2;color:#f2994a;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg style="width:14px;height:14px"><use href="#ic-bag"/></svg></span><span><b>' + CONFIG.RESTAURANT.name + '</b><br><span style="font-weight:400;color:#777;font-size:11px;">' + CONFIG.RESTAURANT.address + '</span></span></div>', iconSize: null, iconAnchor: [10, 50] });
+  const homeIcon = L.divIcon({ className: '', html: '<div style="background:#fff;border-radius:10px;padding:7px 11px;box-shadow:0 2px 8px rgba(0,0,0,.18);font:600 12px Inter,sans-serif;white-space:nowrap;display:flex;align-items:center;gap:6px;"><span style="width:22px;height:22px;border-radius:6px;background:#fdeceb;color:#e0392b;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg style="width:14px;height:14px"><use href="#ic-pin"/></svg></span><span><b>Your Location</b><br><span style="font-weight:400;color:#777;font-size:11px;">' + myorderEscape(CONFIG.ROUTE.homeQuery.split(',')[0]) + '</span></span></div>', iconSize: null, iconAnchor: [10, 50] });
+  const riderIcon = L.divIcon({ className: '', html: '<div style="position:relative;width:34px;height:34px;"><div style="position:absolute;top:50%;left:50%;width:34px;height:34px;border-radius:50%;background:rgba(23,138,76,0.25);transform:translate(-50%,-50%);animation:riderPulse 1.6s infinite;"></div><div style="position:relative;width:34px;height:34px;border-radius:50%;background:#178a4c;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.35);"><svg style="width:19px;height:19px"><use href="#ic-bike"/></svg></div></div>', iconSize: [34, 34], iconAnchor: [17, 17] });
+
+  let restaurantPos, homePos;
+  try {
+    // Restaurant position is fixed; the customer point comes from the order's delivery address.
+    restaurantPos = fallbackRestaurant;
+    const g = await geocode(CONFIG.ROUTE.homeQuery);
+    homePos = [g.lat, g.lng];
+
+    const route = await fetchRoute({ lat: restaurantPos[0], lng: restaurantPos[1] }, { lat: homePos[0], lng: homePos[1] });
+    routePath = route.coords;
+    distanceKm = route.distanceKm;
+    etaMinutes = Math.max(Math.round(route.durationMin), 1);
+  } catch (err) {
+    console.warn('Live routing API unavailable, using fallback route:', err);
+    restaurantPos = fallbackRestaurant;
+    homePos = fallbackHome;
+    routePath = fallbackPath;
+  }
+
+  L.marker(restaurantPos, { icon: restIcon }).addTo(map);
+  L.marker(homePos, { icon: homeIcon }).addTo(map);
+  routeLine = L.polyline(routePath, { color: '#178a4c', weight: 4, opacity: 0.9 }).addTo(map);
+  riderMarker = L.marker(routePath[0], { icon: riderIcon }).addTo(map);
+  map.fitBounds(routeLine.getBounds(), { padding: [60, 60] });
+
+  updateEtaUI();
+  // The animated rider only makes sense while the order is actually out for delivery
+  if (CONFIG.ORDER.rawStatus === 'Delivering') animateRider();
+}
+
+function haversine(a, b) {
+  const R = 6371, toRad = (d) => d * Math.PI / 180;
+  const dLat = toRad(b[0] - a[0]), dLon = toRad(b[1] - a[1]);
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a[0])) * Math.cos(toRad(b[0])) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+
+function updateEtaUI() {
+  const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+  set('distVal', distanceKm.toFixed(1) + ' km');
+  set('etaVal', etaMinutes + ' min');
+  set('mfDist', distanceKm.toFixed(1) + ' km away');
+  set('mfEta', etaMinutes + ' min');
+  set('etaMin', etaMinutes + ' min');
+  set('lastUpdated', new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
+}
+
+function cumulativeDistances(path) {
+  const cum = [0];
+  for (let i = 1; i < path.length; i++) {
+    cum.push(cum[i - 1] + haversine(path[i - 1], path[i]));
+  }
+  return cum;
+}
+
+function pointAtFraction(path, cum, frac) {
+  const target = cum[cum.length - 1] * frac;
+  let i = 0;
+  while (i < cum.length - 1 && cum[i + 1] < target) i++;
+  const segLen = cum[i + 1] - cum[i];
+  const t = segLen > 0 ? (target - cum[i]) / segLen : 0;
+  const a = path[i], b = path[Math.min(i + 1, path.length - 1)];
+  return {
+    lat: a[0] + (b[0] - a[0]) * t,
+    lng: a[1] + (b[1] - a[1]) * t,
+    remainingKm: cum[cum.length - 1] - target
+  };
+}
+
+function animateRider() {
+  const RIDE_DURATION_MS = CONFIG.ROUTE.rideDurationMs;
+  const cum = cumulativeDistances(routePath);
+  const startTime = Date.now();
+
+  riderTimer = setInterval(() => {
+    if (routePath.length < 2) return;
+    const elapsed = Date.now() - startTime;
+    const frac = Math.min(elapsed / RIDE_DURATION_MS, 1);
+    const { lat, lng, remainingKm } = pointAtFraction(routePath, cum, frac);
+    riderMarker.setLatLng([lat, lng]);
+
+    distanceKm = Math.max(remainingKm, 0.02);
+    etaMinutes = Math.max(Math.ceil((1 - frac) * (RIDE_DURATION_MS / 60000)), frac >= 1 ? 0 : 1);
+    updateEtaUI();
+  }, 300);
+}
+
+/* =================================================================
+   DATA LOADING â€” pulls the logged-in user's orders from
+   includes/orders_fetch.php and boots the whole page from it.
+   ================================================================= */
+function myorderRenderEmpty(errorMessage) {
+  const wrap = document.getElementById('ordersWrap');
+  if (wrap) wrap.innerHTML = `<div class="card order-card"><div class="status-sub">${myorderEscape(errorMessage || 'You have no orders yet. Browse the menu to place one!')}</div></div>`;
+  if (showPage) showPage('list');
+}
+
+async function myorderFetchData() {
+  const res = await fetch('../includes/orders_fetch.php', { credentials: 'same-origin' });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'Not logged in');
+  return data.orders || [];
+}
+
+function myorderApplyData(rawOrders) {
+  // Skip the re-render entirely when nothing changed — keeps the fast
+  // polling loop cheap and prevents flicker on unchanged data
+  const signature = JSON.stringify(rawOrders);
+  const unchanged = myorderDataSignature !== null && myorderDataSignature === signature && orders.length > 0;
+  myorderDataSignature = signature;
+
+  orders = rawOrders.map(myorderMapOrder);
+  if (unchanged) {
+    // Nothing changed — keep the "Last updated" clock fresh only when the
+    // tracked order has no recorded status-update time
+    const lu = document.getElementById('lastUpdated');
+    if (lu && !(CONFIG && CONFIG.ORDER.statusUpdatedAt)) {
+      lu.textContent = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    }
+    return;
+  }
+
+  renderOrders(currentOrdersFilter);
+
+  const tracked = myorderPickTracked();
+  if (!tracked) {
+    myorderRenderEmpty();
+    return;
+  }
+  const previousStatus = CONFIG ? CONFIG.ORDER.rawStatus : null;
+  CONFIG = myorderBuildConfig(tracked);
+  renderTrackPage(CONFIG);
+  renderTrackStatus(CONFIG);
+  // Boot the map once; afterwards just refresh the UI on status changes
+  if (!mapBooted) initMap();
+  else if (previousStatus && previousStatus !== tracked.rawStatus) {
+    const when = tracked.statusUpdatedAt
+      ? new Date('2000-01-01T' + tracked.statusUpdatedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+      : '';
+    myorderToast('success', 'Order ' + tracked.id + ' is now ' + tracked.statusLabel + (when ? ' — updated at ' + when : '') + '.');
+  }
+}
+
+async function myorderInit() {
+  try {
+    const rawOrders = await myorderFetchData();
+    if (!rawOrders.length) {
+      myorderRenderEmpty();
+      return;
+    }
+    await myorderApplyData(rawOrders);
+
+    // Fast polling keeps the tracking page in sync with the DB.
+    // Skips ticks while the tab is hidden or a request is already running,
+    // and the signature check inside myorderApplyData makes each tick cheap.
+    async function myorderPollTick() {
+      if (myorderInFlight || document.hidden) return;
+      myorderInFlight = true;
+      try {
+        const fresh = await myorderFetchData();
+        if (fresh.length) {
+          myorderApplyData(fresh);
+        } else if (orders.length) {
+          myorderDataSignature = null;
+          orders = [];
+          myorderRenderEmpty();
+        }
+      } catch (err) { /* keep showing the last good data on transient errors */ }
+      finally { myorderInFlight = false; }
+    }
+    setInterval(myorderPollTick, MYORDER_POLL_MS);
+
+    // Instant refresh the moment the user returns to the tab or refocuses,
+    // so a status the admin just changed is shown without waiting a full cycle
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) myorderPollTick(); });
+    window.addEventListener('focus', myorderPollTick);
+  } catch (err) {
+    console.error(err);
+    myorderRenderEmpty('Could not load your orders. Please refresh the page or login again.');
+  }
+}
+
+// Wire the static Cancel Order button (no inline handlers needed)
+const myorderCancelBtn = document.querySelector('#page-track .cancel-btn');
+if (myorderCancelBtn) myorderCancelBtn.addEventListener('click', cancelTrackedOrder);
+
+myorderInit();
