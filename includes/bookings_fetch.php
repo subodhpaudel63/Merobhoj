@@ -79,6 +79,7 @@ while ($row = $result->fetch_assoc()) {
         'grace_end_at'           => $row['grace_end_at'],
         'grace_deadline_display' => $graceDeadlineFormatted,
         'message'                => $row['message'],
+        'created_at'             => $row['created_at'],
     ];
 }
 $stmt->close();

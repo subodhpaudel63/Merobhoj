@@ -152,18 +152,24 @@ document.addEventListener("DOMContentLoaded", function() {
 
   // Check if elements exist before attaching event listeners
   if (getHamburgerIcon && getHamburgerCrossIcon && getMobileMenu) {
-    // Open the mobile menu
-    getHamburgerIcon.addEventListener("click", function () {
-        getMobileMenu.classList.add("show");
-    });
-
-    // Close the mobile menu
-    function closeMenu() {
+    // Toggle the mobile slide menu open/closed
+    function toggleMobileMenu(forceClose) {
+      if (forceClose) {
         getMobileMenu.classList.remove("show");
+      } else {
+        getMobileMenu.classList.toggle("show");
+      }
     }
 
+    // Open/close the mobile menu when the hamburger icon is clicked
+    getHamburgerIcon.addEventListener("click", function () {
+        toggleMobileMenu();
+    });
+
     // Close the mobile menu when the close icon is clicked
-    getHamburgerCrossIcon.addEventListener("click", closeMenu);
+    getHamburgerCrossIcon.addEventListener("click", function () {
+        toggleMobileMenu(true);
+    });
 
     // Close the mobile menu if clicking outside of it
     document.addEventListener("click", function(event) {
@@ -173,7 +179,7 @@ document.addEventListener("DOMContentLoaded", function() {
             var isClickOnIcon = getHamburgerIcon.contains(event.target);
 
             if (!isClickInsideMenu && !isClickOnIcon) {
-                closeMenu();
+                toggleMobileMenu(true);
             }
         }
     });
@@ -1006,58 +1012,61 @@ var GIS_CONFIG = (function () {
 })();
 
 function handleGoogleCredentialResponse(response) {
-        fetch('includes/google_auth.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id_token: response.credential })
+  if (!response || !response.credential) {
+    alert('Google sign-in was cancelled or failed. Please try again.');
+    return;
+  }
+
+  fetch('includes/google_auth.php', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    credentials: 'same-origin',
+    body: JSON.stringify({ id_token: response.credential })
+  })
+    .then(function (res) {
+      if (!res.ok) {
+        throw new Error('Request failed with status ' + res.status);
+      }
+      return res.json();
     })
-    .then(function(res) {
-        return res.json();
+    .then(function (data) {
+      if (data.success) {
+        window.location.href = data.redirect || '/Merobhoj/client/index.php';
+      } else {
+        alert(data.message || 'Google sign-in failed');
+      }
     })
-    .then(function(data) {
-        if (data.success) {
-            window.location.href = data.redirect || '/Merobhoj/client/index.php';
-        } else {
-            alert(data.message || 'Google sign-in failed');
-        }
-    })
-    .catch(function(err) {
-        console.error('Network error during Google sign-in:', err);
-        alert('Network error during Google sign-in');
+    .catch(function (err) {
+      console.error('Network error during Google sign-in:', err);
+      alert('Network error during Google sign-in. Please try again.');
     });
 }
 
-function handleGoogleFallback() {
-    alert('Google Sign-In is not configured yet.\n\nPlease set GOOGLE_CLIENT_ID in config/bootstrap.php');
-}
-
 function renderGoogleButton() {
-    if (!GIS_CONFIG.useFallback) {
-    if (typeof google === 'undefined' || !google.accounts) {
-        setTimeout(renderGoogleButton, 200);
-        return;
-    }
-    try {
-        google.accounts.id.initialize({
-            client_id: GIS_CONFIG.clientId,
-            callback: handleGoogleCredentialResponse,
-            auto_select: false,
-            cancel_on_tap_outside: false,
-        });
-        google.accounts.id.renderButton(
-            document.getElementById('g_id_onload'),
-            { theme: 'outline', size: 'large', width: '100%' }
-        );
-    } catch (e) {
-        console.error('GIS render failed:', e);
-    }
-    } else {
-    }
+  if (!GIS_CONFIG || GIS_CONFIG.useFallback || !GIS_CONFIG.clientId) {
+    return;
+  }
+
+  if (typeof google === 'undefined' || !google.accounts) {
+    setTimeout(renderGoogleButton, 250);
+    return;
+  }
+
+  try {
+    google.accounts.id.initialize({
+      client_id: GIS_CONFIG.clientId,
+      callback: handleGoogleCredentialResponse,
+      auto_select: false,
+      cancel_on_tap_outside: false
+    });
+  } catch (e) {
+    console.error('GIS render failed:', e);
+  }
 }
 
-// Try to render immediately and also on DOMContentLoaded
 if (GIS_CONFIG) {
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', renderGoogleButton);

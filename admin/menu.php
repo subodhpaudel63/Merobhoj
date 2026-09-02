@@ -244,56 +244,10 @@ $buildMenuUrl = static function (array $overrides = []) use ($queryParams): stri
         font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
-    aside {
-        position: sticky;
-        top: 0;
-        height: 100vh;
-        border-right: 1px solid var(--mkj-border);
-        background: #fff;
-    }
+   
+    
 
-    aside .top {
-        margin-top: 0;
-        padding: 1rem 1.1rem;
-        min-height: 61px;
-        border-bottom: 1px solid var(--mkj-border);
-    }
-
-    aside .sidebar {
-        top: 0;
-        height: calc(100vh - 61px);
-        padding-top: 0.8rem;
-        background: #fff;
-    }
-
-    aside .logo {
-        gap: 0;
-    }
-
-    aside .logo h2 {
-        font-size: 1.2rem;
-        line-height: 1;
-        font-weight: 800;
-        letter-spacing: -0.03em;
-    }
-
-    aside .sidebar a {
-        margin-left: 1rem;
-        margin-right: 0.6rem;
-        border-radius: 0 10px 10px 0;
-        height: 3.05rem;
-        font-size: 0.9rem;
-    }
-
-    aside .sidebar a.active {
-        background: #fff4ec;
-        border-left-color: var(--mkj-primary);
-        color: var(--mkj-primary);
-    }
-
-    aside .sidebar a span.msg_count {
-        background: #ff3b30;
-    }
+    
 
     .page-shell {
         padding: 0 1.5rem 2rem 1.5rem;
@@ -983,12 +937,7 @@ $buildMenuUrl = static function (array $overrides = []) use ($queryParams): stri
 
     @media screen and (max-width: 1180px) {
         .container { grid-template-columns:74px minmax(0, 1fr); }
-        aside .top { padding:1rem .45rem; justify-content:center; }
-        aside .logo h2 { font-size:0; }
-        aside .logo h2::after { content:'MKJ'; font-size:.85rem; color:#172033; }
-        aside .sidebar a { width:52px; margin:.25rem auto; padding:0; justify-content:center; border-radius:8px; border-left:0; }
-        aside .sidebar a h3, aside .sidebar a .msg_count { display:none; }
-        aside .sidebar a.active { border-left:0; }
+       
         .page-shell { padding:0 1.25rem 2rem; }
         .stats-row { grid-template-columns:repeat(4, minmax(0,1fr)); }
         .overview-card { grid-column:span 2; }
@@ -1000,13 +949,7 @@ $buildMenuUrl = static function (array $overrides = []) use ($queryParams): stri
 
     @media screen and (max-width: 760px) {
         .container { display:block; }
-        aside { position:fixed; z-index:1001; left:-205px; width:185px; transition:left .22s ease; box-shadow:12px 0 32px rgba(16,24,40,.12); }
-        aside.open { left:0; }
-        aside .top { padding:1rem 1.1rem; justify-content:space-between; }
-        aside .logo h2 { font-size:1.15rem; }
-        aside .logo h2::after { content:none; }
-        aside .sidebar a { width:auto; margin:0 1rem; padding-left:1rem; justify-content:flex-start; border-radius:0 9px 9px 0; }
-        aside .sidebar a h3, aside .sidebar a .msg_count { display:block; }
+       
         .page-shell { padding:0 .85rem 1.5rem; }
         .topbar { margin:0 -.85rem 1rem; padding:0 .85rem; }
         .searchbox { width:min(190px, 38vw); }
@@ -1088,11 +1031,7 @@ $buildMenuUrl = static function (array $overrides = []) use ($queryParams): stri
         .menu-content { padding:.7rem .75rem .75rem; }
     }
 
-    @media screen and (max-width: 760px) {
-        aside[style*="display: block"] { left:0 !important; }
-        .menu-grid { grid-template-columns:repeat(2, minmax(0,1fr)); }
-    }
-
+    
     @media screen and (max-width: 430px) {
         .menu-grid { grid-template-columns:1fr; }
         .menu-image { min-height:160px; height:160px; }
@@ -1101,31 +1040,12 @@ $buildMenuUrl = static function (array $overrides = []) use ($queryParams): stri
   </style>
 </head>
 <body class="admin-page">
+   <?php include_once __DIR__ . '/topbar.php'; ?>
 
    <div class="container">
       <?php include_once __DIR__ . '/sidebar.php'; ?>
 
       <main class="admin-page-main">
-<div class="admin-topbar" aria-label="Admin toolbar">
-              <button type="button" id="menu_bar" class="admin-menu-button" aria-label="Open navigation">
-                  <span class="material-symbols-sharp">menu</span>
-              </button>
-              <div class="admin-topbar-actions">
-                  <div class="theme-toggler" aria-label="Change color theme">
-                      <span class="material-symbols-sharp active">light_mode</span>
-                      <span class="material-symbols-sharp">dark_mode</span>
-                  </div>
-                  <div class="admin-profile">
-                      <div class="admin-profile-copy">
-                          <strong>Subodh Admin</strong>
-                          <small>Administrator</small>
-                      </div>
-                      <div class="profile-photo">
-                          <img src="../assets/img/usersprofiles/adminpic.jpg" alt="Admin profile">
-                      </div>
-                  </div>
-              </div>
-          </div>
           <?php
           $stockTotals = ['In Stock' => 0, 'Low Stock' => 0, 'Out of Stock' => 0];
           foreach ($menu_items as $mi) {
@@ -1749,6 +1669,7 @@ $buildMenuUrl = static function (array $overrides = []) use ($queryParams): stri
        });
   </script>
    
-   <script src="../assets/js/adminscript.js"></script>
+   
+   <script src="../assets/js/adminscript.js?v=<?= filemtime(__DIR__ . '/../assets/js/adminscript.js') ?>"></script>
 </body>
 </html>

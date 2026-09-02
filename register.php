@@ -136,21 +136,23 @@ session_start();
                   </div>
 
                   <!-- Google Sign-In -->
-                  <div class="field-animate d-grid mt-3">
-                    <div id="g_id_onload" style="display:flex;justify-content:center;">
-                      <?php if (GOOGLE_USE_FALLBACK): ?>
-                      <button type="button" id="google-fallback-btn" onclick="handleGoogleFallback()"
-                        style="display:inline-flex;align-items:center;gap:10px;padding:10px 24px;border:1px solid #dadce0;border-radius:6px;background:#fff;color:#3c4043;font-size:15px;font-family:Roboto,sans-serif;cursor:pointer;transition:box-shadow .2s;width:100%;justify-content:center;"
-                        onmouseover="this.style.boxShadow='0 1px 3px rgba(60,64,67,0.3)'" onmouseout="this.style.boxShadow='none'">
-                        <svg width="20" height="20" viewBox="0 0 48 48" style="flex-shrink:0;">
-                          <path fill="#EA4335" d="M24 9.5c3.3 0 6.2 1.1 8.5 3l6.4-6.4C34.9 2.7 29.9 0 24 0 14.6 0 6.6 5.4 2.6 13.4l7.5 5.8C12.2 13.3 17.8 9.5 24 9.5z"/>
-                          <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.2-.4-4.7H24v9.4h12.7c-.6 3.2-2.4 5.9-5.1 7.7l7.5 5.8c4.4-4.1 7-10.2 7-18.2z"/>
-                          <path fill="#FBBC05" d="M10.1 28.2c-1-2.9-1-6 0-8.9L2.6 13.4C.7 17.6 0 21.6 0 24.5s.7 6.9 2.6 11.1l7.5-5.8z"/>
-                          <path fill="#34A853" d="M24 48c6.5 0 12-2.1 16-5.7l-7.5-5.8c-2.4 1.6-5.5 2.6-8.5 2.6-6.2 0-11.8-3.8-13.7-9.4l-7.5 5.8C6.6 42.6 14.6 48 24 48z"/>
-                        </svg>
-                        Continue with Google
-                      </button>
-                      <?php endif; ?>
+                  <div class="field-animate d-grid mt-3 justify-content-center">
+                    <div id="g_id_onload"
+                         data-client_id="<?php echo GOOGLE_CLIENT_ID; ?>"
+                         data-context="signin"
+                         data-ux_mode="popup"
+                         data-auto_prompt="false"
+                         style="display:flex;justify-content:center;width:100%;max-width:300px;">
+                    </div>
+                    <div class="g_id_signin"
+                         data-type="standard"
+                         data-shape="rectangular"
+                         data-theme="outline"
+                         data-text="continue_with"
+                         data-size="large"
+                         data-logo_alignment="left"
+                         data-locale="en"
+                         style="display:flex;justify-content:center;width:100%;max-width:300px;">
                     </div>
                   </div>
 
@@ -173,11 +175,10 @@ session_start();
   <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
   <?php if (!GOOGLE_USE_FALLBACK): ?>
-  <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <?php endif; ?>
 
-<script type="application/json" id="gisConfig"><?php $gcfg = array(); $gcfg['useFallback'] = GOOGLE_USE_FALLBACK; $gcfg['clientId'] = GOOGLE_CLIENT_ID; echo json_encode($gcfg); ?></script>
+  <script type="application/json" id="gisConfig"><?php $gcfg = array(); $gcfg['useFallback'] = GOOGLE_USE_FALLBACK; $gcfg['clientId'] = GOOGLE_CLIENT_ID; echo json_encode($gcfg); ?></script>
 
   <?php include_once __DIR__ . '/footer.php'; ?>
 

@@ -155,32 +155,13 @@ $positive_percent = $total_feedback > 0 ? round(($positive_feedback / $total_fee
   </style>
 </head>
 <body class="admin-page">
+   <?php include_once __DIR__ . '/topbar.php'; ?>
 
    <div class="container">
       <?php include_once __DIR__ . '/sidebar.php'; ?>
 
 
       <main class="admin-page-main">
-         <div class="admin-topbar" aria-label="Admin toolbar">
-            <button type="button" id="menu_bar" class="admin-menu-button" aria-label="Open navigation">
-                <span class="material-symbols-sharp">menu</span>
-            </button>
-            <div class="admin-topbar-actions">
-                <div class="theme-toggler" aria-label="Change color theme">
-                    <span class="material-symbols-sharp active">light_mode</span>
-                    <span class="material-symbols-sharp">dark_mode</span>
-                </div>
-                <div class="admin-profile">
-                    <div class="admin-profile-copy">
-                        <strong>Subodh Admin</strong>
-                        <small>Administrator</small>
-                    </div>
-                    <div class="profile-photo">
-                        <img src="../assets/img/usersprofiles/adminpic.jpg" alt="Admin profile">
-                    </div>
-                </div>
-            </div>
-         </div>
 
          <h1>Customer Feedback</h1>
 
@@ -459,6 +440,7 @@ $positive_percent = $total_feedback > 0 ? round(($positive_feedback / $total_fee
        }
    </script>
 
-   <script src="../assets/js/adminscript.js"></script>
+   
+   <script src="../assets/js/adminscript.js?v=<?= filemtime(__DIR__ . '/../assets/js/adminscript.js') ?>"></script>
 </body>
 </html>

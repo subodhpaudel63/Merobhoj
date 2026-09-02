@@ -152,23 +152,6 @@ if ($recent_res) {
     .status-completed { background: #DCFCE7 !important; color: #15803D !important; }
     .status-cancelled { background: #FEE2E2 !important; color: #B91C1C !important; }
 
-    @media screen and (min-width: 1200px) {
-      .container {
-        grid-template-columns: 14rem auto !important;
-      }
-      .right-column-sidebar {
-        display: none !important;
-      }
-      .desktop-header-profile {
-        display: flex !important;
-      }
-    }
-    @media screen and (max-width: 1199px) {
-      .desktop-header-profile {
-        display: none !important;
-      }
-    }
-
     /* Premium layout CSS rules */
     .orders-layout {
       display: grid;
@@ -264,9 +247,14 @@ if ($recent_res) {
       box-shadow: var(--box-shadow);
       min-width: 0;
       width: 100%;
-      overflow: visible;
+      overflow-y: auto;
       position: sticky;
-      top: 1.25rem;
+      /* Keep the widget below the sticky topbar (height 4.5rem) so it
+         never overlaps the page header while scrolling. */
+      top: calc(4.5rem + 1.25rem);
+      /* Cap the height to the space under the topbar so the card can
+         scroll internally instead of overlapping the page content. */
+      max-height: calc(100vh - 4.5rem - 2.5rem);
       align-self: start;
     }
     .tracking-sidebar * {
@@ -472,6 +460,7 @@ if ($recent_res) {
   </style>
 </head>
 <body class="admin-orders-page">
+   <?php include_once __DIR__ . '/topbar.php'; ?>
    <div class="container">
       <?php include_once __DIR__ . '/sidebar.php'; ?>
       <!-- --------------
@@ -483,26 +472,6 @@ if ($recent_res) {
       --------------- -->
 
        <main class="admin-page-main">
-            <div class="admin-topbar" aria-label="Admin toolbar">
-                <button type="button" id="menu_bar" class="admin-menu-button" aria-label="Open navigation">
-                    <span class="material-symbols-sharp">menu</span>
-                </button>
-                <div class="admin-topbar-actions">
-                    <div class="theme-toggler" aria-label="Change color theme">
-                        <span class="material-symbols-sharp active">light_mode</span>
-                        <span class="material-symbols-sharp">dark_mode</span>
-                    </div>
-                    <div class="admin-profile">
-                        <div class="admin-profile-copy">
-                            <strong>Subodh Admin</strong>
-                            <small>Administrator</small>
-                        </div>
-                        <div class="profile-photo">
-                            <img src="../assets/img/usersprofiles/adminpic.jpg" alt="Admin profile">
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <div class="dashboard-header admin-page-heading">
                 <div>
@@ -778,7 +747,7 @@ if ($recent_res) {
    </div>
 
 
-<script src="../assets/js/adminscript.js"></script>
+
 <script>
 function toggleAdminOrderItems(orderId) {
     const list = document.getElementById('items-list-' + orderId);
@@ -1002,5 +971,6 @@ document.addEventListener('click', function(event) {
 
 
 
+   <script src="../assets/js/adminscript.js?v=<?= filemtime(__DIR__ . '/../assets/js/adminscript.js') ?>"></script>
 </body>
 </html>

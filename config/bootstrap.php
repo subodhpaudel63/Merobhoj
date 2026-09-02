@@ -24,8 +24,8 @@ define('BASE_URL', '/Merobhoj');
 // https://console.cloud.google.com/apis/credentials
 define('GOOGLE_CLIENT_ID', '509413212738-dtagt4qc4cbj5c4v9aabar78jrl3h3o4.apps.googleusercontent.com');
 
-// Show GIS fallback button when client ID is not configured
-define('GOOGLE_USE_FALLBACK', GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com');
+// Use the official Google Identity Services button when a valid client ID is configured.
+define('GOOGLE_USE_FALLBACK', false);
 
 function url(string $path = ''): string {
     $path = ltrim($path, '/');

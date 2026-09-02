@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../config/bootstrap.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth_check.php';
 
@@ -36,6 +37,16 @@ if ($response === false) {
 $payload = json_decode($response, true);
 if (!$payload || isset($payload['error_description'])) {
     echo json_encode(['success' => false, 'message' => 'Invalid Google token']);
+    exit();
+}
+
+if (($payload['aud'] ?? null) !== GOOGLE_CLIENT_ID) {
+    echo json_encode(['success' => false, 'message' => 'Google token is not valid for this app']);
+    exit();
+}
+
+if (($payload['iss'] ?? '') !== 'https://accounts.google.com' && ($payload['iss'] ?? '') !== 'accounts.google.com') {
+    echo json_encode(['success' => false, 'message' => 'Google token issuer is invalid']);
     exit();
 }
 
@@ -132,9 +143,9 @@ try {
 
     $_SESSION['msg'] = ['type' => 'success', 'text' => 'Signed in with Google successfully!'];
 
-    $redirect = '/Masu%20Ko%20Jhol(full)/client/index.php';
+    $redirect = '/Merobhoj/client/index.php';
     if ($user['user_type'] === 'admin') {
-        $redirect = '/Masu%20Ko%20Jhol(full)/admin/index.php';
+        $redirect = '/Merobhoj/admin/index.php';
     }
 
     echo json_encode([

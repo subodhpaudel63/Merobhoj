@@ -158,7 +158,6 @@ if (isset($_COOKIE['user_img'])) {
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
 <defs>
 <symbol id="ic-clipboard" viewBox="0 0 24 24"><path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><rect x="5.5" y="5" width="13" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8.5 12.5l2.3 2.3L15.5 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-<symbol id="ic-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 12.3l2.6 2.6L16.2 9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 <symbol id="ic-pot" viewBox="0 0 24 24"><path d="M4 11h16v3a6 6 0 0 1-6 6H10a6 6 0 0 1-6-6v-3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M2 11h20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8 8c0-1.5 1-2 1-3.5M12 8c0-1.5 1-2 1-3.5M16 8c0-1.5 1-2 1-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
 <symbol id="ic-bag" viewBox="0 0 24 24"><path d="M6 8h12l1 12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L6 8z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 8V6a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
 <symbol id="ic-bike" viewBox="0 0 24 24"><circle cx="6" cy="17" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="18" cy="17" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M6 17l3-7h5l3 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 10h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M14 8h2.5l1.5 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="14" cy="7.3" r="1.3" fill="currentColor"/></symbol>
@@ -177,10 +176,108 @@ if (isset($_COOKIE['user_img'])) {
 
 
 <div class="layout">
-  <div class="main">
+        <div class="main">
+    <section class="page active" id="page-list">
+      <div class="page-head">
+        <div>
+          <h1>My Orders</h1>
+          <div class="breadcrumb">
+            <a href="#" onclick="return false;">Home</a> &gt; <span class="active-crumb">My Orders</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabs-head">
+        <div class="tabs-row">
+          <div class="tab active" data-tab="all">All Orders</div>
+          <div class="tab" data-tab="ongoing">Ongoing</div>
+          <div class="tab" data-tab="delivered">Delivered</div>
+          <div class="tab" data-tab="cancelled">Cancelled</div>
+        </div>
+        <div class="order-filter-wrap">
+          <button type="button" class="filter-btn" aria-expanded="false" aria-controls="ordersFilterMenu">
+            <svg class="ic" style="width:15px;height:15px"><use href="#ic-filter"/></svg>
+            <span id="filterLabel">Filter</span>
+          </button>
+          <div class="order-filter-menu" id="ordersFilterMenu" hidden>
+            <button type="button" class="filter-option selected" data-filter="all">
+              <span>All Orders</span>
+              <span class="filter-check">✓</span>
+            </button>
+            <button type="button" class="filter-option" data-filter="ongoing">
+              <span>Ongoing</span>
+              <span class="filter-check">✓</span>
+            </button>
+            <button type="button" class="filter-option" data-filter="delivered">
+              <span>Delivered</span>
+              <span class="filter-check">✓</span>
+            </button>
+            <button type="button" class="filter-option" data-filter="cancelled">
+              <span>Cancelled</span>
+              <span class="filter-check">✓</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="ordersWrap"></div>
+
+      <div class="list-footer">Can't find your order? <a href="tel:+9779748759699" title="Call customer support: +977 9748759699">Contact Support</a></div>
+    </section>
+     </div>
+</div>
+
+<!-- =================================================================
+     VIEW DETAILS MODAL — shared by "View Details" (orders list) and
+     "View Bill / Order Details" (tracking page). openOrderDetails(id)
+     looks the order up (CONFIG.ORDER for the live one, or the `orders`
+     list) and fills this in — see the JS section for that function.
+     ================================================================= -->
+<div class="modal-overlay" id="detailsModal" onclick="if(event.target===this) closeOrderDetails();">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <h2>Order Details</h2>
+        <div class="modal-sub" id="mOrderMeta">#ORD-1048 &nbsp;|&nbsp; May 30, 2025</div>
+      </div>
+      <button class="modal-close" onclick="closeOrderDetails()">✕</button>
+    </div>
+    <div class="modal-body">
+      <h3>Restaurant</h3>
+      <div class="modal-restaurant">
+        <img id="mResThumb" src="" alt="">
+        <div>
+          <div class="mr-name" id="mResName"></div>
+          <div class="mr-addr" id="mResAddr"></div>
+        </div>
+      </div>
+
+      <h3>Status</h3>
+      <div class="modal-status-row">
+        <span class="status-pill" id="mStatusPill">Out for Delivery</span>
+        <span class="status-sub" id="mStatusSub" style="margin:0;"></span>
+      </div>
+
+      <h3>Items</h3>
+      <div id="mItemsList"></div>
+
+      <h3>Bill Summary</h3>
+      <div id="mBillList"></div>
+
+      <h3>Payment</h3>
+      <div class="modal-bill-row"><span>Payment Method</span><span id="mPayment">Online Payment</span></div>
+      <div class="modal-bill-row"><span>Order Time</span><span id="mOrderTime"></span></div>
+    </div>
+    <div class="modal-footer">
+      <button class="mf-outline" onclick="closeOrderDetails()">Close</button>
+      <button class="mf-solid" onclick="closeOrderDetails(); trackOrderFromModal();">Track This Order</button>
+    </div>
+  </div>
+</div>
+
 
     <!-- ============ PAGE 1 : ORDER TRACKING DETAIL ============ -->
-    <section class="page active" id="page-track">
+        <section class="page" id="page-track">
       <div class="page-head">
         <div class="head-title-row">
           <img class="order-hero-thumb" id="cfgRestaurantThumb" src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=160&h=160&fit=crop" alt="Restaurant">
@@ -213,7 +310,7 @@ if (isset($_COOKIE['user_img'])) {
         </div>
         <div class="stepper">
           <div class="step done"><div class="dot"><svg class="ic" style="width:22px;height:22px"><use href="#ic-clipboard"/></svg></div><div class="slabel">Order Placed</div><div class="stime">10:20 AM</div></div>
-          <div class="step done"><div class="dot"><svg class="ic" style="width:22px;height:22px"><use href="#ic-check"/></svg></div><div class="slabel">Confirmed</div><div class="stime">10:21 AM</div></div>
+          <div class="step done"><div class="dot"><svg class="ic" style="width:22px;height:22px"><use href="#ic-clipboard"/></svg></div><div class="slabel">Confirmed</div><div class="stime">10:21 AM</div></div>
           <div class="step done"><div class="dot"><svg class="ic" style="width:22px;height:22px"><use href="#ic-pot"/></svg></div><div class="slabel">Preparing</div><div class="stime">10:35 AM</div></div>
           <div class="step done"><div class="dot"><svg class="ic" style="width:22px;height:22px"><use href="#ic-bag"/></svg></div><div class="slabel">Ready</div><div class="stime">11:05 AM</div></div>
           <div class="step current"><div class="dot"><svg class="ic" style="width:22px;height:22px"><use href="#ic-bike"/></svg></div><div class="slabel">Out for Delivery</div><div class="stime">11:15 AM</div></div>
@@ -304,83 +401,7 @@ if (isset($_COOKIE['user_img'])) {
         </div>
       </div>
     </section>
-
-    <!-- ============ PAGE 2 : MY ORDERS LIST ============ -->
-    <section class="page" id="page-list">
-      <div class="page-head">
-        <div>
-          <h1>My Orders</h1>
-          <div class="breadcrumb">
-            <a href="#" onclick="return false;">Home</a> &gt; <span class="active-crumb">My Orders</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="tabs-head">
-        <div class="tabs-row">
-          <div class="tab active" data-tab="all">All Orders</div>
-          <div class="tab" data-tab="ongoing">Ongoing</div>
-          <div class="tab" data-tab="delivered">Delivered</div>
-          <div class="tab" data-tab="cancelled">Cancelled</div>
-        </div>
-        <button class="filter-btn"><svg class="ic" style="width:15px;height:15px"><use href="#ic-filter"/></svg> Filter ▾</button>
-      </div>
-
-      <div id="ordersWrap"></div>
-
-      <div class="list-footer">Can't find your order? <a href="tel:+9779748759699" title="Call customer support: +977 9748759699">Contact Support</a></div>
-    </section>
-
-  </div>
-</div>
-
-<!-- =================================================================
-     VIEW DETAILS MODAL — shared by "View Details" (orders list) and
-     "View Bill / Order Details" (tracking page). openOrderDetails(id)
-     looks the order up (CONFIG.ORDER for the live one, or the `orders`
-     list) and fills this in — see the JS section for that function.
-     ================================================================= -->
-<div class="modal-overlay" id="detailsModal" onclick="if(event.target===this) closeOrderDetails();">
-  <div class="modal-box">
-    <div class="modal-head">
-      <div>
-        <h2>Order Details</h2>
-        <div class="modal-sub" id="mOrderMeta">#ORD-1048 &nbsp;|&nbsp; May 30, 2025</div>
-      </div>
-      <button class="modal-close" onclick="closeOrderDetails()">✕</button>
-    </div>
-    <div class="modal-body">
-      <h3>Restaurant</h3>
-      <div class="modal-restaurant">
-        <img id="mResThumb" src="" alt="">
-        <div>
-          <div class="mr-name" id="mResName"></div>
-          <div class="mr-addr" id="mResAddr"></div>
-        </div>
-      </div>
-
-      <h3>Status</h3>
-      <div class="modal-status-row">
-        <span class="status-pill" id="mStatusPill">Out for Delivery</span>
-        <span class="status-sub" id="mStatusSub" style="margin:0;"></span>
-      </div>
-
-      <h3>Items</h3>
-      <div id="mItemsList"></div>
-
-      <h3>Bill Summary</h3>
-      <div id="mBillList"></div>
-
-      <h3>Payment</h3>
-      <div class="modal-bill-row"><span>Payment Method</span><span id="mPayment">Online Payment</span></div>
-      <div class="modal-bill-row"><span>Order Time</span><span id="mOrderTime"></span></div>
-    </div>
-    <div class="modal-footer">
-      <button class="mf-outline" onclick="closeOrderDetails()">Close</button>
-      <button class="mf-solid" onclick="closeOrderDetails(); trackOrderFromModal();">Track This Order</button>
-    </div>
-  </div>
-</div>
+    
 <?php include_once __DIR__ . '/../footer.php'; ?>
 
 
@@ -390,6 +411,7 @@ if (isset($_COOKIE['user_img'])) {
     <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <?php require_once __DIR__ . '/../config/bootstrap.php'; ?>
+    
     <script src="<?php echo asset('js/script.js'); ?>"></script>
     <script src="<?php echo asset('js/toast_notifications.js'); ?>"></script>
     <script src="<?php echo asset('js/clientscript.js'); ?>"></script>

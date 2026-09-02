@@ -3408,7 +3408,24 @@ body.menu-page .card-body .d-flex.gap-2.mt-3 > .btn { justify-content: center; a
 .auth-page .field-animate:nth-child(4) { animation: fadeUp .55s cubic-bezier(.22,1,.36,1) .78s forwards; }
 .auth-page .field-animate:nth-child(5) { animation: fadeUp .55s cubic-bezier(.22,1,.36,1) .84s forwards; }
 .auth-page .field-animate:nth-child(6) { animation: fadeUp .55s cubic-bezier(.22,1,.36,1) .92s forwards; }
-.auth-page #g_id_onload { opacity: 1 !important; transform: none !important; }
+.auth-page #g_id_onload,
+.auth-page .g_id_signin {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100% !important;
+  max-width: 300px !important;
+  margin: 0 auto !important;
+  text-align: center !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+.auth-page .g_id_signin > div,
+.auth-page .g_id_signin iframe,
+.auth-page #g_id_onload > div {
+  margin: 0 auto !important;
+  display: block !important;
+}
 /* Input groups */
 .auth-page .input-group .input-group-text { background: #f8f8f8; border: 1.5px solid #e5e5e5; border-right: none; color: #aaa; transition: border-color .3s ease, background .3s ease, color .3s ease; }
 .auth-page .input-group .form-control { border: 1.5px solid #e5e5e5; border-left: none; background: #fafafa; transition: border-color .3s ease, background .3s ease, box-shadow .3s ease; outline: none; box-shadow: none !important; }

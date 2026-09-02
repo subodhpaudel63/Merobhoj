@@ -125,162 +125,508 @@ b{
 }
 
 /* ===================
-   Aside
-=================== */
-/* ===================
-   Aside
+   Top Header Bar
 =================== */
 
-aside .top {
+.admin-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 500;
+
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    height: 4.5rem;
+    padding: 0 1.5rem;
+
+    margin-left: 15rem;
+
     background: var(--clr-white);
+    border-bottom: 1px solid var(--clr-border);
+
+    transition: margin-left 0.3s ease;
+}
+
+body.sidebar-collapsed .admin-topbar {
+    margin-left: 0;
+}
+
+.admin-topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.admin-menu-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 2.6rem;
+    height: 2.6rem;
+
+    background: transparent;
+    color: var(--clr-dark);
+    cursor: pointer;
+    border-radius: var(--border-radius-1);
+    transition: background 0.2s ease;
+}
+
+.admin-menu-button:hover {
+    background: var(--clr-info-light);
+}
+
+.admin-topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin-left: auto;
+}
+
+/* ===================
+   Date Range Picker
+=================== */
+
+.daterange-picker {
+    position: relative;
+}
+
+.daterange-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    padding: 0.55rem 0.9rem;
+
+    background: var(--clr-white);
+    color: var(--clr-dark);
+    border: 1px solid var(--clr-border);
+    border-radius: 0.6rem;
+
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+
+.daterange-btn:hover {
+    border-color: var(--clr-primary);
+}
+
+.daterange-btn .material-symbols-sharp {
+    font-size: 1.1rem;
+    color: var(--clr-primary);
+}
+
+.daterange-btn .daterange-chevron {
+    color: var(--clr-dark-variant);
+    font-size: 1.2rem;
+    transition: transform 0.2s ease;
+}
+
+.daterange-picker.open .daterange-chevron {
+    transform: rotate(180deg);
+}
+
+
+.daterange-panel {
+    display: none;
+
+    position: absolute;
+    top: calc(100% + 0.6rem);
+    right: 0;
+    z-index: 600;
+
+    min-width: 15rem;
+    padding: 1rem;
+
+    background: var(--clr-white);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--border-radius-2);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+}
+
+.daterange-picker.open .daterange-panel {
+    display: block;
+}
+
+.daterange-field {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: 1.4rem;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
 }
 
-aside .logo {
-    display: flex;
-    gap: 1rem;
+.daterange-field label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--clr-dark-variant);
 }
 
-aside .logo img {
-    width: 2rem;
-    height: 2rem;
+.daterange-field input[type="date"] {
+    padding: 0.4rem 0.5rem;
+    border: 1px solid var(--clr-border);
+    border-radius: 0.45rem;
+    color: var(--clr-dark);
+    background: var(--clr-color-background);
+    font-family: inherit;
+    font-size: 0.8rem;
 }
 
-aside .top div.close span {
-    display: none;
+.daterange-apply {
+    width: 100%;
+    padding: 0.55rem;
+
+    background: var(--clr-primary);
+    color: var(--clr-white);
+    border-radius: 0.45rem;
+
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
 }
 
+.daterange-apply:hover {
+    background: var(--clr-primary-dark);
+}
 
 /* ===================
-   Sidebar
+   Theme Toggle
 =================== */
 
-aside .sidebar {
-    background: var(--clr-white);
-    display: flex;
-    flex-direction: column;
+.theme-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 
-    /* Let the sidebar grow naturally */
-    height: auto;
-    min-height: calc(100vh - 5rem);
+    width: 2.6rem;
+    height: 2.6rem;
 
-    position: relative;
-    top: 1rem;
+    background: transparent;
+    color: var(--clr-dark-variant);
+    border: none;
+    border-radius: 50%;
 
-    /* Scroll only if the screen is too short */
-    overflow-y: auto;
-    overflow-x: hidden;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
 }
 
-aside h3 {
-    font-weight: 500;
+.theme-toggle-btn:hover {
+    background: var(--clr-info-light);
+    color: var(--clr-primary);
+    border-color: var(--clr-primary);
 }
 
+.theme-toggle-btn .material-symbols-sharp {
+    font-size: 1.25rem;
+}
+
+/* ===================
+   Mobile Sidebar Backdrop
+=================== */
+
+.sidebar-backdrop {
+    display: none;
+}
 
 /* ===================
    Sidebar Links
 =================== */
 
-aside .sidebar a {
+
+/* ===================
+   Profile Dropdown
+=================== */
+
+.admin-profile {
+    position: relative;
+}
+
+.admin-profile-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+
+    padding: 0.3rem 0.5rem;
+
+    background: transparent;
+    cursor: pointer;
+    border-radius: 0.6rem;
+    transition: background 0.2s ease;
+}
+
+.admin-profile-btn:hover {
+    background: var(--clr-info-light);
+}
+
+.admin-profile-copy {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    line-height: 1.25;
+}
+
+.admin-profile-copy strong { color: var(--clr-dark); }
+.admin-profile-copy small { color: var(--clr-dark-variant); }
+
+.admin-profile .profile-photo img {
+    display: block;
+    object-fit: cover;
+}
+
+/* Green online dot on the profile avatar */
+
+.admin-profile-btn .profile-photo {
+    position: relative;
+}
+
+.admin-profile-btn .profile-photo::after {
+    content: '';
+
+    position: absolute;
+    right: 0;
+    bottom: 0;
+
+    width: 0.7rem;
+    height: 0.7rem;
+
+    background: #22c55e;
+    border-radius: 50%;
+    border: 2px solid var(--clr-white);
+}
+
+.admin-profile-btn .profile-chevron {
+    font-size: 1.2rem;
+    color: var(--clr-dark-variant);
+    transition: transform 0.2s ease;
+}
+
+.admin-profile.open .profile-chevron {
+    transform: rotate(180deg);
+}
+
+.admin-profile-menu {
+    display: none;
+
+    position: absolute;
+    top: calc(100% + 0.6rem);
+    right: 0;
+    z-index: 600;
+
+    min-width: 11rem;
+    padding: 0.5rem;
+
+    background: var(--clr-white);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--border-radius-2);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+}
+
+.admin-profile.open .admin-profile-menu {
+    display: block;
+}
+
+.admin-profile-menu a {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+
+    padding: 0.55rem 0.7rem;
+
+    color: var(--clr-dark);
+    font-size: 0.82rem;
+    font-weight: 500;
+    border-radius: 0.45rem;
+}
+
+.admin-profile-menu a:hover {
+    background: var(--clr-info-light);
+    color: var(--clr-primary);
+}
+
+.admin-profile-menu a .material-symbols-sharp {
+    font-size: 1.15rem;
+    color: var(--clr-dark-variant);
+}
+
+.admin-profile-menu a.profile-menu-logout {
+    color: var(--clr-danger);
+    border-top: 1px solid var(--clr-border);
+    margin-top: 0.25rem;
+    padding-top: 0.65rem;
+}
+
+.admin-profile-menu a.profile-menu-logout .material-symbols-sharp {
+    color: var(--clr-danger);
+}
+
+/* ===================
+   Sidebar
+=================== */
+
+.admin-page aside.admin-sidebar,
+.admin-orders-page aside.admin-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    width: 15rem;
+    height: 100vh;
+    min-height: 0;
+
+    background: var(--clr-white);
+    border-right: 1px solid var(--clr-border);
+
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+/* Sidebar Logo */
+
+aside.admin-sidebar .sidebar-logo {
+    flex-shrink: 0;
+
     display: flex;
     align-items: center;
 
+    height: 4.5rem;
+    padding: 0 1.5rem;
+    border-bottom: 1px solid var(--clr-border);
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+aside.admin-sidebar .sidebar-logo h2 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--clr-dark);
+    margin: 0;
+}
+
+aside.admin-sidebar .sidebar-logo h2 span {
+    color: var(--clr-danger);
+}
+
+/* Sidebar Nav */
+
+aside.admin-sidebar .sidebar-nav {
+    flex: 1;
+    min-height: 0;
+
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    padding: 1rem 0.9rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+aside.admin-sidebar .sidebar-link {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+
+    padding: 0.7rem 0.9rem;
+
     color: var(--clr-info-dark);
+    font-weight: 500;
+    border-radius: 0.6rem;
 
-    margin-left: 2rem;
-    gap: 1rem;
-
-    height: 3.3rem;
-
-    transition: all .1s ease;
-    text-decoration: none;
-
-    flex-shrink: 0;
+    white-space: nowrap;
+    transition: background 0.2s ease, color 0.2s ease;
 }
 
-aside .sidebar a span {
-    font-size: 1.6rem;
-    transition: all .3s ease-in-out;
-}
-
-
-/* ===================
-   Sidebar Section Titles
-=================== */
-
-aside .sidebar-section-title {
-    font-size: 0.65rem;
-    font-weight: 700;
-
-    text-transform: uppercase;
-    letter-spacing: 0.08rem;
-
+aside.admin-sidebar .sidebar-link .material-symbols-sharp {
+    font-size: 1.45rem;
     color: var(--clr-info-dark);
-
-    margin: 1.2rem 0 0.4rem 2rem;
-
-    flex-shrink: 0;
+    transition: color 0.2s ease;
 }
 
-
-/* First section */
-
-aside .sidebar-section-title:first-child {
-    margin-top: 0;
+aside.admin-sidebar .sidebar-link h3 {
+    font-weight: 500;
+    font-size: 0.92rem;
 }
 
-
-/* ===================
-   Active Link
-=================== */
-
-aside .sidebar a.active {
-    background-color: var(--clr-light);
+aside.admin-sidebar .sidebar-link:hover {
+    background: var(--clr-info-light);
     color: var(--clr-primary);
-
-    margin-left: calc(1rem - 3px);
-
-    border-left: 5px solid var(--clr-primary);
 }
 
-
-/* ===================
-   Hover
-=================== */
-
-aside .sidebar a:hover span {
-    margin-left: 1rem;
+aside.admin-sidebar .sidebar-link:hover .material-symbols-sharp {
+    color: var(--clr-primary);
 }
 
+/* Active Link */
 
-/* ===================
-   Notification Count
-=================== */
+aside.admin-sidebar .sidebar-link.active {
+    background: var(--clr-light);
+    color: var(--clr-primary);
+}
 
-aside .sidebar a span.msg_count {
-    background-color: var(--clr-danger);
+aside.admin-sidebar .sidebar-link.active .material-symbols-sharp {
+    color: var(--clr-primary);
+}
+
+aside.admin-sidebar .sidebar-link.active::before {
+    content: '';
+
+    position: absolute;
+    left: -0.9rem;
+    top: 15%;
+    height: 70%;
+    width: 4px;
+
+    background: var(--clr-primary);
+    border-radius: 0 4px 4px 0;
+}
+
+/* Badge */
+
+aside.admin-sidebar .sidebar-badge {
+    margin-left: auto;
+
+    background: var(--clr-danger);
     color: var(--clr-white);
 
-    padding: 2px 5px;
-    font-size: 11px;
+    padding: 0.12rem 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 700;
 
-    border-radius: var(--border-radius-1);
+    border-radius: 999px;
 }
 
+/* Sidebar Footer (Logout pinned at the bottom) */
+
+aside.admin-sidebar .sidebar-footer {
+    flex-shrink: 0;
+    padding: 1rem 0.9rem 1.4rem;
+}
 
 /* ===================
-   Logout
+   Sidebar Collapsed State (slides out of view)
 =================== */
 
-aside .sidebar a[href="../includes/logout.php"] {
-    position: static;
-    margin-top: 0.8rem;
-    margin-bottom: 1rem;
+body.sidebar-collapsed .admin-page > .container,
+body.sidebar-collapsed .admin-orders-page > .container {
+    margin-left: 0;
+}
 
-    flex-shrink: 0;
+body.sidebar-collapsed .admin-page aside.admin-sidebar,
+body.sidebar-collapsed .admin-orders-page aside.admin-sidebar,
+.admin-page aside.admin-sidebar.is-collapsed,
+.admin-orders-page aside.admin-sidebar.is-collapsed {
+    transform: translateX(-105%);
+    border-right: none;
 }
  /* ----------------------------
  --------- Main--------------
@@ -877,25 +1223,16 @@ MEDIA QUERY
 ****************/
 
 @media screen and (max-width:1200px) {
-    .container {
-        width: 94%;
-        grid-template-columns: 7rem auto 14rem;
+    /* Narrow the fixed sidebar and offset on medium screens */
+    .admin-page aside.admin-sidebar,
+    .admin-orders-page aside.admin-sidebar {
+        width: 13rem;
     }
 
-    aside .sidebar h3 {
-        display: none;
-    }
-
-    aside .sidebar a {
-        width: 5.6rem;
-    }
-
-    /* Keep logout in normal sidebar flow */
-    aside .sidebar a[href="../includes/logout.php"] {
-        position: static;
-        margin-top: 0.8rem;
-        margin-bottom: 1rem;
-        width: 5.6rem;
+    .admin-topbar,
+    .admin-page > .container,
+    .admin-orders-page > .container {
+        margin-left: 13rem;
     }
 
     main .insights {
@@ -920,103 +1257,47 @@ MEDIA QUERY PHONE
     }
 
 
-    /* Mobile Sidebar */
+    /* Mobile Sidebar Drawer */
 
-    aside {
+    .admin-page aside.admin-sidebar,
+    .admin-orders-page aside.admin-sidebar {
         position: fixed;
 
-        width: 18rem;
+        top: 0;
+        left: 0;
+
+        width: 16rem;
         height: 100vh;
 
-        left: -110px;
+        z-index: 1200;
 
-        z-index: 3;
+        border-right: 1px solid var(--clr-border);
 
-        background-color: var(--clr-white);
-
-        display: none;
-
-        animation: menuLeft .3s ease forwards;
+        transform: translateX(-105%);
+        transition: transform 0.3s ease;
     }
 
-
-    @keyframes menuLeft {
-        to {
-            left: 0;
-        }
+    body.sidebar-open .admin-page aside.admin-sidebar,
+    body.sidebar-open .admin-orders-page aside.admin-sidebar {
+        transform: translateX(0);
     }
 
-
-    /* Mobile Sidebar Container */
-
-    aside .sidebar {
-        height: calc(100vh - 5rem);
-        min-height: 0;
-
-        overflow-y: auto;
-        overflow-x: hidden;
-
-        top: 1rem;
-    }
-
-
-    /* Show Logo */
-
-    aside .logo h2 {
+    /* Show labels again on the mobile drawer */
+    .admin-page aside.admin-sidebar .sidebar-link h3,
+    .admin-orders-page aside.admin-sidebar .sidebar-link h3 {
         display: inline;
     }
 
+    /* Mobile Sidebar Backdrop */
 
-    /* Show Menu Text */
-
-    aside .sidebar h3 {
-        display: inline;
-    }
-
-
-    /* Mobile Links */
-
-    aside .sidebar a {
-        width: 100%;
-        height: 3.4rem;
-
-        flex-shrink: 0;
-    }
-
-
-    /* Mobile Section Titles */
-
-    aside .sidebar-section-title {
+    body.sidebar-open .sidebar-backdrop {
         display: block;
-    }
 
+        position: fixed;
+        inset: 0;
+        z-index: 1100;
 
-    /* Mobile Close Button */
-
-    aside .top div.close span {
-        display: inline;
-
-        position: absolute;
-
-        right: 0;
-
-        margin-right: 30px;
-
-        font-size: 35px;
-
-        cursor: pointer;
-    }
-
-
-    /* Keep Logout Normal */
-
-    aside .sidebar a[href="../includes/logout.php"] {
-        position: static;
-
-        width: 100%;
-
-        margin-top: 0.8rem;
-        margin-bottom: 1rem;
+        background: rgba(15, 23, 42, 0.5);
     }
 
 
@@ -1936,61 +2217,10 @@ MEDIA QUERY PHONE
 
 
 /* =========================================
-   FINAL SIDEBAR FIX
+   SIDEBAR (legacy overrides removed)
+   The sidebar is now styled with the shared
+   .admin-sidebar rules near the top of this file.
 ========================================= */
-
-aside {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-aside .top {
-    flex-shrink: 0;
-    margin-top: 1.4rem;
-}
-
-aside .sidebar {
-    flex: 1;
-    min-height: 0;
-    height: auto;
-
-    position: relative;
-    top: 0;
-
-    display: flex;
-    flex-direction: column;
-
-    overflow-y: auto;
-    overflow-x: hidden;
-
-    padding-bottom: 1rem;
-}
-
-
-/* Sidebar links */
-
-aside .sidebar a {
-    flex-shrink: 0;
-}
-
-
-/* Section headings */
-
-aside .sidebar-section-title {
-    flex-shrink: 0;
-}
-
-
-/* Logout */
-
-aside .sidebar a[href="../includes/logout.php"] {
-    position: static !important;
-    margin-top: 0.5rem;
-    margin-bottom: 1rem;
-    flex-shrink: 0;
-}
 
 /* Admin pages: consistent admin shell and toolbar
    Applies to every admin sub-page so the nav bar and layout
@@ -2004,16 +2234,13 @@ aside .sidebar a[href="../includes/logout.php"] {
 
 .admin-orders-page > .container,
 .admin-page > .container {
-  width: min(96%, 1600px);
-  grid-template-columns: 14rem minmax(0, 1fr);
-  gap: 1.8rem;
-}
-
-.admin-orders-page aside,
-.admin-page aside {
-  position: sticky;
-  top: 0;
-  align-self: start;
+  width: auto;
+  max-width: none;
+  margin: 0 0 0 15rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  padding: 1.8rem 2rem;
+  transition: margin-left 0.3s ease;
 }
 
 .admin-orders-page .admin-page-main,
@@ -2028,7 +2255,7 @@ aside .sidebar a[href="../includes/logout.php"] {
    (dashboard, feedback): push it down into the content column and
    hide its obsolete nav row (the shared topbar replaces it). */
 .admin-page > .container > .right {
-  grid-column: 2;
+  grid-column: 1;
   margin-top: 2rem;
   min-width: 0;
 }
@@ -2041,73 +2268,8 @@ aside .sidebar a[href="../includes/logout.php"] {
   margin-left: 0;
 }
 
-.admin-topbar {
-  min-height: 4rem;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  margin-bottom: 1.25rem;
-  padding: 0.55rem 0.8rem;
-  background: var(--clr-white);
-  border: 1px solid var(--clr-border);
-  border-radius: var(--border-radius-2);
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
-}
-
-.admin-menu-button {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  width: 2.6rem;
-  height: 2.6rem;
-  background: transparent;
-  color: var(--clr-dark);
-  cursor: pointer;
-  border-radius: var(--border-radius-1);
-}
-
-.admin-topbar-actions,
-.admin-profile {
-  display: flex;
-  align-items: center;
-}
-
-.admin-topbar-actions { gap: 1.25rem; }
-.admin-profile { gap: 0.75rem; }
-
-.admin-profile-copy {
-  display: flex;
-  flex-direction: column;
-  text-align: right;
-  line-height: 1.25;
-}
-
-.admin-profile-copy strong { color: var(--clr-dark); }
-.admin-profile-copy small { color: var(--clr-dark-variant); }
-.admin-profile .profile-photo img { display: block; object-fit: cover; }
-
-.admin-topbar .theme-toggler {
-  display: flex;
-  width: 4.2rem;
-  height: 1.8rem;
-  overflow: hidden;
-  background: var(--clr-color-background);
-  border-radius: var(--border-radius-1);
-  cursor: pointer;
-}
-
-.admin-topbar .theme-toggler span {
-  width: 50%;
-  display: grid;
-  place-items: center;
-  color: var(--clr-dark-variant);
-  font-size: 1.15rem;
-}
-
-.admin-topbar .theme-toggler span.active {
-  background: var(--clr-primary);
-  color: #fff;
-}
+/* Legacy topbar styles removed — the shared header bar is now
+   defined once near the top of this file (.admin-topbar). */
 
 .admin-page-heading {
   display: flex;
@@ -2147,11 +2309,8 @@ aside .sidebar a[href="../includes/logout.php"] {
 }
 
 @media screen and (max-width: 1200px) {
-  .admin-orders-page > .container,
-  .admin-page > .container {
-    width: 94%;
-    grid-template-columns: 7rem minmax(0, 1fr);
-  }
+  /* Narrow sidebar variant is handled in the earlier 1200px block;
+     nothing extra needed here for the admin shell. */
 }
 
 @media screen and (max-width: 768px) {
@@ -2159,37 +2318,22 @@ aside .sidebar a[href="../includes/logout.php"] {
   .admin-page > .container {
     width: 100%;
     display: block;
-  }
-
-  .admin-orders-page .admin-page-main,
-  .admin-page .admin-page-main {
-    margin-top: 0;
-    padding: 0 1rem 1.5rem;
-  }
-
-  .admin-orders-page aside,
-  .admin-page aside {
-    position: fixed;
-    top: 0;
-    left: 0;
-    align-self: auto;
-    z-index: 100;
+    margin-left: 0;
+    padding: 1rem;
   }
 
   .admin-topbar {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    justify-content: space-between;
-    margin: 0 -1rem 1.25rem;
-    padding-inline: 1rem;
-    border-width: 0 0 1px;
-    border-radius: 0;
+    margin-left: 0;
+    padding: 0.6rem 1rem;
   }
 
-  .admin-menu-button { display: inline-flex; }
+  .daterange-btn {
+    padding: 0.45rem 0.6rem;
+    font-size: 0.75rem;
+  }
+
   .admin-profile-copy { display: none; }
-  .admin-topbar-actions { gap: 0.8rem; }
+  .admin-topbar-actions { gap: 0.6rem; }
   .admin-page-heading { align-items: flex-start; }
 }
 

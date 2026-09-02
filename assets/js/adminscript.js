@@ -73,42 +73,149 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 document.addEventListener('DOMContentLoaded', function() {
-    const menuBar = document.getElementById('menu_bar');
-    const sideBar = document.querySelector('aside');
-    const closeBtn = document.getElementById('close_btn');
+    const body = document.body;
+    const sidebar = document.getElementById('admin_sidebar');
+    const backdrop = document.getElementById('sidebar_backdrop');
 
-    if (menuBar && sideBar) {
-        menuBar.addEventListener('click', function() {
-            sideBar.style.display = 'block';
+    const isMobileView = () => window.innerWidth <= 768;
+
+    // Central handler — exposed globally so the header button's inline
+    // onclick="mkjToggleSidebar(event)" always works.
+    window.mkjToggleSidebar = function(e) {
+        if (e && e.__mkjSidebarHandled) return; // avoid double-toggle from inline + listener
+        if (e) e.__mkjSidebarHandled = true;
+        if (e && e.preventDefault) e.preventDefault();
+        const btn = document.getElementById('menu_toggle');
+        const icon = btn ? btn.querySelector('span') : null;
+
+        if (isMobileView()) {
+            body.classList.toggle('sidebar-open');
+        } else {
+            body.classList.toggle('sidebar-collapsed');
+            if (sidebar) sidebar.classList.toggle('is-collapsed');
+        }
+
+        const hidden = body.classList.contains('sidebar-collapsed') || body.classList.contains('sidebar-open');
+        if (btn) btn.setAttribute('aria-expanded', hidden ? 'false' : 'true');
+        if (icon) icon.textContent = hidden ? 'menu' : 'menu_open';
+    };
+
+    const menuToggle = document.getElementById('menu_toggle');
+    if (menuToggle) {
+        // Direct binding (primary). Inline onclick in topbar.php is the fallback.
+        menuToggle.addEventListener('click', window.mkjToggleSidebar);
+    }
+
+    if (backdrop) {
+        backdrop.addEventListener('click', function() {
+            body.classList.remove('sidebar-open');
+            if (sidebar) sidebar.classList.remove('is-collapsed');
+            const btn = document.getElementById('menu_toggle');
+            if (btn) btn.setAttribute('aria-expanded', 'true');
+            const icon = btn ? btn.querySelector('span') : null;
+            if (icon) icon.textContent = 'menu_open';
         });
     }
 
-    if (closeBtn && sideBar) {
-        closeBtn.addEventListener('click', function() {
-            sideBar.style.display = 'none';
-        });
-    }
-
-    // Keep the sidebar visible by default once the layout is back on
-    // desktop widths. Without this, closing the drawer on mobile would
-    // leave the sidebar hidden even after resizing the window wider.
     window.addEventListener('resize', function() {
-        if (sideBar && window.innerWidth > 768) {
-            sideBar.style.display = '';
+        if (!isMobileView()) {
+            body.classList.remove('sidebar-open');
+            if (sidebar) sidebar.classList.remove('is-collapsed');
         }
     });
 
-    const themeToggler = document.querySelector('.theme-toggler');
-    if (themeToggler) {
-        const themeIcons = themeToggler.querySelectorAll('span');
-        themeIcons.forEach(icon => {
-            icon.addEventListener('click', function() {
-                themeIcons.forEach(i => i.classList.remove('active'));
-                this.classList.add('active');
-                document.body.classList.toggle('dark-theme-variables');
-            });
+    // Theme toggle (with persistence)
+    const themeToggle = document.getElementById('theme_toggle');
+    const themeIcon = themeToggle ? themeToggle.querySelector('span') : null;
+
+    function applyThemeIcon() {
+        if (!themeIcon) return;
+        themeIcon.textContent = document.body.classList.contains('dark-theme-variables')
+            ? 'dark_mode'
+            : 'light_mode';
+    }
+
+    if (localStorage.getItem('mkj_admin_theme') === 'dark') {
+        document.body.classList.add('dark-theme-variables');
+    }
+    applyThemeIcon();
+
+    if (themeToggle) {
+        themeToggle.addEventListener('click', function() {
+            document.body.classList.toggle('dark-theme-variables');
+            localStorage.setItem(
+                'mkj_admin_theme',
+                document.body.classList.contains('dark-theme-variables') ? 'dark' : 'light'
+            );
+            applyThemeIcon();
         });
     }
+
+    // Profile dropdown
+    const profileBtn = document.getElementById('profile_menu_btn');
+    const profileWrap = document.getElementById('profile_dropdown');
+
+    if (profileBtn && profileWrap) {
+        profileBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const isOpen = profileWrap.classList.toggle('open');
+            profileBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            profileWrap.querySelector('.admin-profile-menu').setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+        });
+    }
+
+    // Date range picker
+    const daterangePicker = document.getElementById('daterange_picker');
+    const daterangeBtn = document.getElementById('daterange_btn');
+    const fromInput = document.getElementById('daterange_from');
+    const toInput = document.getElementById('daterange_to');
+    const daterangeLabel = document.getElementById('daterange_label');
+
+    const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    function updateDateRangeLabel() {
+        if (!daterangeLabel || !fromInput || !toInput || !fromInput.value || !toInput.value) return;
+
+        const from = new Date(fromInput.value + 'T00:00:00');
+        const to = new Date(toInput.value + 'T00:00:00');
+        if (isNaN(from.getTime()) || isNaN(to.getTime())) return;
+
+        const short = (d) => `${MONTH_NAMES[d.getMonth()]} ${d.getDate()}`;
+
+        daterangeLabel.textContent = from.getFullYear() === to.getFullYear()
+            ? `${short(from)} \u2013 ${short(to)}, ${to.getFullYear()}`
+            : `${short(from)}, ${from.getFullYear()} \u2013 ${short(to)}, ${to.getFullYear()}`;
+    }
+
+    if (daterangeBtn && daterangePicker) {
+        daterangeBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const isOpen = daterangePicker.classList.toggle('open');
+            daterangeBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            daterangePicker.querySelector('.daterange-panel').setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+        });
+    }
+
+    if (fromInput) fromInput.addEventListener('change', updateDateRangeLabel);
+    if (toInput) toInput.addEventListener('change', updateDateRangeLabel);
+
+    const daterangeApply = document.getElementById('daterange_apply');
+    if (daterangeApply) {
+        daterangeApply.addEventListener('click', function() {
+            updateDateRangeLabel();
+            daterangePicker.classList.remove('open');
+        });
+    }
+
+    // Close any open dropdown when clicking outside of it
+    document.addEventListener('click', function(e) {
+        if (profileWrap && !profileWrap.contains(e.target)) {
+            profileWrap.classList.remove('open');
+        }
+        if (daterangePicker && !daterangePicker.contains(e.target)) {
+            daterangePicker.classList.remove('open');
+        }
+    });
 
     const observerOptions = {
         threshold: 0.1,

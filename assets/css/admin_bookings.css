@@ -911,22 +911,24 @@ body {
 }
 
 .btn-close-modal {
-    background: none;
+    background: #fee2e2;
     border: none;
-    font-size: 1.25rem;
-    color: #64748b;
+    font-size: 1.35rem;
+    color: #dc2626;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 4px;
+    width: 2.25rem;
+    height: 2.25rem;
     border-radius: 50%;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, color 0.2s, transform 0.2s;
 }
 
 .btn-close-modal:hover {
-    background-color: #e2e8f0;
-    color: #0f172a;
+    background-color: #dc2626;
+    color: #ffffff;
+    transform: scale(1.05);
 }
 
 .bookings-modal-body {

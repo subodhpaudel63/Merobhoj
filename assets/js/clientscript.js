@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function () {
   const sessionType = document.querySelector('meta[name="mkj-session-type"]')?.content;
   const sessionText = document.querySelector('meta[name="mkj-session-text"]')?.content;
   if (sessionType && sessionText && window.ToastNotifications) {
@@ -336,48 +336,6 @@
     fetchOrders();
     setInterval(fetchOrders, POLL_MS);
 
-    let serverOffset = 0;
-    const initTimeOffset = (serverTimeStr) => {
-      if (!serverTimeStr) return;
-      serverOffset = new Date(serverTimeStr.replace(' ', 'T')).getTime() - new Date().getTime();
-    };
-    const getServerTime = () => new Date(new Date().getTime() + serverOffset);
-    const fetchBookings = async () => {
-      try {
-        const res = await fetch('../includes/bookings_fetch.php');
-        const data = await res.json();
-        const tbody = document.getElementById('bookings-body');
-        if (!data.ok) { tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">Please login to view your bookings.</td></tr>`; return; }
-        if (data.server_now) initTimeOffset(data.server_now);
-        if (!data.bookings || data.bookings.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No table bookings found.</td></tr>`; return; }
-        tbody.innerHTML = data.bookings.map(b => {
-          const tableLabel = b.table_number || b.table_name || ('Table ' + (b.table_id || 'N/A'));
-          const statusClass = `status-${b.status.toLowerCase()}`;
-          const timerHtml = b.status === 'Confirmed' && b.grace_end_at ? `<div class="countdown-container" data-grace-end="${b.grace_end_at}">--:--</div>` : `<span class="text-muted">-</span>`;
-          return `<tr><td><strong style="color: #0d47a1;">${tableLabel}</strong><br><small class="text-muted">Capacity: ${b.capacity}</small></td><td><strong>${b.formatted_date}</strong><br><span class="text-muted">${b.formatted_time}</span></td><td style="font-weight: 700;">${b.people}</td><td><div class="status-container"><span class="status-badge ${statusClass}">${b.status}</span><div style="margin-top: 5px;">${timerHtml}</div></div></td></tr>`;
-        }).join('');
-      } catch (e) { console.error(e); }
-    };
-    const updateCountdowns = () => {
-      document.querySelectorAll('.countdown-container').forEach(container => {
-        const graceEndStr = container.getAttribute('data-grace-end');
-        if (!graceEndStr) return;
-        const graceEnd = new Date(graceEndStr.replace(' ', 'T'));
-        const bookingTime = new Date(graceEnd.getTime() - (20 * 60 * 1000));
-        const now = getServerTime();
-        if (now < bookingTime) container.innerHTML = `<span style="color:#6b7280;font-size:12px;">Starts at ${bookingTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
-        else if (now >= graceEnd) container.innerHTML = '<span class="grace-expired">Grace period expired</span>';
-        else {
-          const diff = graceEnd - now, mins = Math.floor(diff / 60000), secs = Math.floor((diff % 60000) / 1000);
-          const timeStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-          let colorClass = 'grace-timer'; if (mins < 5) colorClass += ' grace-danger'; else if (mins < 10) colorClass += ' grace-warning';
-          container.innerHTML = `<div style="font-size:11px;color:#d97706;">âš ï¸ Booking started</div><div class="${colorClass}">â³ ${timeStr} left</div>`;
-        }
-      });
-    };
-    fetchBookings();
-    setInterval(fetchBookings, POLL_MS);
-    setInterval(updateCountdowns, 1000);
   }
 });
 
@@ -398,7 +356,7 @@
    No hardcoded demo order data is used anywhere below.
    ================================================================= */
 
-const MYORDER_STEP_ICONS   = ['ic-clipboard', 'ic-check', 'ic-pot', 'ic-bag', 'ic-bike', 'ic-door'];
+const MYORDER_STEP_ICONS   = ['ic-clipboard', 'ic-clipboard', 'ic-pot', 'ic-bag', 'ic-bike', 'ic-door'];
 const STEP_ICONS           = MYORDER_STEP_ICONS; // kept for the mini stepper renderer
 const MYORDER_STEP_LABELS  = ['Order Placed', 'Confirmed', 'Preparing', 'Ready', 'Out for Delivery', 'Delivered'];
 const MYORDER_STATUS_STEP  = { Pending: 0, Confirmed: 1, Preparing: 2, Ready: 3, Delivering: 4, Completed: 5, Cancelled: -1 };
@@ -621,7 +579,7 @@ function renderTrackStatus(cfg) {
       }
       row.innerHTML = MYORDER_STEP_LABELS.map((label, i) => {
         const cls = i < o.doneCount - 1 ? 'done' : (i === o.doneCount - 1 ? 'current' : 'pending');
-        const icon = i < o.doneCount - 1 ? 'ic-check' : MYORDER_STEP_ICONS[i];
+          const icon = MYORDER_STEP_ICONS[i] || 'ic-clipboard';
         return `<div class="step ${cls}"><div class="dot"><svg class="ic" style="width:22px;height:22px"><use href="#${icon}"/></svg></div><div class="slabel">${label}</div><div class="stime">${o.stepTimes[i]}</div></div>`;
       }).join('');
     }
@@ -716,15 +674,30 @@ async function reorderOrder(o) {
 
 /* ---------------- NAVIGATION BETWEEN THE TWO "PAGES" ---------------- */
 function showPage(name) {
-  document.getElementById('page-track').classList.toggle('active', name === 'track');
-  document.getElementById('page-list').classList.toggle('active', name === 'list');
+  const trackEl = document.getElementById('page-track');
+  const listEl = document.getElementById('page-list');
+  const bkEl = document.getElementById('page-bookings');
+  if (trackEl) trackEl.classList.toggle('active', name === 'track');
+  if (listEl) listEl.classList.toggle('active', name === 'list');
+  if (bkEl) bkEl.classList.toggle('active', name === 'bookings');
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  if (name === 'track') setTimeout(() => { if (map) { map.invalidateSize(); } }, 80);
+  if (name === 'track' && trackEl) setTimeout(() => { if (map) { map.invalidateSize(); } }, 80);
 }
 
 /* ---------------- TRACK A SPECIFIC ORDER ----------------
-   Rebuilds the tracking page (CONFIG) around the chosen order and
-   resets the live map, which is keyed to the previous order's address. */
+   On the orders list page (myorder.php) tracking now opens its own
+   standalone page (client/track_order.php?order=<orderNumber>) — like
+   the original design. This helper performs that navigation and also
+   records which order the user picked so any in-page reload keeps it. */
+function openTrackPage(o) {
+  if (!o || !o.orderNumber) return;
+  myorderSelectedOrderNumber = o.orderNumber;
+  window.location.href = 'track_order.php?order=' + encodeURIComponent(o.orderNumber);
+}
+
+/* ---------------- TRACKING STATE ----------------
+   myorderSelectedOrderNumber: the order the user explicitly chose to track
+   (kept so the order survives polling refreshes and page reloads). */
 let myorderSelectedOrderNumber = null; // user-picked order, survives polling refreshes
 let riderTimer = null;                 // rider animation interval handle
 
@@ -736,26 +709,16 @@ function resetMap() {
   mapBooted = false;
 }
 
-function trackOrder(o) {
-  if (!o) return;
-  const sameOrder = CONFIG && CONFIG.ORDER.orderNumber === o.orderNumber;
-  myorderSelectedOrderNumber = o.orderNumber;
-  CONFIG = myorderBuildConfig(o);
-  renderTrackPage(CONFIG);
-  renderTrackStatus(CONFIG);
-  if (!sameOrder) resetMap();
-  if (!mapBooted) initMap();
-  showPage('track');
-}
 
-/* "Track This Order" inside the details modal — tracks whatever order
-   the modal is currently showing (stored on the modal by openOrderDetails). */
+
+/* "Track This Order" inside the details modal — opens the order in its own
+   standalone tracking page (client/track_order.php), like the old design. */
 function trackOrderFromModal() {
   const modal = document.getElementById('detailsModal');
   const id = modal && modal.dataset.orderId;
   const o = id && orders.find((x) => x.id === id);
-  if (o) trackOrder(o);
-  else showPage('track');
+  if (o) openTrackPage(o);
+  else window.location.href = 'track_order.php'; // no order selected -> latest active order
 }
 
 /* ---------------- ORDERS LIST (page 2) ---------------- */
@@ -764,9 +727,8 @@ function miniStepper(o) {
   let dots = '', lines = '';
   o.steps.forEach((s, i) => {
     const cls = i < o.doneCount - 1 ? 'done' : (i === o.doneCount - 1 ? 'current' : 'pending');
-    const iconHtml = i < o.doneCount - 1
-      ? `<svg class="ic" style="width:15px;height:15px"><use href="#ic-check"/></svg>`
-      : `<svg class="ic" style="width:15px;height:15px"><use href="#${STEP_ICONS[i]}"/></svg>`;
+    const iconName = STEP_ICONS[i] || 'ic-clipboard';
+    const iconHtml = `<svg class="ic" style="width:15px;height:15px"><use href="#${iconName}"/></svg>`;
     dots += `<div class="mini-step ${cls}"><div class="mini-dot">${iconHtml}</div><div class="ml">${myorderEscape(s)}</div><div class="mt">${myorderEscape(o.stepTimes[i])}</div></div>`;
     if (i < o.steps.length - 1) {
       lines += `<div class="mini-line-seg ${i < o.doneCount - 1 ? 'done' : 'pending'}"></div>`;
@@ -822,18 +784,60 @@ if (ordersWrapEl) {
     const o = orders.find((x) => x.id === (card && card.dataset.orderId));
     if (!o) return;
     if (btn.dataset.action === 'details') openOrderDetails(o.id);
-    else if (btn.dataset.action === 'track') trackOrder(o);
+        else if (btn.dataset.action === 'track') openTrackPage(o);
     else if (btn.dataset.action === 'reorder') reorderOrder(o);
   });
 }
 
-document.querySelectorAll('.tab').forEach((t) => {
-  t.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach((x) => x.classList.remove('active'));
-    t.classList.add('active');
-    currentOrdersFilter = t.dataset.tab;
-    renderOrders(currentOrdersFilter);
+const ordersFilterBtn = document.querySelector('.filter-btn');
+const ordersFilterMenu = document.getElementById('ordersFilterMenu');
+const ordersFilterLabel = document.getElementById('filterLabel');
+const myorderFilterLabelMap = {
+  all: 'Filter',
+  ongoing: 'Ongoing',
+  delivered: 'Delivered',
+  cancelled: 'Cancelled'
+};
+
+function myorderSyncFilterLabel(filter) {
+  const label = myorderFilterLabelMap[filter] || 'Filter';
+  if (ordersFilterLabel) ordersFilterLabel.textContent = label;
+}
+
+function myorderApplyFilter(filter) {
+  currentOrdersFilter = filter;
+  myorderSyncFilterLabel(filter);
+  document.querySelectorAll('.tab').forEach((x) => x.classList.toggle('active', x.dataset.tab === filter));
+  document.querySelectorAll('.filter-option').forEach((opt) => {
+    opt.classList.toggle('selected', opt.dataset.filter === filter);
   });
+  renderOrders(currentOrdersFilter);
+  if (ordersFilterMenu) ordersFilterMenu.hidden = true;
+  if (ordersFilterBtn) ordersFilterBtn.setAttribute('aria-expanded', 'false');
+}
+
+if (ordersFilterBtn && ordersFilterMenu) {
+  ordersFilterBtn.addEventListener('click', (event) => {
+    event.stopPropagation();
+    const open = !ordersFilterMenu.hidden;
+    ordersFilterMenu.hidden = open;
+    ordersFilterBtn.setAttribute('aria-expanded', String(!open));
+  });
+
+  document.addEventListener('click', (event) => {
+    if (!ordersFilterMenu.contains(event.target) && !ordersFilterBtn.contains(event.target)) {
+      ordersFilterMenu.hidden = true;
+      ordersFilterBtn.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  ordersFilterMenu.querySelectorAll('.filter-option').forEach((option) => {
+    option.addEventListener('click', () => myorderApplyFilter(option.dataset.filter));
+  });
+}
+
+document.querySelectorAll('.tab').forEach((t) => {
+  t.addEventListener('click', () => myorderApplyFilter(t.dataset.tab));
 });
 
 /* =================================================================
@@ -1048,8 +1052,10 @@ function animateRider() {
    ================================================================= */
 function myorderRenderEmpty(errorMessage) {
   const wrap = document.getElementById('ordersWrap');
-  if (wrap) wrap.innerHTML = `<div class="card order-card"><div class="status-sub">${myorderEscape(errorMessage || 'You have no orders yet. Browse the menu to place one!')}</div></div>`;
-  if (showPage) showPage('list');
+    if (wrap) wrap.innerHTML = `<div class="card order-card"><div class="status-sub">${myorderEscape(errorMessage || 'You have no orders yet. Browse the menu to place one!')}</div></div>`;
+  // Only switch to the orders-list section when this page actually has one
+  // (e.g. the standalone track_order.php has no #page-list and must stay visible).
+  if (typeof showPage === 'function' && document.getElementById('page-list')) showPage('list');
 }
 
 async function myorderFetchData() {
@@ -1142,3 +1148,505 @@ const myorderCancelBtn = document.querySelector('#page-track .cancel-btn');
 if (myorderCancelBtn) myorderCancelBtn.addEventListener('click', cancelTrackedOrder);
 
 myorderInit();
+
+
+
+
+
+/* =================================================================
+   TABLE BOOKINGS PAGE (client/booking.php)
+   All data is loaded at runtime from the backend endpoint
+   includes/bookings_fetch.php (JSON, prepared statements, scoped to
+   the logged-in user's email). CSS classes are namespaced with
+   "bk-" so they can never clash with other client pages.
+   ================================================================= */
+
+const BK_STATUS_BUCKET = {
+    'Pending':    'upcoming',
+    'Confirmed':  'confirmed',
+    'Checked-in': 'confirmed',
+    'Completed':  'completed',
+    'Cancelled':  'cancelled',
+    'No-show':    'cancelled'
+};
+
+const bkTimerEl      = document.getElementById('timer');
+const bkTimerSub     = document.getElementById('timerSub');
+const bkTabs         = [...document.querySelectorAll('.bk-tab')];
+const bkFilterWrap   = document.getElementById('filterWrap');
+const bkFilterBtn    = document.getElementById('filterBtn');
+const bkFilterLabel  = document.getElementById('filterLabel');
+const bkFilterOptions = [...document.querySelectorAll('.bk-filter-option')];
+const bkRowsBody     = document.getElementById('rows');
+const bkShown        = document.getElementById('shown');
+const viewModal      = document.getElementById('viewModal');
+const editModal      = document.getElementById('editModal');
+
+const bkFilterNames = {
+    all: 'Filter',
+    upcoming: 'Upcoming',
+    confirmed: 'Confirmed',
+    completed: 'Completed',
+    cancelled: 'Cancelled'
+};
+
+let bkRows = [];
+let bkBookings = [];
+let bkCurrentFilter = 'all';
+let bkServerNow = null;
+
+/* ===== Escape helper for any backend-provided text ===== */
+function bkEscape(value) {
+    return String(value ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+}
+
+/* ===== Grace Timer (from the Checked-in booking's grace_end_at) ===== */
+let graceSeconds = null;
+
+function renderGraceTimer() {
+    if (!bkTimerEl) return; // page without the grace-timer card
+    if (graceSeconds === null || graceSeconds <= 0) {
+        bkTimerEl.textContent = '--:--';
+        if (bkTimerSub) bkTimerSub.textContent = 'No active timer';
+        return;
+    }
+    const m = String(Math.floor(graceSeconds / 60)).padStart(2, '0');
+    const s = String(graceSeconds % 60).padStart(2, '0');
+    bkTimerEl.textContent = `${m}:${s}`;
+}
+
+function computeGraceSeconds() {
+    graceSeconds = null;
+    if (bkTimerSub) bkTimerSub.textContent = 'No active timer';
+
+    const parseDb = s => new Date(String(s).replace(' ', 'T'));
+    const now = bkServerNow ? parseDb(bkServerNow) : new Date();
+
+    for (const b of bkBookings) {
+        if (b.status === 'Checked-in' && b.grace_end_at) {
+            const diff = Math.floor((parseDb(b.grace_end_at) - now) / 1000);
+            if (diff > 0) {
+                graceSeconds = diff;
+                if (bkTimerSub) {
+                    bkTimerSub.textContent = 'Check-in grace for ' + (b.table_name || 'your table')
+                        + (b.grace_deadline_display ? ' until ' + b.grace_deadline_display : '');
+                }
+                break;
+            }
+        }
+    }
+    renderGraceTimer();
+}
+setInterval(() => {
+    if (graceSeconds !== null && graceSeconds > 0) {
+        graceSeconds--;
+        renderGraceTimer();
+    }
+}, 1000);
+
+/* ===== Row rendering ===== */
+const bkPeopleIcon = `<svg class="bk-people-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"></circle><path d="M3.5 20c.7-3.4 2.6-5 5.5-5s4.8 1.6 5.5 5"></path><path d="M16.5 11.5a3 3 0 1 0 0-6"></path><path d="M15.2 15.2c2.6.3 4.3 1.9 5.3 4.8"></path></svg>`;
+const bkCalIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>`;
+const bkClockIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2.5"/></svg>`;
+const bkTableIcon = `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 28h30"/><path d="M20 25h24"/><path d="M23 28v13"/><path d="M41 28v13"/><path d="M14 41h9M41 41h9"/><path d="M13 21h10M41 21h10"/><path d="M16 21v9M48 21v9"/><path d="M25 28v-7M39 28v-7"/><path d="M32 21v7"/></svg>`;
+
+function bkGuestLabel(people) {
+    return `${people} ${Number(people) === 1 ? 'Person' : 'People'}`;
+}
+
+function bkBuildRow(b) {
+    const bucket = BK_STATUS_BUCKET[b.status] || 'upcoming';
+    const pillClass = { upcoming: 'bk-up', confirmed: 'bk-ok', completed: 'bk-done', cancelled: 'bk-bad' }[bucket] || 'bk-up';
+    const cancellable = b.status === 'Pending';
+
+    const tr = document.createElement('tr');
+    tr.dataset.status = bucket;
+    tr.dataset.id = b.id;
+    tr._booking = b;
+
+    const tableLabel = bkEscape(b.table_name || 'Table');
+    const areaLabel = b.capacity ? `${b.capacity} seats` : '—';
+    const bookedOn = b.created_at ? bkEscape(b.created_at) : '';
+
+    tr.innerHTML = `
+        <td>
+            <div class="bk-detail">
+                <div class="bk-table-pic">${bkTableIcon}</div>
+                <div>
+                    <div class="bk-idline">
+                        <span class="bk-id">#BK-${String(b.id).padStart(4, '0')}</span>
+                        <span class="bk-pill ${pillClass}">${bkEscape(b.status)}</span>
+                    </div>
+                    <div class="bk-restaurant">Mero Bhoj Restaurant</div>
+                    ${bookedOn ? `<div class="bk-booked">Booked on ${bookedOn}</div>` : ''}
+                </div>
+            </div>
+        </td>
+        <td>
+            <div class="bk-icon-line">${bkCalIcon}<span class="bk-primary">${bkEscape(b.formatted_date || b.booking_date)}</span></div>
+            <div class="bk-icon-line">${bkClockIcon}<span class="bk-primary">${bkEscape(b.formatted_time || b.booking_time)}</span></div>
+        </td>
+        <td>
+            <div class="bk-guest">
+                <div class="bk-guest-line bk-primary">${bkPeopleIcon}<span>${bkEscape(bkGuestLabel(b.people))}</span></div>
+            </div>
+        </td>
+        <td>
+            <div class="bk-table-name">♜ ${tableLabel}</div>
+            <div class="bk-area">${bkEscape(areaLabel)}</div>
+        </td>
+        <td>
+            <div class="bk-booking-status">
+                <span class="bk-status-text bk-status-${bucket}">${bkEscape(b.status)}</span>
+            </div>
+        </td>
+        <td>
+            <div class="bk-money">—</div>
+            <div class="bk-pay">Pay at restaurant</div>
+        </td>
+        <td>
+            <div class="bk-actions">
+                <button class="bk-view" type="button">View Details</button>
+                <button class="bk-cancel" type="button" ${cancellable ? '' : 'disabled style="opacity:.55;cursor:not-allowed"'}>Cancel</button>
+            </div>
+        </td>`;
+    return tr;
+}
+
+function bkRenderRows() {
+    if (!bkRowsBody) return;
+    bkRowsBody.innerHTML = '';
+    for (const b of bkBookings) {
+        bkRowsBody.appendChild(bkBuildRow(b));
+    }
+    bkRows = [...bkRowsBody.querySelectorAll('tr')];
+}
+
+
+/* ===== Filtering / counters ===== */
+let bkLastViewedRow = null;
+
+function bkVisibleRows(filter) {
+    return bkRows.filter(row => filter === 'all' || row.dataset.status === filter);
+}
+
+function bkUpdateCounters() {
+    const counts = { all: bkRows.length, upcoming: 0, confirmed: 0, completed: 0, cancelled: 0 };
+    bkRows.forEach(row => {
+        const k = row.dataset.status;
+        if (k in counts) counts[k]++;
+    });
+    document.querySelectorAll('[data-count]').forEach(badge => {
+        const key = badge.dataset.count;
+        if (key in counts) badge.textContent = counts[key];
+    });
+}
+
+function bkRenderEmptyState() {
+    const existing = document.getElementById('emptyRow');
+    if (existing) existing.remove();
+
+    if (bkRowsBody && bkVisibleRows(bkCurrentFilter).length === 0) {
+        const tr = document.createElement('tr');
+        tr.id = 'emptyRow';
+        tr.innerHTML = `<td colspan="7" class="bk-empty-bookings"><strong>No bookings found</strong><span>Bookings from your database will appear here.</span></td>`;
+        bkRowsBody.appendChild(tr);
+    }
+}
+
+function bkApplyFilter(filter) {
+    bkCurrentFilter = filter;
+
+    bkRows.forEach(row => {
+        row.style.display = (filter === 'all' || row.dataset.status === filter) ? '' : 'none';
+    });
+
+    const visible = bkVisibleRows(filter);
+    if (bkShown) bkShown.textContent = visible.length ? `1 to ${visible.length} of ${visible.length}` : '0 of 0';
+
+    bkTabs.forEach(tab => tab.classList.toggle('active', tab.dataset.filter === filter));
+    bkFilterOptions.forEach(option => option.classList.toggle('selected', option.dataset.filterChoice === filter));
+
+    if (bkFilterLabel) bkFilterLabel.textContent = bkFilterNames[filter] || 'Filter';
+    if (bkFilterWrap) bkFilterWrap.classList.remove('open');
+    if (bkFilterBtn) bkFilterBtn.setAttribute('aria-expanded', 'false');
+
+    bkRenderEmptyState();
+}
+
+/* ===== Upcoming booking card ===== */
+function bkRenderUpcoming() {
+    const textEl = document.getElementById('upcomingBookingText');
+    const tableEl = document.getElementById('upcomingBookingTable');
+    if (!textEl || !tableEl) return;
+
+    const today = bkServerNow ? String(bkServerNow).slice(0, 10) : new Date().toISOString().slice(0, 10);
+    const upcoming = bkBookings
+        .filter(b => ['Pending', 'Confirmed', 'Checked-in'].includes(b.status) && b.booking_date >= today)
+        .sort((a, b) => `${a.booking_date} ${a.booking_time}`.localeCompare(`${b.booking_date} ${b.booking_time}`))[0];
+
+    if (upcoming) {
+        textEl.textContent = `${upcoming.formatted_date || upcoming.booking_date} · ${upcoming.formatted_time || upcoming.booking_time}`;
+        tableEl.textContent = `${upcoming.table_name || 'Table'} · ${bkGuestLabel(upcoming.people)}`;
+    } else {
+        textEl.textContent = 'No upcoming booking';
+        tableEl.textContent = 'No table scheduled';
+    }
+}
+
+/* ===== Modal system ===== */
+function openModal(el) {
+    if (!el) return;
+    el.classList.add('show');
+    el.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+}
+function closeModal(el) {
+    if (!el) return;
+    el.classList.remove('show');
+    el.style.display = 'none';
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+}
+
+function bkFillViewModal(b) {
+    document.getElementById('viewId').textContent = `#BK-${String(b.id).padStart(4, '0')}`;
+    document.getElementById('viewRestaurant').textContent = 'Mero Bhoj Restaurant';
+    document.getElementById('viewName').textContent = b.name || '—';
+    document.getElementById('viewStatus').textContent = b.status || '—';
+    document.getElementById('viewDate').textContent = b.formatted_date || b.booking_date || '—';
+    document.getElementById('viewTime').textContent = b.formatted_time || b.booking_time || '—';
+    document.getElementById('viewGuests').textContent = bkGuestLabel(b.people);
+    document.getElementById('viewTable').textContent = b.table_name || '—';
+    document.getElementById('viewAmount').textContent = 'Pay at restaurant';
+    document.getElementById('viewBooked').textContent = b.created_at || '—';
+}
+
+function bkFillEditModal(b) {
+    const set = (id, value) => { const el = document.getElementById(id); if (el) el.value = value ?? ''; };
+    set('editName', b.name);
+    set('editDate', b.booking_date);
+    set('editTime', (b.booking_time || '').slice(0, 5));
+    set('editMessage', b.message);
+
+    const guests = document.getElementById('editGuests');
+    const guestValue = bkGuestLabel(b.people);
+    if (guests && [...guests.options].some(o => o.value === guestValue)) guests.value = guestValue;
+
+    const table = document.getElementById('editTable');
+    if (table && b.table_name && [...table.options].some(o => o.value === b.table_name)) {
+        table.value = b.table_name;
+    }
+}
+
+
+/* ===== Cancel booking (backend) ===== */
+async function bkCancelBooking(row, button) {
+    const b = row._booking;
+    if (!b || button.disabled) return;
+
+    if (!window.confirm('Are you sure you want to cancel this booking?')) return;
+
+    button.disabled = true;
+    button.textContent = 'Cancelling…';
+
+    try {
+        const res = await fetch('../includes/cancel_booking_customer.php', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: b.id })
+        });
+        const data = await res.json();
+
+        if (!data.ok) throw new Error(data.message || 'Could not cancel the booking.');
+
+        // Update the row in place
+        row.dataset.status = 'cancelled';
+        b.status = 'Cancelled';
+
+        const pill = row.querySelector('.bk-pill');
+        if (pill) {
+            pill.textContent = 'Cancelled';
+            pill.className = 'bk-pill bk-bad';
+        }
+        const status = row.querySelector('.bk-status-text');
+        if (status) {
+            status.textContent = 'Cancelled';
+            status.className = 'bk-status-text bk-status-cancelled';
+        }
+        button.textContent = 'Cancelled';
+        button.style.opacity = '.65';
+
+        bkUpdateCounters();
+        bkApplyFilter(bkCurrentFilter);
+        if (window.showToast) {
+            window.showToast('success', 'Booking cancelled successfully.');
+        } else {
+            alert('Booking cancelled successfully.');
+        }
+    } catch (err) {
+        button.disabled = false;
+        button.textContent = 'Cancel';
+        if (window.showToast) {
+            window.showToast('error', err.message || 'Could not cancel the booking.');
+        } else {
+            alert(err.message || 'Could not cancel the booking.');
+        }
+    }
+}
+
+/* ===== Global click handling (modals + row actions) ===== */
+document.addEventListener('click', function (e) {
+    const view = e.target.closest('.bk-view');
+    const cancel = e.target.closest('.bk-cancel');
+    const close = e.target.closest('[data-close]');
+    const edit = e.target.closest('#viewEditBtn');
+    const save = e.target.closest('#saveEdit');
+
+    if (view) {
+        e.preventDefault();
+        const row = view.closest('tr');
+        if (!row || !row._booking) return;
+        bkLastViewedRow = row;
+        bkFillViewModal(row._booking);
+        openModal(viewModal);
+        return;
+    }
+
+    if (cancel) {
+        e.preventDefault();
+        const row = cancel.closest('tr');
+        if (row && row._booking) bkCancelBooking(row, cancel);
+        return;
+    }
+
+    if (close) {
+        e.preventDefault();
+        closeModal(document.getElementById(close.dataset.close));
+        return;
+    }
+
+    if (edit) {
+        e.preventDefault();
+        if (!bkLastViewedRow || !bkLastViewedRow._booking) return;
+        bkFillEditModal(bkLastViewedRow._booking);
+        closeModal(viewModal);
+        openModal(editModal);
+        return;
+    }
+
+
+    if (save) {
+        e.preventDefault();
+        if (!bkLastViewedRow || !bkLastViewedRow._booking) return;
+        const b = bkLastViewedRow._booking;
+
+        const nameEl = document.getElementById('editName');
+        const guestsEl = document.getElementById('editGuests');
+        const newName = nameEl ? nameEl.value.trim() : '';
+        const newGuests = guestsEl ? guestsEl.value : '';
+
+        if (newName) b.name = newName;
+        const guestMatch = newGuests.match(/^(\d+)/);
+        if (guestMatch) b.people = parseInt(guestMatch[1], 10);
+
+        // Reflect the change in the row (guests cell)
+        const guestEl = bkLastViewedRow.querySelector('td:nth-child(3) .bk-primary');
+        if (guestEl) guestEl.innerHTML = `${bkPeopleIcon}<span>${bkEscape(bkGuestLabel(b.people))}</span>`;
+
+        const msg = document.getElementById('saveMsg');
+        if (msg) {
+            msg.classList.add('show');
+            setTimeout(() => {
+                msg.classList.remove('show');
+                closeModal(editModal);
+            }, 900);
+        } else {
+            closeModal(editModal);
+        }
+        return;
+    }
+
+    if (e.target === viewModal) closeModal(viewModal);
+    if (e.target === editModal) closeModal(editModal);
+});
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        closeModal(viewModal);
+        closeModal(editModal);
+        if (bkFilterWrap) bkFilterWrap.classList.remove('open');
+        if (bkFilterBtn) bkFilterBtn.setAttribute('aria-expanded', 'false');
+    }
+});
+
+const editForm = document.getElementById('editForm');
+if (editForm) editForm.addEventListener('submit', e => e.preventDefault());
+
+// Hide the dialogs up-front (pages without modals are simply skipped)
+if (viewModal) viewModal.style.display = 'none';
+if (editModal) editModal.style.display = 'none';
+
+/* ===== Filter UI wiring ===== */
+bkTabs.forEach(tab => tab.addEventListener('click', () => bkApplyFilter(tab.dataset.filter)));
+
+if (bkFilterBtn) {
+    bkFilterBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        const isOpen = bkFilterWrap.classList.toggle('open');
+        bkFilterBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+}
+bkFilterOptions.forEach(option => {
+    option.addEventListener('click', e => {
+        e.stopPropagation();
+        bkApplyFilter(option.dataset.filterChoice);
+    });
+});
+document.addEventListener('click', e => {
+    if (bkFilterWrap && !bkFilterWrap.contains(e.target)) {
+        bkFilterWrap.classList.remove('open');
+        if (bkFilterBtn) bkFilterBtn.setAttribute('aria-expanded', 'false');
+    }
+});
+
+/* ===== Backend data loading ===== */
+function bkRenderLoadError(message) {
+    if (!bkRowsBody) return;
+    bkRowsBody.innerHTML = `<tr id="emptyRow"><td colspan="7" class="bk-empty-bookings"><strong>${bkEscape(message)}</strong><span>Try refreshing the page or login again.</span></td></tr>`;
+    bkRows = [];
+}
+
+async function bkLoadBookings() {
+    if (!bkRowsBody) return; // not on the bookings page
+
+    try {
+        const res = await fetch('../includes/bookings_fetch.php', { credentials: 'same-origin' });
+        const data = await res.json();
+
+        if (!data.ok) {
+            bkRenderLoadError(data.error || 'Could not load your bookings.');
+            return;
+        }
+
+        bkBookings = data.bookings || [];
+        bkServerNow = data.server_now || null;
+
+        bkRenderRows();
+        bkUpdateCounters();
+        bkApplyFilter(bkCurrentFilter);
+        bkRenderUpcoming();
+        computeGraceSeconds();
+    } catch (err) {
+        console.error(err);
+        bkRenderLoadError('Could not load your bookings. Please refresh the page.');
+    }
+}
+
+bkLoadBookings();
+
+

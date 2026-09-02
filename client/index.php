@@ -105,9 +105,16 @@ if (isset($_COOKIE['user_img'])) {
               >
             </li>
             <li class="list-unstyled py-2">
-              <a class="text-decoration-none text-uppercase p-4" href="./myorder.php"
+              <a class="text-decoration-none text-uppercase p-4" href="./myorder.php#"
                 >My Order</a>
             </li>
+
+            
+             <li class="list-unstyled py-2">
+              <a class="text-decoration-none text-uppercase p-4" href="./booking.php"
+                >Booking</a>
+            </li>
+
             <?php if (!$currentUser): ?>
               <li class="list-unstyled py-2">
                 <a class="btn btn-gradient" href="<?php echo url('/login.php'); ?>">Login</a>
@@ -233,6 +240,10 @@ if (isset($_COOKIE['user_img'])) {
                   href="./myorder.php"
                   >My Order</a
                 >
+                 <li class="list-unstyled py-2">
+              <a class="text-decoration-none text-uppercase p-4" href="./booking.php"
+                >Booking</a>
+            </li>
               </li>
               <li class="list-unstyled py-2">
                 <a
