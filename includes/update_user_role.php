@@ -8,7 +8,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $role = $_POST['role'] ?? '';
 
     // Validate role
-    if (!in_array($role, ['user', 'admin'])) {
+    $allowed_roles = ['user', 'admin', 'manager', 'chef', 'waiter', 'rider'];
+    if (!in_array($role, $allowed_roles, true)) {
         $response = ['success' => false, 'message' => 'Invalid role.'];
         
         // Check if this is an AJAX request

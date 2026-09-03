@@ -21,7 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Validate user type
-    if (!in_array($user_type, ['user', 'admin'])) {
+    $allowed_user_types = ['user', 'admin', 'manager', 'chef', 'waiter', 'rider'];
+    if (!in_array($user_type, $allowed_user_types, true)) {
         $_SESSION['msg'] = ['type' => 'error', 'text' => 'Invalid user type.'];
         header("Location: /Merobhoj/admin/users.php");
         exit;

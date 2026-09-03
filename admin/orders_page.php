@@ -828,40 +828,17 @@ function handleOrderDelete(orderNumber, orderId) {
 }
 
 function showDeleteConfirmation(orderNumber, orderId) {
-    const modalHtml = `
-        <div id="deleteConfirmModal" class="delete-confirm-overlay">
-            <div class="delete-confirm-modal">
-                <div class="icon-wrapper">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2">
-                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
-                    </svg>
-                </div>
-                <h3>Delete Order?</h3>
-                <p>Order ${orderNumber} will be permanently deleted. This action cannot be undone.</p>
-                <div class="delete-confirm-buttons">
-                    <button class="btn-cancel" onclick="closeDeleteConfirmation()">Cancel</button>
-                    <button class="btn-delete-confirm" onclick="confirmDelete('${orderNumber}', ${orderId})">Delete</button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    const existingModal = document.getElementById('deleteConfirmModal');
-    if (existingModal) existingModal.remove();
-    
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    
-    document.getElementById('deleteConfirmModal').addEventListener('click', function(e) {
-        if (e.target === this) closeDeleteConfirmation();
+    openDeleteConfirm({
+        title: 'Delete Order?',
+        message: `Order ${orderNumber} will be permanently deleted. This action cannot be undone.`,
+        onConfirm: function () {
+            confirmDelete(orderNumber, orderId);
+        }
     });
 }
 
 function closeDeleteConfirmation() {
-    const modal = document.getElementById('deleteConfirmModal');
-    if (modal) {
-        modal.style.animation = 'fadeOut 0.3s ease-in-out';
-        setTimeout(() => modal.remove(), 300);
-    }
+    closeDeleteConfirm();
 }
 
 function confirmDelete(orderNumber, orderId) {

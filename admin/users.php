@@ -65,6 +65,17 @@ foreach($users as $user) {
     if($user['user_type'] === 'admin') $admin_users++;
 }
 // All users are considered active since there's no is_active column
+
+// Badge color per user type (Bootstrap is not loaded on this page,
+// so the type badges are styled inline)
+$userTypeBadgeColors = [
+    'admin'   => '#e84118',
+    'manager' => '#7380ec',
+    'chef'    => '#ffa502',
+    'waiter'  => '#00b894',
+    'rider'   => '#0984e3',
+    'user'    => '#2ed573',
+];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -332,6 +343,10 @@ foreach($users as $user) {
                    <select id="user_type" name="user_type">
                      <option value="user">Regular User</option>
                      <option value="admin">Admin</option>
+                      <option value="manager">Manager</option>
+                      <option value="chef">Chef</option>
+                      <option value="waiter">Waiter</option>
+                      <option value="rider">Rider</option>
                    </select>
                  </div>
                  <div class="form-group">
@@ -364,7 +379,7 @@ foreach($users as $user) {
                     <td><?php echo intval($user['id']); ?></td>
                     <td><?php echo htmlspecialchars($user['email']); ?></td>
                     <td>
-                      <span class="badge <?php echo $user['user_type'] === 'admin' ? 'bg-danger' : 'bg-success'; ?>">
+                      <span style="display: inline-block; padding: 0.3rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; color: #fff; background: <?php echo htmlspecialchars($userTypeBadgeColors[$user['user_type']] ?? '#94a3b8'); ?>;">
                         <?php echo ucfirst(htmlspecialchars($user['user_type'])); ?>
                       </span>
                     </td>
@@ -395,13 +410,13 @@ foreach($users as $user) {
                         
                         <?php if ($user['user_type'] === 'admin' && $user['email'] !== 'subodhpaudel0000@gmail.com'): ?>
                           <!-- Admin user - show delete button only (except main admin) -->
-                          <form action="../includes/delete_user.php" method="post" class="action-form" onsubmit="return confirm('Delete this admin permanently? This action cannot be undone.');" style="margin:0;">
+                          <form action="../includes/delete_user.php" method="post" class="action-form" onsubmit="return confirmFormDelete(event, 'Delete Admin?', 'This admin account will be permanently deleted. This action cannot be undone.');" style="margin:0;">
                             <input type="hidden" name="user_id" value="<?php echo intval($user['id']); ?>">
                             <button type="submit" class="btn-danger" style="height:32px; padding: 0 10px; display:inline-flex; align-items:center; justify-content:center;">Delete Admin</button>
                           </form>
                           <span class="admin-badge" style="height:32px; display:inline-flex; align-items:center; justify-content:center;">Admin User</span>
                         <?php elseif ($user['user_type'] !== 'admin'): ?>
-                          <form action="../includes/delete_user.php" method="post" class="action-form" onsubmit="return confirm('Delete this user permanently?');" style="margin:0;">
+                          <form action="../includes/delete_user.php" method="post" class="action-form" onsubmit="return confirmFormDelete(event, 'Delete User?', 'This user account will be permanently deleted. This action cannot be undone.');" style="margin:0;">
                             <input type="hidden" name="user_id" value="<?php echo intval($user['id']); ?>">
                             <button type="submit" class="btn-danger" style="height:32px; padding: 0 10px; display:inline-flex; align-items:center; justify-content:center;">Delete</button>
                           </form>

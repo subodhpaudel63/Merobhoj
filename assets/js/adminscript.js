@@ -1,5 +1,5 @@
 // Admin-side shared behaviors
-// Used by: admin/login.php, admin/index.php, admin/menu.php, admin/orders_page.php, admin/bookings.php, admin/order_view.php, admin/analytics.php, admin/feedback.php, admin/users.php
+// Used by: admin/login.php, admin/index.php, admin/menu.php, admin/orders_page.php, admin/bookings.php, admin/order_view.php, admin/feedback.php, admin/users.php
 
 function showBookingToast(message, type = 'info') {
     const toast = document.createElement('div');
@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const isMobileView = () => window.innerWidth <= 768;
 
-    // Central handler — exposed globally so the header button's inline
+    // Central handler â€” exposed globally so the header button's inline
     // onclick="mkjToggleSidebar(event)" always works.
     window.mkjToggleSidebar = function(e) {
         if (e && e.__mkjSidebarHandled) return; // avoid double-toggle from inline + listener
@@ -341,13 +341,6 @@ function exportPDF() {
     window.print();
 }
 
-function setAnalyticsRange(range) {
-    const url = new URL(window.location.href);
-    url.searchParams.set('date_range', range);
-    url.searchParams.delete('start_date');
-    url.searchParams.delete('end_date');
-    window.location.href = url.toString();
-}
 
 function showFullMessage(event, anchor) {
     if (event) event.preventDefault();
@@ -385,292 +378,613 @@ function closeAddressModal() {
     if (modal) modal.style.display = 'none';
 }
 
-function openFeedbackModal(name, message, rating, date) {
-    const modal = document.getElementById('feedbackModal');
-    if (!modal) return;
-    const title = modal.querySelector('#modalTitle');
-    const modalDate = modal.querySelector('#modalDate');
-    const stars = modal.querySelector('#modalStars');
-    const body = modal.querySelector('#modalMsgBody');
-    if (title) title.textContent = name || 'Guest';
-    if (modalDate) modalDate.textContent = date || '';
-    if (stars) stars.textContent = '★'.repeat(Number(rating || 0));
-    if (body) body.textContent = message || '';
-    modal.style.display = 'flex';
-}
 
-function closeModal() {
-    const modal = document.getElementById('feedbackModal');
-    if (modal) modal.style.display = 'none';
-}
 
-function deleteFeedback(id, name, button) {
-    if (!confirm(`Delete feedback from ${name}?`)) return;
-    if (button) button.disabled = true;
-    fetch(`../includes/delete_feedback.php?id=${encodeURIComponent(id)}`, { method: 'POST' })
-        .then(() => window.location.reload())
-        .catch(() => {
-            alert('Unable to delete feedback right now.');
-            if (button) button.disabled = false;
-        });
-}
 
-function initAnalyticsCharts() {
-    const payload = window.analyticsPayload;
-    if (!payload || typeof Chart === 'undefined') return;
-    const charts = payload.charts || payload;
+/* ============================================================
+   Scoped in an IIFE and guarded so it only runs on the feedback
+   page (this file is shared by the other admin pages).
+   Review data is injected by feedback.php into
+   window.__FEEDBACK_DATA__ (fetched from the feedback table) â€”
+   no dummy/seed data lives here.
+   Delete  -> ../includes/delete_feedback.php  (POST feedback_id)
+   Add     -> ../includes/feedback_form.php    (POST name/email/rating/comments)
+   Note: the response feature is kept in memory only â€” the
+   feedback table has no response column yet.
+   ============================================================ */
+(function () {
+    // Feedback page only â€” skip everywhere else
+    if (!document.getElementById('reviewTable')) return;
 
-    const legacySalesCanvas = document.getElementById('salesChart');
-    const legacyStatusCanvas = document.getElementById('orderStatusChart');
-    const legacySalesDataEl = document.getElementById('analyticsSalesData');
-    const legacyOrderStatsEl = document.getElementById('analyticsOrderStats');
-    if (legacySalesCanvas && legacyStatusCanvas && legacySalesDataEl && legacyOrderStatsEl) {
-        const salesData = JSON.parse(legacySalesDataEl.textContent || '[]');
-        const orderStats = JSON.parse(legacyOrderStatsEl.textContent || '[]');
+    const reviews = Array.isArray(window.__FEEDBACK_DATA__)
+        ? window.__FEEDBACK_DATA__
+        : [];
 
-        new Chart(legacySalesCanvas.getContext('2d'), {
-            type: 'line',
-            data: {
-                labels: salesData.map((item) => item.date),
-                datasets: [
-                    {
-                        label: 'Revenue (Rs)',
-                        data: salesData.map((item) => item.revenue),
-                        borderColor: '#667eea',
-                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                        tension: 0.4,
-                    },
-                    {
-                        label: 'Orders',
-                        data: salesData.map((item) => item.order_count),
-                        borderColor: '#764ba2',
-                        backgroundColor: 'rgba(118, 75, 162, 0.1)',
-                        tension: 0.4,
-                    },
-                ],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: { y: { beginAtZero: true } },
-            },
-        });
+    let selectedReviewId = null;
 
-        new Chart(legacyStatusCanvas.getContext('2d'), {
-            type: 'doughnut',
-            data: {
-                labels: orderStats.map((item) => item.status),
-                datasets: [{
-                    data: orderStats.map((item) => item.count),
-                    backgroundColor: ['#4CAF50', '#2196F3', '#FF9800', '#F44336'],
-                }],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } },
-            },
-        });
-        return;
+    const $ = id => document.getElementById(id);
+
+    function pct(n, total) {
+        return total ? Math.round((n / total) * 100) : 0;
     }
 
-    const revenueCanvas = document.getElementById('revenueChart');
-    const ordersCanvas = document.getElementById('ordersChart');
-    const paymentCanvas = document.getElementById('paymentChart');
-    const paymentLegend = document.getElementById('paymentLegend');
-    if (!revenueCanvas || !ordersCanvas || !paymentCanvas) return;
-
-    const lineOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { display: false },
-            tooltip: {
-                backgroundColor: '#0f172a',
-                titleColor: '#fff',
-                bodyColor: '#fff',
-                padding: 12,
-                cornerRadius: 12,
-            },
-        },
-        scales: {
-            x: {
-                grid: { display: false },
-                ticks: { color: '#64748b', maxRotation: 0, autoSkip: true },
-            },
-            y: {
-                beginAtZero: true,
-                grid: { color: 'rgba(148, 163, 184, 0.18)' },
-                ticks: { color: '#64748b' },
-            },
-        },
-    };
-
-    if (window.analyticsCharts && typeof window.analyticsCharts.destroy === 'function') {
-        window.analyticsCharts.destroy();
+    function stars(rating) {
+        return "â˜…".repeat(rating) + "â˜†".repeat(5 - rating);
     }
-    window.analyticsCharts = window.analyticsCharts || {};
 
-    window.analyticsCharts.revenue = new Chart(revenueCanvas.getContext('2d'), {
-        type: 'line',
-        data: {
-            labels: charts.labels,
-            datasets: [{
-                data: charts.revenue,
-                borderColor: '#ff6a00',
-                backgroundColor: 'rgba(255, 106, 0, 0.12)',
-                fill: true,
-                borderWidth: 3,
-                pointRadius: 3,
-                pointHoverRadius: 5,
-                tension: 0.38,
-            }],
-        },
-        options: {
-            ...lineOptions,
-            scales: {
-                ...lineOptions.scales,
-                y: {
-                    ...lineOptions.scales.y,
-                    ticks: {
-                        color: '#64748b',
-                        callback: (value) => `\u20B9${Number(value).toLocaleString()}`,
-                    },
-                },
-            },
-        },
+    function initials(name) {
+        return name.split(/\s+/).map(x => x[0]).join("").slice(0, 2).toUpperCase();
+    }
+
+    function formatDate(iso) {
+        if (!iso) return "";
+        const [y, m, d] = iso.split("-").map(Number);
+        return new Date(y, m - 1, d).toLocaleDateString("en-US", {
+            month: "short", day: "numeric", year: "numeric"
+        });
+    }
+
+    function escapeHtml(value) {
+        return String(value)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+    /* Newest review first: DB rows arrive newest-first (created_at DESC)
+       and reviews added through the modal get a much larger timestamp id. */
+    function getLatestReview() {
+        return reviews.reduce(
+            (latest, review) => (!latest || review.id > latest.id ? review : latest),
+            null
+        );
+    }
+
+    function getFilteredReviews() {
+        const search = $("searchInput").value.trim().toLowerCase();
+        const rating = $("ratingFilter").value;
+        const from = $("dateFrom").value;
+        const to = $("dateTo").value;
+
+        return reviews.filter(r => {
+            const textMatch = !search ||
+                `${r.name} ${r.email} ${r.review}`.toLowerCase().includes(search);
+
+            const ratingMatch = rating === "all" || String(r.rating) === rating;
+
+            const fromMatch = !from || r.isoDate >= from;
+            const toMatch = !to || r.isoDate <= to;
+
+            return textMatch && ratingMatch && fromMatch && toMatch;
+        });
+    }
+
+    function updateFilterSummary() {
+        const parts = [];
+        const search = $("searchInput").value.trim();
+        const rating = $("ratingFilter").value;
+        const from = $("dateFrom").value;
+        const to = $("dateTo").value;
+
+        if (search) parts.push(`Search: "${search}"`);
+        if (rating !== "all") parts.push(`${rating} star${rating === "1" ? "" : "s"}`);
+        if (from || to) parts.push(`${from ? formatDate(from) : "Any"} - ${to ? formatDate(to) : "Any"}`);
+
+        $("filterSummary").hidden = parts.length === 0;
+        $("summaryText").textContent = parts.join(" â€¢ ");
+
+        $("clearSearch").hidden = !search;
+
+        $("dateBtnText").textContent =
+            from || to
+                ? `${from ? formatDate(from) : "Any"} - ${to ? formatDate(to) : "Any"}`
+                : "Select Date Range";
+    }
+
+    function render() {
+        const filtered = getFilteredReviews();
+        const total = reviews.length;
+
+        const avg = total
+            ? reviews.reduce((sum, r) => sum + r.rating, 0) / total
+            : 0;
+
+        const positive = reviews.filter(r => r.rating >= 4).length;
+        const responded = reviews.filter(r => r.responded).length;
+
+        $("totalReviews").textContent = total;
+        $("averageRating").textContent = `${avg.toFixed(1)} / 5`;
+        $("averageStars").textContent = stars(Math.round(avg));
+        $("ratingBased").textContent = `Based on ${total} review${total === 1 ? "" : "s"}`;
+        $("positiveRatio").textContent = `${pct(positive, total)}%`;
+        $("positiveCount").textContent = `(${positive} positive)`;
+        $("responseRate").textContent = `${pct(responded, total)}%`;
+        $("responseText").textContent = responded
+            ? `${responded} response${responded === 1 ? "" : "s"} sent`
+            : "No responses yet";
+
+        const counts = [1, 2, 3, 4, 5].map(
+            n => reviews.filter(r => r.rating === n).length
+        );
+
+        const [one, two, three, four, five] = counts;
+        const low = one + two;
+
+        $("donutTotal").textContent = total;
+        $("fiveCount").textContent = `${five} (${pct(five, total)}%)`;
+        $("fourCount").textContent = `${four} (${pct(four, total)}%)`;
+        $("threeCount").textContent = `${three} (${pct(three, total)}%)`;
+        $("lowCount").textContent = `${low} (${pct(low, total)}%)`;
+
+        for (let n = 1; n <= 5; n++) {
+            const count = counts[n - 1];
+            $("bar" + n).style.width = pct(count, total) + "%";
+            $("dist" + n).textContent = `${count} (${pct(count, total)}%)`;
+        }
+
+        if (total) {
+            let start = 0;
+            const colors = ["#e83e54", "#e83e54", "#ff641b", "#fbb12a", "#32c36c"];
+            const pieces = [];
+
+            counts.forEach((count, index) => {
+                const end = start + (count / total) * 360;
+                if (count) pieces.push(`${colors[index]} ${start}deg ${end}deg`);
+                start = end;
+            });
+
+            $("donut").style.background =
+                pieces.length
+                    ? `conic-gradient(${pieces.join(", ")})`
+                    : "#edf0f4";
+        } else {
+            $("donut").style.background = "#edf0f4";
+        }
+
+        const tbody = $("reviewTable");
+        tbody.innerHTML = "";
+
+        filtered.forEach(review => {
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+                <td>
+                    <div class="customer">
+                        <div class="avatar">${initials(review.name)}</div>
+                        <div>${escapeHtml(review.name)}</div>
+                    </div>
+                </td>
+
+                <td class="email">${escapeHtml(review.email)}</td>
+
+                <td class="rating-cell">
+                    <span class="stars">${stars(review.rating)}</span>
+                    <span class="rating-num">${review.rating} / 5</span>
+                </td>
+
+                <td class="review-text">${escapeHtml(review.review)}</td>
+
+                <td class="date-cell">
+                    ${formatDate(review.isoDate)}
+                    <br>
+                    <span class="email">${review.time}</span>
+                </td>
+
+                <td>
+                    <div class="action">
+                        <button class="view-action" data-id="${review.id}">
+                            <i data-lucide="eye"></i>
+                            View
+                        </button>
+                        <button class="delete" data-delete="${review.id}">
+                            <i data-lucide="trash-2"></i>
+                            Delete
+                        </button>
+                    </div>
+                </td>
+            `;
+
+            tbody.appendChild(row);
+        });
+
+        $("emptyState").hidden = filtered.length !== 0;
+        $("resultCount").textContent =
+            `${filtered.length} result${filtered.length === 1 ? "" : "s"}`;
+
+        $("showingText").textContent = filtered.length
+            ? `Showing 1 to ${filtered.length} of ${total} review${total === 1 ? "" : "s"}`
+            : "No reviews to show";
+
+        const latest = getLatestReview();
+
+        $("activity").innerHTML = latest
+            ? `
+                <div class="activity-item">
+                    <div class="activity-avatar">${initials(latest.name)}</div>
+                    <div class="activity-copy">
+                        <strong>${escapeHtml(latest.name)}</strong>
+                        <p>gave a ${latest.rating}-star rating.</p>
+                        <span class="activity-rating">${latest.rating} â˜…</span>
+                    </div>
+                    <span class="activity-time">${latest.time}</span>
+                </div>
+            `
+            : `<p>No activity yet.</p>`;
+
+        updateFilterSummary();
+
+        lucide.createIcons();
+    }
+
+    /* Search */
+    $("searchInput").addEventListener("input", render);
+
+    $("clearSearch").addEventListener("click", () => {
+        $("searchInput").value = "";
+        render();
     });
 
-    window.analyticsCharts.orders = new Chart(ordersCanvas.getContext('2d'), {
-        type: 'line',
-        data: {
-            labels: charts.labels,
-            datasets: [{
-                data: charts.orders,
-                borderColor: '#22a55f',
-                backgroundColor: 'rgba(34, 165, 95, 0.12)',
-                fill: true,
-                borderWidth: 3,
-                pointRadius: 3,
-                pointHoverRadius: 5,
-                tension: 0.38,
-            }],
-        },
-        options: lineOptions,
+    /* Rating */
+    $("ratingFilter").addEventListener("change", render);
+
+    /* Date picker */
+    $("dateBtn").addEventListener("click", () => {
+        $("datePopover").hidden = !$("datePopover").hidden;
     });
 
-    const paymentColors = ['#5b9dd9', '#45c4b0', '#f5b335'];
-    window.analyticsCharts.payment = new Chart(paymentCanvas.getContext('2d'), {
-        type: 'doughnut',
-        data: {
-            labels: charts.paymentLabels,
-            datasets: [{
-                data: charts.paymentValues,
-                backgroundColor: paymentColors,
-                borderWidth: 0,
-                hoverOffset: 4,
-            }],
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '68%',
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: (context) => {
-                            const value = context.raw || 0;
-                            const total = charts.paymentTotal || 1;
-                            const percentage = Math.round((value / total) * 100);
-                            return ` ${context.label}: ${percentage}% (\u20B9${Number(value).toLocaleString()})`;
-                        },
-                    },
-                },
-            },
-        },
+    $("closeDatePopover").addEventListener("click", () => {
+        $("datePopover").hidden = true;
     });
 
-    if (paymentLegend) {
-        paymentLegend.innerHTML = charts.paymentLabels.map((label, index) => `
-            <div class="payment-legend-item">
-                <span class="payment-dot" style="background:${paymentColors[index]}"></span>
-                <div>
-                    <span class="payment-label">${label}</span>
-                    <span class="payment-meta">${charts.paymentPercentages[index]}% (\u20B9${Number(charts.paymentValues[index]).toLocaleString()})</span>
+    $("applyDate").addEventListener("click", () => {
+        const from = $("dateFrom").value;
+        const to = $("dateTo").value;
+
+        if (from && to && from > to) {
+            alert("The start date cannot be after the end date.");
+            return;
+        }
+
+        $("datePopover").hidden = true;
+        render();
+    });
+
+    $("clearDate").addEventListener("click", () => {
+        $("dateFrom").value = "";
+        $("dateTo").value = "";
+        $("datePopover").hidden = true;
+        render();
+    });
+
+    /* Filter button */
+    $("filterBtn").addEventListener("click", () => {
+        const filtered = getFilteredReviews();
+        $("filterBtn").classList.toggle("active-filter", filtered.length !== reviews.length);
+        render();
+    });
+
+    /* Reset */
+    $("resetBtn").addEventListener("click", () => {
+        $("searchInput").value = "";
+        $("ratingFilter").value = "all";
+        $("dateFrom").value = "";
+        $("dateTo").value = "";
+        $("datePopover").hidden = true;
+        render();
+    });
+
+    $("clearAllFilters").addEventListener("click", () => {
+        $("resetBtn").click();
+    });
+
+    /* Add review modal */
+    $("openReview").addEventListener("click", () => {
+        $("reviewModal").hidden = false;
+        $("customerName").focus();
+    });
+
+    $("closeReview").addEventListener("click", () => {
+        $("reviewModal").hidden = true;
+    });
+
+    $("reviewModal").addEventListener("click", e => {
+        if (e.target === $("reviewModal")) $("reviewModal").hidden = true;
+    });
+
+    /* Add review â€” saved through the existing feedback form endpoint */
+    $("reviewForm").addEventListener("submit", e => {
+        e.preventDefault();
+
+        const submitBtn = e.target.querySelector(".submit-review");
+        if (submitBtn) submitBtn.disabled = true;
+
+        const payload = new FormData();
+        payload.append("name", $("customerName").value.trim());
+        payload.append("email", $("customerEmail").value.trim());
+        payload.append("rating", $("customerRating").value);
+        payload.append("comments", $("customerReview").value.trim());
+
+        fetch("../includes/feedback_form.php", { method: "POST", body: payload })
+            .then(res => res.json())
+            .then(result => {
+                if (!result || result.status !== "success") {
+                    alert((result && result.message) || "Unable to save the review.");
+                    return;
+                }
+
+                const now = new Date();
+                const iso = now.toISOString().slice(0, 10);
+
+                reviews.push({
+                    id: now.getTime(), // temporary id until the page is reloaded
+                    name: $("customerName").value.trim(),
+                    email: $("customerEmail").value.trim(),
+                    rating: Number($("customerRating").value),
+                    review: $("customerReview").value.trim(),
+                    isoDate: iso,
+                    date: formatDate(iso),
+                    time: now.toLocaleTimeString("en-US", {
+                        hour: "2-digit",
+                        minute: "2-digit"
+                    }),
+                    responded: false
+                });
+
+                $("reviewForm").reset();
+                $("reviewModal").hidden = true;
+                render();
+            })
+            .catch(() => alert("Unable to save the review right now."))
+            .finally(() => {
+                if (submitBtn) submitBtn.disabled = false;
+            });
+    });
+
+    /* View modal */
+    function openView(id) {
+        const review = reviews.find(r => r.id === id);
+        if (!review) return;
+
+        selectedReviewId = id;
+
+        $("viewAvatar").textContent = initials(review.name);
+        $("viewName").textContent = review.name;
+        $("viewEmail").textContent = review.email;
+
+        $("viewRating").innerHTML = `
+            <span>${stars(review.rating)}</span>
+            <span class="rating-label">${review.rating}.0 / 5</span>
+        `;
+
+        $("viewReview").textContent = review.review;
+        $("viewDate").textContent = formatDate(review.isoDate);
+        $("viewTime").textContent = review.time;
+
+        $("viewModal").hidden = false;
+        lucide.createIcons();
+    }
+
+    document.addEventListener("click", e => {
+        const viewButton = e.target.closest(".view-action");
+        const deleteButton = e.target.closest(".delete");
+
+        if (viewButton) {
+            openView(Number(viewButton.dataset.id));
+        }
+
+        if (deleteButton) {
+            deleteReview(Number(deleteButton.dataset.delete));
+        }
+    });
+
+    function closeView() {
+        $("viewModal").hidden = true;
+    }
+
+    $("closeView").addEventListener("click", closeView);
+    $("closeViewBottom").addEventListener("click", closeView);
+
+    $("viewModal").addEventListener("click", e => {
+        if (e.target === $("viewModal")) closeView();
+    });
+
+    /* Delete â€” removed from the database through delete_feedback.php */
+    function deleteReview(id) {
+        const review = reviews.find(r => r.id === id);
+
+        if (!review) return;
+
+        openDeleteConfirm({
+            title: 'Delete Review?',
+            message: `The review from ${review.name} will be permanently deleted. This action cannot be undone.`,
+            onConfirm: function () { performReviewDelete(id); }
+        });
+    }
+
+    function performReviewDelete(id) {
+        const payload = new FormData();
+        payload.append("feedback_id", id);
+
+        fetch("../includes/delete_feedback.php", { method: "POST", body: payload })
+            .then(res => res.json())
+            .then(result => {
+                if (!result || !result.success) {
+                    alert((result && result.message) || "Unable to delete the review.");
+                    return;
+                }
+
+                const index = reviews.findIndex(r => r.id === id);
+                if (index !== -1) reviews.splice(index, 1);
+
+                if (selectedReviewId === id) {
+                    closeView();
+                    selectedReviewId = null;
+                }
+
+                render();
+            })
+            .catch(() => alert("Unable to delete the review right now."));
+    }
+
+    /* Response â€” in memory only (no response column in the feedback table yet) */
+    function openResponse(id) {
+        const review = reviews.find(r => r.id === id);
+        if (!review) return;
+
+        selectedReviewId = id;
+        $("responseFor").textContent = `Responding to ${review.name}`;
+        $("responseTextInput").value = "";
+        $("viewModal").hidden = true;
+        $("responseModal").hidden = false;
+        $("responseTextInput").focus();
+    }
+
+    $("writeResponse").addEventListener("click", () => {
+        const latest = getLatestReview();
+
+        if (!latest) {
+            alert("Add a review first.");
+            return;
+        }
+
+        openResponse(latest.id);
+    });
+
+    $("viewRespond").addEventListener("click", () => {
+        if (selectedReviewId) openResponse(selectedReviewId);
+    });
+
+    $("closeResponse").addEventListener("click", () => {
+        $("responseModal").hidden = true;
+    });
+
+    $("responseModal").addEventListener("click", e => {
+        if (e.target === $("responseModal")) {
+            $("responseModal").hidden = true;
+        }
+    });
+
+    $("sendResponse").addEventListener("click", () => {
+        const text = $("responseTextInput").value.trim();
+
+        if (!text) {
+            alert("Please write a response first.");
+            return;
+        }
+
+        const review = reviews.find(r => r.id === selectedReviewId);
+
+        if (review) {
+            review.responded = true;
+            review.response = text;
+        }
+
+        $("responseModal").hidden = true;
+        render();
+    });
+
+    /* Close popovers/modals with Escape */
+    document.addEventListener("keydown", e => {
+        if (e.key !== "Escape") return;
+
+        $("datePopover").hidden = true;
+        $("reviewModal").hidden = true;
+        $("viewModal").hidden = true;
+        $("responseModal").hidden = true;
+    });
+
+    lucide.createIcons();
+    render();
+})();
+
+/* ============================================================
+   SHARED DELETE CONFIRMATION MODAL â€” same UI as the orders page
+   (delete-confirm-modal). Used by every admin-panel delete action.
+   Styles live in assets/css/adminstyle.css.
+
+   openDeleteConfirm({
+       title: 'Delete Order?',
+       message: 'It will be permanently deleted.',
+       confirmText: 'Delete',              // optional
+       onConfirm: function () { ... }      // runs when Delete is clicked
+   });
+
+   For plain POST forms use:
+       <form onsubmit="return confirmFormDelete(event, 'Title', 'Message')">
+   ============================================================ */
+window.openDeleteConfirm = function (options) {
+    const opts = options || {};
+
+    const existing = document.getElementById('deleteConfirmModal');
+    if (existing) existing.remove();
+
+    const modalHtml = `
+        <div id="deleteConfirmModal" class="delete-confirm-overlay">
+            <div class="delete-confirm-modal">
+                <div class="icon-wrapper">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
+                    </svg>
+                </div>
+                <h3></h3>
+                <p></p>
+                <div class="delete-confirm-buttons">
+                    <button type="button" class="btn-cancel">Cancel</button>
+                    <button type="button" class="btn-delete-confirm"></button>
                 </div>
             </div>
-        `).join('');
-    }
-}
+        </div>
+    `;
 
-function updateAnalyticsWidgets(payload) {
-    if (!payload) return;
-    const charts = payload.charts || payload;
-    const stats = payload.stats || payload;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
 
-    const statMap = [
-        { selector: '.analytics-stat-card:nth-child(1) strong', value: `\u20B9${Number(stats.totalRevenue).toLocaleString()}` },
-        { selector: '.analytics-stat-card:nth-child(2) strong', value: Number(stats.totalOrders).toLocaleString() },
-        { selector: '.analytics-stat-card:nth-child(3) strong', value: `\u20B9${Number(stats.avgOrderValue).toLocaleString()}` },
-        { selector: '.analytics-stat-card:nth-child(4) strong', value: Number(stats.newCustomers).toLocaleString() }
-    ];
+    const modal = document.getElementById('deleteConfirmModal');
+    modal.querySelector('h3').textContent = opts.title || 'Delete?';
+    modal.querySelector('p').textContent = opts.message
+        || 'This item will be permanently deleted. This action cannot be undone.';
 
-    statMap.forEach(({ selector, value }) => {
-        const node = document.querySelector(selector);
-        if (node) node.textContent = value;
+    const confirmBtn = modal.querySelector('.btn-delete-confirm');
+    confirmBtn.textContent = opts.confirmText || 'Delete';
+    confirmBtn.addEventListener('click', function () {
+        closeDeleteConfirm();
+        if (typeof opts.onConfirm === 'function') opts.onConfirm();
     });
 
-    const lastUpdated = document.getElementById('analyticsLastUpdated');
-    if (lastUpdated) {
-        lastUpdated.textContent = `Last updated ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-    }
+    const cancelBtn = modal.querySelector('.btn-cancel');
+    cancelBtn.addEventListener('click', function () {
+        closeDeleteConfirm();
+    });
 
-    if (window.analyticsCharts?.revenue) {
-        window.analyticsCharts.revenue.data.labels = charts.labels;
-        window.analyticsCharts.revenue.data.datasets[0].data = charts.revenue;
-        window.analyticsCharts.revenue.update();
-    }
-    if (window.analyticsCharts?.orders) {
-        window.analyticsCharts.orders.data.labels = charts.labels;
-        window.analyticsCharts.orders.data.datasets[0].data = charts.orders;
-        window.analyticsCharts.orders.update();
-    }
-    if (window.analyticsCharts?.payment) {
-        window.analyticsCharts.payment.data.labels = charts.paymentLabels;
-        window.analyticsCharts.payment.data.datasets[0].data = charts.paymentValues;
-        window.analyticsCharts.payment.update();
-    }
+    modal.addEventListener('click', function (e) {
+        if (e.target === this) closeDeleteConfirm();
+    });
+};
 
-    const paymentLegend = document.getElementById('paymentLegend');
-    if (paymentLegend) {
-        const paymentColors = ['#5b9dd9', '#45c4b0', '#f5b335'];
-        paymentLegend.innerHTML = charts.paymentLabels.map((label, index) => `
-            <div class="payment-legend-item">
-                <span class="payment-dot" style="background:${paymentColors[index]}"></span>
-                <div>
-                    <span class="payment-label">${label}</span>
-                    <span class="payment-meta">${charts.paymentPercentages[index]}% (\u20B9${Number(charts.paymentValues[index]).toLocaleString()})</span>
-                </div>
-            </div>
-        `).join('');
+window.closeDeleteConfirm = function () {
+    const modal = document.getElementById('deleteConfirmModal');
+    if (modal) {
+        modal.style.animation = 'fadeOut 0.3s ease-in-out';
+        setTimeout(() => modal.remove(), 300);
     }
-}
+};
 
-function refreshAnalyticsData() {
-    const url = window.analyticsRefreshUrl || ('analytics_data.php' + window.location.search);
-    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-        .then((response) => response.json())
-        .then((payload) => {
-            updateAnalyticsWidgets(payload);
-        })
-        .catch((error) => {
-            console.warn('Unable to refresh analytics data:', error);
-        });
-}
+/* Confirmation wrapper for plain POST forms */
+window.confirmFormDelete = function (event, title, message) {
+    event.preventDefault();
+    const form = event.target;
+    openDeleteConfirm({
+        title: title,
+        message: message,
+        onConfirm: function () { form.submit(); }
+    });
+    return false;
+};
 
-document.addEventListener('DOMContentLoaded', function () {
-    initAnalyticsCharts();
-    setInterval(refreshAnalyticsData, 15000);
+/* Close the delete confirmation with Escape */
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeDeleteConfirm();
 });
+
 

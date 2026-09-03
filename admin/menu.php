@@ -1179,7 +1179,7 @@ $buildMenuUrl = static function (array $overrides = []) use ($queryParams): stri
                   <?php foreach ($pageItems as $item): ?>
                       <div class="menu-card">
                           <?php if (!empty($item['menu_image']) && file_exists('../' . $item['menu_image'])): ?>
-                              <div class="menu-image"><img src="../<?php echo $item['menu_image']; ?>" alt="<?php echo htmlspecialchars($item['menu_name']); ?>"></div>
+                              <div class="menu-image"><img src="../<?php echo $item['menu_image']; ?>" alt="<?php echo htmlspecialchars($item['menu_name']); ?>" loading="lazy" decoding="async"></div>
                           <?php else: ?>
                               <div class="menu-image"><span class="material-symbols-sharp" style="font-size:3rem;color:#f05a22;">fastfood</span></div>
                           <?php endif; ?>
@@ -1229,7 +1229,7 @@ $buildMenuUrl = static function (array $overrides = []) use ($queryParams): stri
                       <?php if ($stockAlertItems): ?>
                           <?php foreach ($stockAlertItems as $item): ?>
                               <div class="alert-item">
-                                  <img src="<?php echo htmlspecialchars($itemImage($item)); ?>" alt="<?php echo htmlspecialchars($item['menu_name']); ?>">
+                                  <img src="<?php echo htmlspecialchars($itemImage($item)); ?>" alt="<?php echo htmlspecialchars($item['menu_name']); ?>" loading="lazy" decoding="async">
                                   <div><strong><?php echo htmlspecialchars($item['menu_name']); ?></strong><small><?php echo ($item['menu_status'] ?? '') === 'Out of Stock' ? 'Out of stock' : 'Only a few items left'; ?></small></div>
                                   <span class="inline-badge stock-<?php echo strtolower(str_replace(' ', '-', $item['menu_status'])); ?>"><?php echo htmlspecialchars($item['menu_status']); ?></span>
                               </div>
@@ -1242,7 +1242,7 @@ $buildMenuUrl = static function (array $overrides = []) use ($queryParams): stri
                       <div class="panel-heading"><h3>Popular Items (This Month)</h3><button type="button" class="panel-link">View Report</button></div>
                       <?php foreach ($popularItems as $idx => $item): ?>
                           <div class="popular-item">
-                              <span class="rank"><?php echo $idx + 1; ?></span><img src="<?php echo htmlspecialchars($itemImage($item)); ?>" alt="<?php echo htmlspecialchars($item['menu_name']); ?>">
+                              <span class="rank"><?php echo $idx + 1; ?></span><img src="<?php echo htmlspecialchars($itemImage($item)); ?>" alt="<?php echo htmlspecialchars($item['menu_name']); ?>" loading="lazy" decoding="async">
                               <div><strong><?php echo htmlspecialchars($item['menu_name']); ?></strong><small><?php echo max(1, 45 - ($idx * 7)); ?> Orders</small></div>
                               <svg class="mini-chart" viewBox="0 0 62 22" aria-hidden="true"><polyline points="1,17 10,12 18,15 27,5 37,13 47,9 54,14 61,4"></polyline></svg>
                           </div>
@@ -1272,7 +1272,7 @@ $buildMenuUrl = static function (array $overrides = []) use ($queryParams): stri
                       <tbody>
                           <?php foreach ($recentItems as $item): ?>
                               <tr>
-                                  <td><div class="recent-item"><img src="<?php echo htmlspecialchars($itemImage($item)); ?>" alt=""><strong><?php echo htmlspecialchars($item['menu_name']); ?></strong></div></td>
+                                  <td><div class="recent-item"><img src="<?php echo htmlspecialchars($itemImage($item)); ?>" alt="" loading="lazy" decoding="async"><strong><?php echo htmlspecialchars($item['menu_name']); ?></strong></div></td>
                                   <td><?php echo htmlspecialchars(ucfirst($item['menu_category'])); ?></td><td>Rs. <?php echo number_format((float)$item['menu_price'], 2); ?></td>
                                   <td><span class="inline-badge stock-<?php echo strtolower(str_replace(' ', '-', $item['menu_status'] ?? 'In Stock')); ?>"><?php echo htmlspecialchars($item['menu_status'] ?? 'In Stock'); ?></span></td>
                                   <td><?php echo ($item['menu_status'] ?? '') === 'Out of Stock' ? '0' : (($item['menu_status'] ?? '') === 'Low Stock' ? '4' : '20'); ?></td><td>Today</td>
@@ -1454,81 +1454,14 @@ $buildMenuUrl = static function (array $overrides = []) use ($queryParams): stri
        }
        
        // Create confirmation modal for delete operations
-       function showDeleteConfirmation(itemName, onDeleteCallback) {
-           // Remove any existing modal
-           const existingModal = document.getElementById('deleteConfirmModal');
-           if (existingModal) existingModal.remove();
-           
-           // Create modal HTML
-           const modalHtml = `
-               <div id="deleteConfirmModal" class="delete-confirm-overlay" style="
-                   position: fixed;
-                   top: 0;
-                   left: 0;
-                   width: 100%;
-                   height: 100%;
-                   background: rgba(0, 0, 0, 0.6);
-                   backdrop-filter: blur(5px);
-                   z-index: 5000;
-                   display: flex;
-                   justify-content: center;
-                   align-items: center;
-                   animation: fadeIn 0.3s ease;
-               ">
-                   <div class="delete-confirm-modal" style="
-                       background: var(--clr-white);
-                       padding: 2rem;
-                       border-radius: var(--border-radius-2);
-                       width: 90%;
-                       max-width: 450px;
-                       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-                       position: relative;
-                       animation: modalSlideIn 0.3s ease;
-                   ">
-                       <h3 style="
-                           color: var(--clr-danger);
-                           margin-top: 0;
-                           margin-bottom: 1rem;
-                           font-size: 1.3rem;
-                           display: flex;
-                           align-items: center;
-                           gap: 0.5rem;
-                       "><span class="material-symbols-sharp">warning</span> Confirm Deletion</h3>
-                       <p style="margin: 1rem 0; color: var(--clr-dark);">Are you sure you want to delete <strong>${itemName}</strong>? This action cannot be undone.</p>
-                       <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
-                           <button id="cancelDeleteBtn" class="btn-warning" style="
-                               padding: 0.6rem 1.2rem;
-                               border-radius: var(--border-radius-1);
-                               border: none;
-                               cursor: pointer;
-                               font-weight: 500;
-                               transition: all 0.2s ease;
-                           ">Cancel</button>
-                           <button id="confirmDeleteBtn" class="btn-danger" style="
-                               padding: 0.6rem 1.2rem;
-                               border-radius: var(--border-radius-1);
-                               border: none;
-                               cursor: pointer;
-                               font-weight: 500;
-                               transition: all 0.2s ease;
-                           ">Delete</button>
-                       </div>
-                   </div>
-               </div>
-           `;
-           
-           document.body.insertAdjacentHTML('beforeend', modalHtml);
-           
-           // Add event listeners
-           document.getElementById('cancelDeleteBtn').addEventListener('click', function() {
-               document.getElementById('deleteConfirmModal').remove();
-           });
-           
-           document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
-               document.getElementById('deleteConfirmModal').remove();
-               onDeleteCallback();
-           });
-       }
+        // (delegates to the shared delete-confirm-modal helper in adminscript.js)
+        function showDeleteConfirmation(itemName, onDeleteCallback) {
+            openDeleteConfirm({
+                title: 'Confirm Deletion',
+                message: `Are you sure you want to delete ${itemName}? This action cannot be undone.`,
+                onConfirm: onDeleteCallback
+            });
+        }
 
        function deleteMenuItem(menuId, itemName) {
            showDeleteConfirmation(itemName, function() {
@@ -1597,7 +1530,14 @@ $buildMenuUrl = static function (array $overrides = []) use ($queryParams): stri
                alert('Select at least one menu item first.');
                return;
            }
-           if (!confirm(`Delete ${ids.length} selected menu item(s)? This cannot be undone.`)) return;
+           openDeleteConfirm({
+                title: `Delete ${ids.length} Menu Item${ids.length === 1 ? '' : 's'}`,
+                message: 'The selected menu item(s) will be permanently deleted. This action cannot be undone.',
+                onConfirm: function () { performBulkMenuDelete(ids); }
+            });
+        }
+
+        function performBulkMenuDelete(ids) {
            Promise.all(ids.map(menuId => fetch('menu_ajax.php', {
                method: 'POST',
                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

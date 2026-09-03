@@ -272,6 +272,7 @@ $cart = array_values($_SESSION['cart'] ?? []);
           <li class="list-unstyled py-2"><a class="text-decoration-none text-uppercase p-4" href="./aboutus.php">About</a></li>
           <li class="list-unstyled py-2"><a class="text-decoration-none text-uppercase p-4" href="./menu.php">Menu</a></li>
           <li class="list-unstyled py-2"><a class="text-decoration-none text-uppercase p-4" href="./myorder.php">My Order</a></li>
+          <li class="list-unstyled py-2"><a class="text-decoration-none text-uppercase p-4" href="./booking.php">My Booking</a></li>
           <li class="list-unstyled py-2"><a class="text-decoration-none text-uppercase p-4" href="./contactus.php">Contact</a></li>
         </ul>
       </div>

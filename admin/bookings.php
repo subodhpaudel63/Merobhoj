@@ -1064,7 +1064,14 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'bookings') {
 
    // handleDelete
    function handleDelete(id) {
-       if(!confirm(`Are you sure you want to delete booking #${id}?`)) return;
+       openDeleteConfirm({
+            title: 'Delete Booking?',
+            message: `Booking #${id} will be permanently deleted. This action cannot be undone.`,
+            onConfirm: function () { performBookingDelete(id); }
+        });
+    }
+
+    function performBookingDelete(id) {
        fetch('../includes/delete_booking.php', {
            method: 'POST',
            headers: { 'Content-Type': 'application/json' },

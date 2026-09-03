@@ -1,11 +1,22 @@
 <?php
-// Start session if not already started
+// Feedback data logic only — NO HTML OUTPUT.
+// This file used to be a full standalone admin page; its HTML/JS was removed.
+// It is now included by admin pages (e.g. admin/index.php) which render the
+// feedback data using the variables defined below:
+//   $feedback, $total_feedback, $average_rating,
+//   $positive_feedback, $positive_percent, $latest_feedback
 declare(strict_types=1);
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
 require_once __DIR__ . '/../includes/admin_auth.php';
 require_admin();
 require_once __DIR__ . '/../includes/db.php';
+
+// Include guard so this file can be included by multiple pages safely
+if (defined('MEROBHOJ_FEEDBACK_DATA_LOADED')) {
+    return;
+}
+define('MEROBHOJ_FEEDBACK_DATA_LOADED', true);
 
 // Fetch feedback from database
 $feedback = [];
@@ -36,8 +47,6 @@ if ($res) {
     }
 }
 
-
-
 // Calculate stats for the insight cards
 $total_feedback = count($feedback);
 $average_rating = 0;
@@ -55,392 +64,353 @@ if ($total_feedback > 0) {
 }
 
 $positive_percent = $total_feedback > 0 ? round(($positive_feedback / $total_feedback) * 100) : 0;
+
+// Build the dataset consumed by the feedback dashboard JS (adminscript.js).
+// Field names match what the dashboard script expects:
+//   review (message), isoDate/date/time (derived from created_at), responded.
+$feedback_js = [];
+foreach ($feedback as $f) {
+    $ts = strtotime((string) $f['created_at']);
+    $feedback_js[] = [
+        'id'        => (int) $f['id'],
+        'name'      => (string) $f['name'],
+        'email'     => (string) $f['email'],
+        'rating'    => max(1, min(5, (int) $f['rating'])),
+        'review'    => (string) $f['message'],
+        'isoDate'   => $ts ? date('Y-m-d', $ts) : '',
+        'date'      => $ts ? date('M j, Y', $ts) : '',
+        'time'      => $ts ? date('h:i A', $ts) : '',
+        'responded' => false, // the feedback table has no response column yet
+    ];
+}
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Customer Feedback - Mero Bhoj</title>
+  <title>Customer Feedback</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@48,400,0,0" />
-  <!-- Ensure this path is correct based on your folder structure -->
   <link rel="stylesheet" href="../assets/css/adminstyle.css?v=<?= filemtime(__DIR__ . '/../assets/css/adminstyle.css') ?>">
-  
-  <style>
-    /* Internal styles to complement adminstyle.css */
-    .recent-orders {
-        margin-top: 2rem;
-        background: var(--clr-white);
-        padding: var(--card-padding);
-        border-radius: var(--card-border-radius);
-        box-shadow: var(--box-shadow);
-        transition: all 300ms ease;
-    }
-
-    .recent-orders:hover {
-        box-shadow: none;
-    }
-
-    .recent-orders table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    .recent-orders table th, .recent-orders table td {
-        padding: 1.2rem 0.5rem;
-        text-align: left;
-        border-bottom: 1px solid var(--clr-light);
-    }
-
-    .rating-stars {
-        color: #ffbb55;
-        font-size: 1.1rem;
-        letter-spacing: 2px;
-    }
-
-    .feedback-text-preview {
-        max-width: 200px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        color: var(--clr-info-dark);
-    }
-
-    /* Modal Styling */
-    #feedbackModal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.6);
-        backdrop-filter: blur(5px);
-        z-index: 3000;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .modal-content {
-        background: var(--clr-white);
-        padding: 2.5rem;
-        border-radius: var(--card-border-radius);
-        width: 90%;
-        max-width: 550px;
-        box-shadow: var(--box-shadow);
-        position: relative;
-        animation: modalFade 0.3s ease;
-    }
-
-    @keyframes modalFade {
-        from { transform: translateY(-20px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
-    }
-
-    main .insights > div.positive-feedback span { background: var(--clr-success); }
-    main .insights > div.avg-rating span { background: var(--clr-primary); }
-
-    .view-btn {
-        background: var(--clr-primary);
-        color: var(--clr-white);
-        padding: 0.5rem 1rem;
-        border-radius: var(--border-radius-1);
-        cursor: pointer;
-        font-weight: 500;
-        transition: opacity 0.2s;
-        border: none;
-    }
-    .view-btn:hover { opacity: 0.8; }
-  </style>
 </head>
 <body class="admin-page">
    <?php include_once __DIR__ . '/topbar.php'; ?>
-
    <div class="container">
       <?php include_once __DIR__ . '/sidebar.php'; ?>
 
+      <main class="admin-page-main page">
+  <div class="content">
 
-      <main class="admin-page-main">
-
-         <h1>Customer Feedback</h1>
-
-         <div class="insights">
-            <div class="total-feedback">
-               <span class="material-symbols-sharp">forum</span>
-               <div class="middle">
-                  <div class="left">
-                     <h3>Total Reviews</h3>
-                     <h1><?php echo $total_feedback; ?></h1>
-                  </div>
-               </div>
-               <small class="text-muted">Global customer count</small>
-            </div>
-
-            <div class="avg-rating">
-               <span class="material-symbols-sharp">star</span>
-               <div class="middle">
-                  <div class="left">
-                     <h3>Average Score</h3>
-                     <h1><?php echo $average_rating; ?> / 5</h1>
-                  </div>
-               </div>
-               <small class="text-muted">Satisfaction rating</small>
-            </div>
-
-            <div class="positive-feedback">
-               <span class="material-symbols-sharp">thumb_up</span>
-               <div class="middle">
-                  <div class="left">
-                     <h3>Positive Ratio</h3>
-                     <h1><?php echo $positive_percent; ?>%</h1>
-                  </div>
-               </div>
-               <small class="text-muted">High satisfaction (4+ stars)</small>
-            </div>
-         </div>
-
-         <div class="recent-orders">
-            <h2>Review History</h2>
-            <table>
-               <thead>
-                  <tr>
-                     <th>Customer</th>
-                     <th>Email</th>
-                     <th>Rating</th>
-                     <th>Message Snippet</th>
-                     <th>Date</th>
-                     <th></th>
-                  </tr>
-               </thead>
-               <tbody>
-                  <?php if (empty($feedback)): ?>
-                    <tr><td colspan="6" style="text-align:center;">No feedback yet.</td></tr>
-                  <?php else: ?>
-                    <?php foreach ($feedback as $item): ?>
-                    <tr>
-                       <td><b><?php echo htmlspecialchars($item['name'] ?? 'Guest'); ?></b></td>
-                       <td><?php echo htmlspecialchars($item['email'] ?? 'N/A'); ?></td>
-                       <td class="rating-stars">
-                          <?php for($i=1; $i<=5; $i++) echo ($i <= ($item['rating'] ?? 0)) ? '★' : '☆'; ?>
-                       </td>
-                       <td class="feedback-text-preview"><?php echo htmlspecialchars(strlen($item['message'] ?? '') > 50 ? substr($item['message'] ?? '', 0, 50) . '...' : ($item['message'] ?? '')); ?></td>
-                       <td class="text-muted"><?php echo isset($item['created_at']) ? date('M d', strtotime($item['created_at'])) : 'N/A'; ?></td>
-                       <td>
-                          <div class="d-flex gap-2">
-                             <button class="view-btn" 
-                                     onclick="openFeedbackModal('<?php echo addslashes($item['name'] ?? 'Guest'); ?>', '<?php echo addslashes($item['message'] ?? ''); ?>', <?php echo $item['rating'] ?? 0; ?>, '<?php echo isset($item['created_at']) ? date('M d, Y', strtotime($item['created_at'])) : 'N/A'; ?>')">
-                                View
-                             </button>
-                             <button class="btn-danger" 
-                                     onclick="deleteFeedback(<?php echo $item['id'] ?? 0; ?>, '<?php echo addslashes(addslashes($item['name'] ?? 'Guest')); ?>', this)"
-                                     style="padding: 0.5rem 1rem; border-radius: var(--border-radius-1);">
-                                Delete
-                             </button>
-                          </div>
-                       </td>
-                    </tr>
-                    <?php endforeach; ?>
-                  <?php endif; ?>
-               </tbody>
-            </table>
-         </div>
-      </main>
-
-      <div class="right">
-         <div class="top">
-            <button id="menu_btn"><span class="material-symbols-sharp">menu</span></button>
-            <div class="theme-toggler">
-               <span class="material-symbols-sharp active">light_mode</span>
-               <span class="material-symbols-sharp">dark_mode</span>
-            </div>
-            <div class="profile">
-               <div class="info">
-                  <p>Hey, <b>Admin</b></p>
-                  <small class="text-muted">Administrator</small>
-               </div>
-               <div class="profile-photo">
-                  <img src="../assets/img/usersprofiles/adminpic.jpg" alt="Admin" onerror="this.src='https://ui-avatars.com/api/?name=Admin&background=7380ec&color=fff'">
-               </div>
-            </div>
-         </div>
-
-         <div class="recent-updates">
-            <h2>Review Activity</h2>
-            <div class="updates">
-               <?php if(empty($latest_feedback)): ?>
-                  <p class="text-muted" style="padding: 1rem;">No recent activity</p>
-               <?php else: ?>
-                  <?php foreach($latest_feedback as $recent): ?>
-                  <div class="update">
-                     <div class="profile-photo">
-                        <img src="https://ui-avatars.com/api/?name=<?php echo urlencode($recent['name'] ?? 'User'); ?>&background=random" alt="User">
-                     </div>
-                     <div class="message">
-                        <p><b><?php echo htmlspecialchars($recent['name'] ?? 'User'); ?></b> gave a <?php echo $recent['rating'] ?? 0; ?>-star rating.</p>
-                        <small class="text-muted"><?php echo isset($recent['created_at']) ? date('H:i A', strtotime($recent['created_at'])) : ''; ?></small>
-                     </div>
-                  </div>
-                  <?php endforeach; ?>
-               <?php endif; ?>
-            </div>
-         </div>
+    <div class="title-row">
+      <div>
+        <h1>Customer Feedback</h1>
+        <p>Monitor customer reviews and improve service quality.</p>
       </div>
+      <button class="add-review-btn" id="openReview">
+        <i data-lucide="plus"></i>
+        Add Review
+      </button>
+    </div>
+
+    <div class="dashboard-grid">
+
+      <div class="main-column">
+
+        <section class="stats-grid">
+
+          <article class="stat-card">
+            <div class="stat-icon orange"><i data-lucide="message-square-text"></i></div>
+            <div class="stat-copy">
+              <span>Total Reviews</span>
+              <strong id="totalReviews">1</strong>
+              <small>All time reviews</small>
+              <em id="reviewChange">▲ 100% <b>vs last month</b></em>
+            </div>
+          </article>
+
+          <article class="stat-card">
+            <div class="stat-icon orange"><i data-lucide="star"></i></div>
+            <div class="stat-copy">
+              <span>Average Rating</span>
+              <strong id="averageRating">5.0 / 5</strong>
+              <div class="stars" id="averageStars"></div>
+              <small id="ratingBased">Based on 1 review</small>
+            </div>
+          </article>
+
+          <article class="stat-card">
+            <div class="stat-icon green"><i data-lucide="thumbs-up"></i></div>
+            <div class="stat-copy">
+              <span>Positive Ratio</span>
+              <strong id="positiveRatio">100%</strong>
+              <small id="positiveCount">(1 positive)</small>
+              <em>▲ 100% <b>vs last month</b></em>
+            </div>
+          </article>
+
+          <article class="stat-card">
+            <div class="stat-icon purple"><i data-lucide="message-circle"></i></div>
+            <div class="stat-copy">
+              <span>Response Rate</span>
+              <strong id="responseRate">0%</strong>
+              <small id="responseText">No responses yet</small>
+              <em class="neutral">— <b>vs last month</b></em>
+            </div>
+          </article>
+
+        </section>
+
+        <section class="filters card">
+
+          <div class="search-box">
+            <i data-lucide="search"></i>
+            <input id="searchInput" type="text" placeholder="Search by name or email...">
+            <button class="clear-search" id="clearSearch" title="Clear search" hidden>
+              <i data-lucide="x"></i>
+            </button>
+          </div>
+
+          <select id="ratingFilter" aria-label="Rating">
+            <option value="all">All Ratings</option>
+            <option value="5">5 Stars</option>
+            <option value="4">4 Stars</option>
+            <option value="3">3 Stars</option>
+            <option value="2">2 Stars</option>
+            <option value="1">1 Star</option>
+          </select>
+
+          <button class="date-btn" id="dateBtn">
+            <i data-lucide="calendar-days"></i>
+            <span id="dateBtnText">Select Date Range</span>
+            <i data-lucide="chevron-down"></i>
+          </button>
+
+          <button class="filter-btn" id="filterBtn">
+            <i data-lucide="sliders-horizontal"></i>
+            Filter
+          </button>
+
+          <button class="reset-btn" id="resetBtn">
+            Reset
+          </button>
+
+          <section class="date-popover" id="datePopover" hidden>
+            <div class="popover-title">
+              <strong>Select date range</strong>
+              <button id="closeDatePopover"><i data-lucide="x"></i></button>
+            </div>
+            <div class="date-fields">
+              <label>
+                From
+                <input type="date" id="dateFrom">
+              </label>
+              <label>
+                To
+                <input type="date" id="dateTo">
+              </label>
+            </div>
+            <div class="popover-actions">
+              <button id="clearDate">Clear</button>
+              <button class="apply-btn" id="applyDate">Apply</button>
+            </div>
+          </section>
+
+        </section>
+
+        <section class="filter-summary" id="filterSummary" hidden>
+          <span><i data-lucide="filter"></i><b>Active filters:</b> <span id="summaryText"></span></span>
+          <button id="clearAllFilters">Clear all</button>
+        </section>
+
+        <section class="history card">
+          <div class="section-heading">
+            <h2>Review History</h2>
+            <span id="resultCount"></span>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Customer</th>
+                  <th>Email</th>
+                  <th>Rating</th>
+                  <th>Review</th>
+                  <th>Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="reviewTable"></tbody>
+            </table>
+          </div>
+
+          <div class="empty" id="emptyState" hidden>
+            <i data-lucide="message-square-off"></i>
+            <strong>No reviews found</strong>
+            <span>Try changing your search or filters.</span>
+          </div>
+
+          <div class="history-footer">
+            <span id="showingText">Showing 1 to 1 of 1 review</span>
+            <div class="pagination">
+              <button id="prevPage" disabled><i data-lucide="chevron-left"></i></button>
+              <button class="active">1</button>
+              <button id="nextPage" disabled><i data-lucide="chevron-right"></i></button>
+            </div>
+          </div>
+        </section>
+
+        <section class="tip">
+          <div class="info"><i data-lucide="info"></i></div>
+          <span>Responding to reviews shows customers you value their feedback and helps build trust.</span>
+          <button id="writeResponse">
+            <i data-lucide="message-square-reply"></i>
+            Write a Response
+          </button>
+        </section>
+
+      </div>
+
+      <aside class="side-column">
+
+        <section class="side-card">
+          <h3>Review Overview</h3>
+          <div class="overview">
+            <div class="donut" id="donut">
+              <div>
+                <strong id="donutTotal">1</strong>
+                <span>Total</span>
+              </div>
+            </div>
+
+            <div class="legend">
+              <div><i class="dot green-dot"></i><span>5 Star</span><b id="fiveCount">1 (100%)</b></div>
+              <div><i class="dot yellow-dot"></i><span>4 Star</span><b id="fourCount">0 (0%)</b></div>
+              <div><i class="dot orange-dot"></i><span>3 Star</span><b id="threeCount">0 (0%)</b></div>
+              <div><i class="dot red-dot"></i><span>1-2 Star</span><b id="lowCount">0 (0%)</b></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="side-card">
+          <h3>Recent Activity</h3>
+          <div id="activity"></div>
+        </section>
+
+        <section class="side-card distribution">
+          <h3>Rating Distribution</h3>
+
+          <div class="bar-row"><span>5 Star</span><div><i id="bar5"></i></div><b id="dist5">1 (100%)</b></div>
+          <div class="bar-row"><span>4 Star</span><div><i id="bar4"></i></div><b id="dist4">0 (0%)</b></div>
+          <div class="bar-row"><span>3 Star</span><div><i id="bar3"></i></div><b id="dist3">0 (0%)</b></div>
+          <div class="bar-row"><span>2 Star</span><div><i id="bar2"></i></div><b id="dist2">0 (0%)</b></div>
+          <div class="bar-row"><span>1 Star</span><div><i id="bar1"></i></div><b id="dist1">0 (0%)</b></div>
+        </section>
+
+      </aside>
+    </div>
+  </div>
+</main>
    </div>
 
-   <div id="feedbackModal">
-       <div class="modal-content">
-           <span class="material-symbols-sharp" onclick="closeModal()" style="position: absolute; right: 1.5rem; top: 1.5rem; cursor: pointer; color: var(--clr-info-dark);">close</span>
-           <h2 id="modalTitle" style="margin-bottom: 0.5rem; color: var(--clr-primary);">Review Details</h2>
-           <p id="modalDate" class="text-muted" style="margin-bottom: 1.5rem;"></p>
-           
-           <div id="modalStars" class="rating-stars" style="margin-bottom: 1rem; font-size: 1.5rem;"></div>
-           
-           <div style="background: var(--clr-light); padding: 1.5rem; border-radius: var(--border-radius-2); margin-bottom: 1.5rem; max-height: 200px; overflow-y: auto;">
-               <p id="modalMsgBody" style="line-height: 1.8; color: var(--clr-dark); white-space: pre-wrap;"></p>
-           </div>
-           
-           <button onclick="closeModal()" class="view-btn" style="width: 100%; padding: 1rem;">Close Review</button>
-       </div>
-   </div>
+<div class="modal" id="reviewModal" hidden>
+  <div class="modal-box">
+    <button class="close" id="closeReview"><i data-lucide="x"></i></button>
+    <h2>Add Customer Review</h2>
+    <p>Create a review and watch the dashboard update instantly.</p>
 
-      <script>
-      function openFeedbackModal(name, message, rating, date) {
-           document.getElementById('modalTitle').innerText = "Feedback from " + name;
-           document.getElementById('modalDate').innerText = "Submitted on " + date;
-           document.getElementById('modalMsgBody').innerText = message;
-           
-           let stars = "";
-           for(let i=1; i<=5; i++) stars += (i <= rating) ? '★' : '☆';
-           document.getElementById('modalStars').innerText = stars;
-           
-           document.getElementById('feedbackModal').style.display = 'flex';
-       }
+    <form id="reviewForm">
+      <label>Customer Name
+        <input id="customerName" required placeholder="e.g. Sita Sharma">
+      </label>
 
-       function closeModal() {
-           document.getElementById('feedbackModal').style.display = 'none';
-       }
+      <label>Email
+        <input id="customerEmail" type="email" required placeholder="customer@email.com">
+      </label>
 
-       // Create confirmation modal for delete operations
-       function showDeleteConfirmation(itemName, onDeleteCallback) {
-           // Remove any existing modal
-           const existingModal = document.getElementById('deleteConfirmModal');
-           if (existingModal) existingModal.remove();
-           
-           // Create modal HTML
-           const modalHtml = `
-               <div id="deleteConfirmModal" class="delete-confirm-overlay" style="
-                   position: fixed;
-                   top: 0;
-                   left: 0;
-                   width: 100%;
-                   height: 100%;
-                   background: rgba(0, 0, 0, 0.6);
-                   backdrop-filter: blur(5px);
-                   z-index: 5000;
-                   display: flex;
-                   justify-content: center;
-                   align-items: center;
-                   animation: fadeIn 0.3s ease;
-               ">
-                   <div class="delete-confirm-modal" style="
-                       background: var(--clr-white);
-                       padding: 2rem;
-                       border-radius: var(--border-radius-2);
-                       width: 90%;
-                       max-width: 450px;
-                       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-                       position: relative;
-                       animation: modalSlideIn 0.3s ease;
-                   ">
-                       <h3 style="
-                           color: var(--clr-danger);
-                           margin-top: 0;
-                           margin-bottom: 1rem;
-                           font-size: 1.3rem;
-                           display: flex;
-                           align-items: center;
-                           gap: 0.5rem;
-                       "><span class="material-symbols-sharp">warning</span> Confirm Deletion</h3>
-                       <p style="margin: 1rem 0; color: var(--clr-dark);">Are you sure you want to delete <strong>${itemName}</strong>? This action cannot be undone.</p>
-                       <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
-                           <button id="cancelDeleteBtn" class="btn-warning" style="
-                               padding: 0.6rem 1.2rem;
-                               border-radius: var(--border-radius-1);
-                               border: none;
-                               cursor: pointer;
-                               font-weight: 500;
-                               transition: all 0.2s ease;
-                           ">Cancel</button>
-                           <button id="confirmDeleteBtn" class="btn-danger" style="
-                               padding: 0.6rem 1.2rem;
-                               border-radius: var(--border-radius-1);
-                               border: none;
-                               cursor: pointer;
-                               font-weight: 500;
-                               transition: all 0.2s ease;
-                           ">Delete</button>
-                       </div>
-                   </div>
-               </div>
-           `;
-           
-           document.body.insertAdjacentHTML('beforeend', modalHtml);
-           
-           // Add event listeners
-           document.getElementById('cancelDeleteBtn').addEventListener('click', function() {
-               document.getElementById('deleteConfirmModal').remove();
-           });
-           
-           document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
-               document.getElementById('deleteConfirmModal').remove();
-               onDeleteCallback();
-           });
-       }
+      <label>Rating
+        <select id="customerRating">
+          <option value="5">★★★★★ 5 / 5</option>
+          <option value="4">★★★★☆ 4 / 5</option>
+          <option value="3">★★★☆☆ 3 / 5</option>
+          <option value="2">★★☆☆☆ 2 / 5</option>
+          <option value="1">★☆☆☆☆ 1 / 5</option>
+        </select>
+      </label>
 
-       function deleteFeedback(feedbackId, name, button) {
-           showDeleteConfirmation(`feedback from ${name}`, function() {
-               fetch('../includes/delete_feedback.php', {
-                   method: 'POST',
-                   headers: {
-                       'Content-Type': 'application/x-www-form-urlencoded',
-                   },
-                   body: 'feedback_id=' + encodeURIComponent(feedbackId)
-               })
-               .then(response => response.json())
-               .then(data => {
-                   if (data.success) {
-                       const row = button.closest('tr');
-                       row.style.opacity = '0';
-                       row.style.transition = 'opacity 0.3s ease';
-                       setTimeout(() => {
-                           row.remove();
-                           // Check if table is now empty and add a message if needed
-                           const tableBody = document.querySelector('table tbody');
-                           if (tableBody.children.length === 0) {
-                               tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No feedback yet.</td></tr>';
-                           }
-                       }, 300);
-                   } else {
-                       alert(data.message || 'Failed to delete feedback.');
-                   }
-               })
-               .catch(error => {
-                   console.error('Error:', error);
-                   alert('Error deleting feedback. Please try again.');
-               });
-           });
-       }
+      <label>Review
+        <textarea id="customerReview" required placeholder="Write the customer's review..."></textarea>
+      </label>
 
-       window.onclick = function(e) {
-           const modal = document.getElementById('feedbackModal');
-           if (e.target == modal) {
-               closeModal();
-           }
-       }
-   </script>
+      <button class="submit-review" type="submit">
+        <i data-lucide="plus"></i>
+        Add Review
+      </button>
+    </form>
+  </div>
+</div>
 
-   
-   <script src="../assets/js/adminscript.js?v=<?= filemtime(__DIR__ . '/../assets/js/adminscript.js') ?>"></script>
+<div class="modal" id="viewModal" hidden>
+  <div class="modal-box view-box">
+    <button class="close" id="closeView"><i data-lucide="x"></i></button>
+
+    <div class="view-header">
+      <div class="large-avatar" id="viewAvatar"></div>
+      <div>
+        <h2 id="viewName"></h2>
+        <p id="viewEmail"></p>
+      </div>
+    </div>
+
+    <div class="view-rating" id="viewRating"></div>
+
+    <div class="review-detail">
+      <span>Customer Review</span>
+      <p id="viewReview"></p>
+    </div>
+
+    <div class="view-meta">
+      <div><i data-lucide="calendar-days"></i><span><b>Date</b><small id="viewDate"></small></span></div>
+      <div><i data-lucide="clock-3"></i><span><b>Time</b><small id="viewTime"></small></span></div>
+    </div>
+
+    <div class="view-actions">
+      <button class="secondary-btn" id="closeViewBottom">Close</button>
+      <button class="response-btn" id="viewRespond"><i data-lucide="message-square-reply"></i> Write Response</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="responseModal" hidden>
+  <div class="modal-box">
+    <button class="close" id="closeResponse"><i data-lucide="x"></i></button>
+    <h2>Write a Response</h2>
+    <p id="responseFor">Respond to the customer.</p>
+
+    <textarea id="responseTextInput" placeholder="Thank you for your feedback..."></textarea>
+
+    <button class="submit-review" id="sendResponse">
+      <i data-lucide="send"></i>
+      Send Response
+    </button>
+  </div>
+</div>
+
+<script>
+  // Review data from the database, consumed by the feedback section of adminscript.js
+  window.__FEEDBACK_DATA__ = <?= json_encode($feedback_js, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?>;
+
+  // Render the lucide icons (the CSS targets the <svg> elements lucide generates)
+  lucide.createIcons();
+</script>
+<script src="../assets/js/adminscript.js?v=<?= filemtime(__DIR__ . '/../assets/js/adminscript.js') ?>"></script>
 </body>
 </html>

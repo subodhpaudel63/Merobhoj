@@ -31,11 +31,6 @@ if (isset($conn)) {
             <h3>Customers</h3>
         </a>
 
-        <a href="analytics.php" class="sidebar-link <?php echo ($current_page === 'analytics.php') ? 'active' : ''; ?>">
-            <span class="material-symbols-sharp">monitoring</span>
-            <h3>Analytics</h3>
-        </a>
-
         <a href="orders_page.php" class="sidebar-link <?php echo ($current_page === 'orders_page.php' || $current_page === 'order_view.php') ? 'active' : ''; ?>">
             <span class="material-symbols-sharp">mail</span>
             <h3>Orders</h3>
@@ -57,6 +52,11 @@ if (isset($conn)) {
         <a href="feedback.php" class="sidebar-link <?php echo ($current_page === 'feedback.php') ? 'active' : ''; ?>">
             <span class="material-symbols-sharp">chat_bubble</span>
             <h3>Feedback</h3>
+        </a>
+
+        <a href="finance.php" class="sidebar-link <?php echo ($current_page === 'finance.php') ? 'active' : ''; ?>">
+            <span class="material-symbols-sharp">account_balance</span>
+            <h3>Finance</h3>
         </a>
 
         <a href="#" class="sidebar-link">
