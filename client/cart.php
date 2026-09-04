@@ -108,22 +108,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
                     break;
                 }
 
-                if ($order_type === 'Delivery') {
-                    if ($address === '') {
-                        $response['message'] = 'Delivery address is required for delivery orders';
-                        break;
-                    }
-                    $table_number = '';
-                } elseif ($order_type === 'Dine In') {
-                    if ($table_number === '') {
-                        $response['message'] = 'Table number is required for dine in orders';
-                        break;
-                    }
-                    $address = '';
-                } elseif ($order_type === 'Takeaway') {
-                    $address = '';
-                    $table_number = '';
-                }
+              // Only Delivery and Takeaway can be placed through the customer cart.
+// Dine In orders are created exclusively via the table QR self-order flow.
+if (!in_array($order_type, ['Delivery', 'Takeaway'], true)) {
+    $response['message'] = 'Invalid order type. Dine-in orders must be placed via table QR ordering.';
+    break;
+}
+
+if ($order_type === 'Delivery') {
+    if ($address === '') {
+        $response['message'] = 'Delivery address is required for delivery orders';
+        break;
+    }
+    $table_number = '';
+} elseif ($order_type === 'Takeaway') {
+    $address = '';
+    $table_number = '';
+}
                 
                 // Generate a single unique order_number for this entire checkout
                 $order_number = 'ORD-' . date('Ymd') . '-' . sprintf('%04d', rand(1000, 9999));

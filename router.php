@@ -3,7 +3,7 @@ session_start();
 ini_set('memory_limit', '1024M');
 
 $request_uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$base = '/Masu Ko Jhol(full)';
+$base = '/Merobhoj/';
 if (strpos($request_uri, $base) === 0) {
     $request_uri = substr($request_uri, strlen($base));
 }
@@ -20,8 +20,8 @@ if (preg_match('/^order\/([a-zA-Z0-9]+)$/', $request_uri, $matches)) {
     require __DIR__ . '/order_qr.php';
     exit;
 }
-if ($request_uri === 'api_qr_requests_client') {
-    require __DIR__ . '/api_qr_requests_client.php';
+if ($request_uri === 'admin/api/api_qr_requests_client') {
+    require __DIR__ . '/admin/api/api_qr_requests_client.php';
     exit;
 }
 

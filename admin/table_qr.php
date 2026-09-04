@@ -13,7 +13,10 @@ require_once __DIR__ . '/../includes/db.php';
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Table QR Management - Mero Bhoj</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@48,400,0,0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@48,400,0,0" />
   <link rel="stylesheet" href="../assets/css/adminstyle.css?v=<?= filemtime(__DIR__ . '/../assets/css/adminstyle.css') ?>">
   <!-- QRCode.js CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -78,7 +81,7 @@ require_once __DIR__ . '/../includes/db.php';
     const BASE_ORDER_URL = window.location.origin + '/Merobhoj/order/';
 
     function loadTables() {
-      fetch('api_qr_tables.php?action=list')
+      fetch('api/api_qr_tables.php?action=list')
         .then(r => r.json())
         .then(data => {
           if (data.success) renderTables(data.tables);
@@ -172,7 +175,7 @@ require_once __DIR__ . '/../includes/db.php';
       const original = btn.innerHTML;
       btn.disabled = true;
       btn.innerHTML = '<span class="material-symbols-sharp qrm-spin">progress_activity</span>';
-      fetch('api_qr_tables.php', {
+      fetch('api/api_qr_tables.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'regenerate', table_id: tableId })
@@ -204,13 +207,13 @@ require_once __DIR__ . '/../includes/db.php';
 
     document.getElementById('generateAllBtn').addEventListener('click', () => {
       if (!confirm('Generate QR codes for all tables that don\'t have one yet?')) return;
-      fetch('api_qr_tables.php?action=list')
+      fetch('api/api_qr_tables.php?action=list')
         .then(r => r.json()).then(data => {
           if (!data.success) return;
           const noQr = data.tables.filter(t => !t.qr_token);
           if (!noQr.length) { showQrToast('All tables already have QR codes!', 'info'); return; }
           Promise.all(noQr.map(t =>
-            fetch('api_qr_tables.php', {
+            fetch('api/api_qr_tables.php', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ action: 'regenerate', table_id: t.id })

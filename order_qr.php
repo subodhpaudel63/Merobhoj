@@ -700,7 +700,7 @@ while ($row = $menu_query->fetch_assoc()) {
         payment: document.getElementById('paymentMethod').value
       };
 
-      fetch(BASE_URL + '/api_qr_requests_client.php', {
+      fetch(BASE_URL + '/admin/api/api_qr_requests_client.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -810,7 +810,7 @@ while ($row = $menu_query->fetch_assoc()) {
       if (!activeRequestId) return;
       clearTimeout(pollTimer);
 
-      fetch(`${BASE_URL}/api_qr_requests_client.php?action=status&request_id=${activeRequestId}`)
+      fetch(`${BASE_URL}/admin/api/api_qr_requests_client.php?action=status&request_id=${activeRequestId}`)
         .then(r => r.json())
         .then(data => {
           if (data.success) {

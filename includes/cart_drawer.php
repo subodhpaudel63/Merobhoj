@@ -624,12 +624,7 @@ $drawerCount = count($drawerCart);
                           <span class="mkj-radio-label">Takeaway</span>
                       </label>
 
-                      <label class="mkj-custom-radio-btn">
-                          <input type="radio" name="order_type" value="Dine In" class="order-type-radio">
-                          <span class="mkj-radio-indicator"></span>
-                          <i class="fa fa-chair mkj-radio-icon"></i>
-                          <span class="mkj-radio-label">Dine In</span>
-                      </label>
+                      
                   </div>
               </div>
                 <div class="mkj-field" id="drawer_table_number_wrapper" style="display:none;" hidden>
@@ -655,17 +650,10 @@ $drawerCount = count($drawerCart);
                   <label class="mkj-order-label">Payment Method *</label>
                   <div class="d-flex gap-2 flex-wrap mkj-radio-group">
                       <label class="mkj-custom-radio-btn">
-                          <input type="radio" name="payment_method" value="Cash on Delivery" checked>
+                          <input type="radio" name="payment_method" value="Cash on Delivery" id="drawerCashPaymentRadio" checked>
                           <span class="mkj-radio-indicator"></span>
-                          <i class="fa fa-money-bill mkj-radio-icon"></i>
-                          <span class="mkj-radio-label">Cash on Delivery</span>
-                      </label>
-
-                      <label class="mkj-custom-radio-btn">
-                          <input type="radio" name="payment_method" value="Pay at Restaurant">
-                          <span class="mkj-radio-indicator"></span>
-                          <i class="fa fa-store mkj-radio-icon"></i>
-                          <span class="mkj-radio-label">Pay at Restaurant</span>
+                          <i class="fa fa-money-bill mkj-radio-icon" id="drawerCashPaymentIcon"></i>
+                          <span class="mkj-radio-label" id="drawerCashPaymentLabel">Cash on Delivery</span>
                       </label>
 
                       <label class="mkj-custom-radio-btn">
@@ -742,41 +730,40 @@ $drawerCount = count($drawerCart);
 </script>
 <script src="<?php echo asset('js/cart_drawer.js'); ?>"></script>
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const checkoutForm = document.getElementById('checkoutForm');
-    if (!checkoutForm) return;
+  const orderTypeRadios = checkoutForm.querySelectorAll('input[name="order_type"]');
+const addressWrapper = document.getElementById('drawer_address_wrapper');
+const addressField = document.getElementById('drawerAddress');
+const drawerCashPaymentRadio = document.getElementById('drawerCashPaymentRadio');
+const drawerCashPaymentIcon = document.getElementById('drawerCashPaymentIcon');
+const drawerCashPaymentLabel = document.getElementById('drawerCashPaymentLabel');
 
-    const orderTypeRadios = checkoutForm.querySelectorAll('input[name="order_type"]');
-    const addressWrapper = document.getElementById('drawer_address_wrapper');
-    const addressField = document.getElementById('drawerAddress');
-    const tableWrapper = document.getElementById('drawer_table_number_wrapper');
-    const tableField = document.getElementById('drawerTableNumber');
+function syncOrderTypeFields() {
+  const selected = checkoutForm.querySelector('input[name="order_type"]:checked')?.value || 'Delivery';
+  const isDelivery = selected === 'Delivery';
+  const isTakeaway = selected === 'Takeaway';
 
-    function syncOrderTypeFields() {
-      const selected = checkoutForm.querySelector('input[name="order_type"]:checked')?.value || 'Delivery';
-      const isDelivery = selected === 'Delivery';
-      const isDineIn = selected === 'Dine In';
+  if (addressWrapper) {
+    addressWrapper.style.display = isDelivery ? '' : 'none';
+    addressWrapper.hidden = !isDelivery;
+  }
+  if (addressField) {
+    addressField.required = isDelivery;
+    if (!isDelivery) addressField.value = '';
+  }
 
-      if (addressWrapper) {
-        addressWrapper.style.display = isDelivery ? '' : 'none';
-        addressWrapper.hidden = !isDelivery;
-      }
-      if (addressField) {
-        addressField.required = isDelivery;
-        if (!isDelivery) addressField.value = '';
-      }
+  // Takeaway pays at the restaurant instead of cash on delivery
+  if (drawerCashPaymentRadio) {
+    drawerCashPaymentRadio.value = isTakeaway ? 'Pay at Restaurant' : 'Cash on Delivery';
+  }
+  if (drawerCashPaymentLabel) {
+    drawerCashPaymentLabel.textContent = isTakeaway ? 'Pay at Restaurant' : 'Cash on Delivery';
+  }
+  if (drawerCashPaymentIcon) {
+    drawerCashPaymentIcon.classList.toggle('fa-shop', isTakeaway);
+    drawerCashPaymentIcon.classList.toggle('fa-money-bill', !isTakeaway);
+  }
+}
 
-      if (tableWrapper) {
-        tableWrapper.style.display = isDineIn ? '' : 'none';
-        tableWrapper.hidden = !isDineIn;
-      }
-      if (tableField) {
-        tableField.required = isDineIn;
-        if (!isDineIn) tableField.value = '';
-      }
-    }
-
-    orderTypeRadios.forEach(radio => radio.addEventListener('change', syncOrderTypeFields));
-    syncOrderTypeFields();
-  });
+orderTypeRadios.forEach(r => r.addEventListener('change', syncOrderTypeFields));
+syncOrderTypeFields();
 </script>

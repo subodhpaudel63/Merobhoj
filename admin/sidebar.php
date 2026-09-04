@@ -17,7 +17,7 @@ if (isset($conn)) {
 
 <aside class="admin-sidebar" id="admin_sidebar">
     <a href="./index.php" class="sidebar-logo">
-        <h2>Masu <span>ko jhol</span></h2>
+        <h2>Mero <span>Bhoj</span></h2>
     </a>
 
     <nav class="sidebar-nav">

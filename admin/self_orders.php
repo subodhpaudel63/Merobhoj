@@ -13,7 +13,10 @@ require_once __DIR__ . '/../includes/db.php';
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Self Orders Queue - Mero Bhoj</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@48,400,0,0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@48,400,0,0" />
   <link rel="stylesheet" href="../assets/css/adminstyle.css?v=<?= filemtime(__DIR__ . '/../assets/css/adminstyle.css') ?>">
 </head>
 <body class="admin-page">
@@ -94,7 +97,7 @@ require_once __DIR__ . '/../includes/db.php';
     let activeFilter = 'all';
 
     function loadRequests() {
-      fetch('api_qr_requests.php?action=list')
+      fetch('api/api_qr_requests.php?action=list')
         .then(r => r.json())
         .then(data => {
           if (data.success) {
@@ -250,7 +253,7 @@ require_once __DIR__ . '/../includes/db.php';
       const card = document.getElementById('order-card-' + id);
       if (card) card.style.opacity = '0.6';
 
-      fetch('api_qr_requests.php', {
+      fetch('api/api_qr_requests.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, request_id: id, reason })

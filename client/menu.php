@@ -396,12 +396,7 @@ if ($catResult) {
                                         <span class="mkj-radio-label">Takeaway</span>
                                     </label>
 
-                                    <label class="mkj-custom-radio-btn">
-                                        <input type="radio" name="order_type" value="Dine In" class="order-type-radio">
-                                        <span class="mkj-radio-indicator"></span>
-                                        <i class="fa fa-chair mkj-radio-icon"></i>
-                                        <span class="mkj-radio-label">Dine In</span>
-                                    </label>
+                                   
                                 </div>
                             </div>
                             <div class="mkj-field" id="table_number_wrapper" style="display:none;" hidden>
@@ -427,17 +422,10 @@ if ($catResult) {
                                 <label class="mkj-order-label">Payment Method *</label>
                                 <div class="d-flex gap-2 flex-wrap mkj-radio-group">
                                     <label class="mkj-custom-radio-btn">
-                                        <input type="radio" name="payment_method" value="Cash on Delivery" checked>
+                                        <input type="radio" name="payment_method" value="Cash on Delivery" id="cashPaymentRadio" checked>
                                         <span class="mkj-radio-indicator"></span>
-                                        <i class="fa fa-money-bill mkj-radio-icon"></i>
-                                        <span class="mkj-radio-label">Cash on Delivery</span>
-                                    </label>
-
-                                    <label class="mkj-custom-radio-btn">
-                                        <input type="radio" name="payment_method" value="Pay at Restaurant">
-                                        <span class="mkj-radio-indicator"></span>
-                                        <i class="fa fa-store mkj-radio-icon"></i>
-                                        <span class="mkj-radio-label">Pay at Restaurant</span>
+                                        <i class="fa fa-money-bill mkj-radio-icon" id="cashPaymentIcon"></i>
+                                        <span class="mkj-radio-label" id="cashPaymentLabel">Cash on Delivery</span>
                                     </label>
 
                                     <label class="mkj-custom-radio-btn">

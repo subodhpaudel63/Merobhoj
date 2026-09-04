@@ -495,7 +495,7 @@ Want to explore that next?
               <div class="our-chef-slider d-flex flex-column align-items-center gap-4">
                 <img width="200px" src="<?php echo asset('images/team-1.png'); ?>" alt="">
                 <div class="chef-slider-content">
-                  <h5 class="text-center d-block">Ramu Kaka</h5>
+                  <h5 class="text-center d-block">Virat Kholi</h5>
                   <p class="text-center mb-0">Head Chef</p>
                   <div class="d-flex justify-content-center">
                     <hr class="w-25 my-2">
@@ -529,7 +529,7 @@ Want to explore that next?
               <div class="our-chef-slider d-flex flex-column align-items-center gap-4">
                 <img width="200px" src="<?php echo asset('images/team-2.png'); ?>" alt="">
                 <div class="chef-slider-content">
-                  <h5 class="text-center d-block">Rame Ko Nati</h5>
+                  <h5 class="text-center d-block">Grace Lamtang</h5>
                   <p class="text-center mb-0">Head Chef</p>
                   <div class="d-flex justify-content-center">
                     <hr class="w-25 my-2">

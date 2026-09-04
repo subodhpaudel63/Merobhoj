@@ -449,8 +449,8 @@ if (isset($_COOKIE['user_img'])) {
             <div class="contact-info-text">
               <h6 class="text-center mb-2 auth-title">Email</h6>
               <p class="contact-email-list">
-                <a href="mailto:MasukoJhol@gmail.com">MasukoJhol@gmail.com</a><br>
-                <a href="mailto:sample@gmail.com">sample@gmail.com</a>
+                <a href="mailto:Merobhoj@gmail.com">Merobhoj@gmail.com</a><br>
+                
               </p>
             </div>
           </div>

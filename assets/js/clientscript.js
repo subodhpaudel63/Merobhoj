@@ -256,13 +256,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const inputPrice = document.getElementById('input-price');
     const inputTotal = document.getElementById('input-total-price');
     const quantityInput = document.getElementById('quantity');
-    const orderTypeRadios = document.querySelectorAll('input[name="order_type"]');
+    const orderTypeRadios = buyModal.querySelectorAll('input[name="order_type"]');
     const addressWrapper = document.getElementById('address_wrapper');
     const addressField = document.getElementById('address');
     const addressLabel = document.getElementById('address_label');
-    const tableWrapper = document.getElementById('table_number_wrapper');
-    const tableField = document.getElementById('table_number');
+    const cashPaymentRadio = document.getElementById('cashPaymentRadio');
+    const cashPaymentIcon = document.getElementById('cashPaymentIcon');
+    const cashPaymentLabel = document.getElementById('cashPaymentLabel');
     const tableLabel = document.getElementById('table_number_label');
+    const tableField = document.getElementById('table_number');
+    
+    
     const recalc = () => {
       const price = parseFloat(modalPrice.textContent) || 0;
       const qty = Math.max(1, parseInt(quantityInput.value) || 1);
@@ -276,15 +280,24 @@ document.addEventListener('DOMContentLoaded', function () {
       document.getElementById('summary-total') && (document.getElementById('summary-total').textContent = total);
     };
     const syncOrderTypeFields = () => {
-      const selected = document.querySelector('input[name="order_type"]:checked')?.value || 'Delivery';
+      const selected = buyModal.querySelector('input[name="order_type"]:checked')?.value || 'Delivery';
       const isDelivery = selected === 'Delivery';
       const isDineIn = selected === 'Dine In';
+      const isTakeaway = selected === 'Takeaway';
       if (addressWrapper) { addressWrapper.style.display = isDelivery ? '' : 'none'; addressWrapper.hidden = !isDelivery; }
       if (addressLabel) addressLabel.textContent = isDelivery ? 'Delivery Address *' : 'Address';
       if (addressField) { addressField.required = isDelivery; if (!isDelivery) addressField.value = ''; }
-      if (tableWrapper) { tableWrapper.style.display = isDineIn ? '' : 'none'; tableWrapper.hidden = !isDineIn; }
+      
       if (tableLabel) tableLabel.textContent = isDineIn ? 'Table Number *' : 'Table Number (for Dine In)';
       if (tableField) { tableField.required = isDineIn; if (!isDineIn) tableField.value = ''; }
+
+      // Takeaway pays at the restaurant instead of cash on delivery
+      if (cashPaymentRadio) cashPaymentRadio.value = isTakeaway ? 'Pay at Restaurant' : 'Cash on Delivery';
+      if (cashPaymentLabel) cashPaymentLabel.textContent = isTakeaway ? 'Pay at Restaurant' : 'Cash on Delivery';
+      if (cashPaymentIcon) {
+        cashPaymentIcon.classList.toggle('fa-shop', isTakeaway);
+        cashPaymentIcon.classList.toggle('fa-money-bill', !isTakeaway);
+      }
     };
     document.getElementById('qty-minus')?.addEventListener('click', () => { quantityInput.value = Math.max(1, (parseInt(quantityInput.value) || 1) - 1); recalc(); });
     document.getElementById('qty-plus')?.addEventListener('click', () => { quantityInput.value = (parseInt(quantityInput.value) || 1) + 1; recalc(); });

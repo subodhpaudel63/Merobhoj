@@ -71,26 +71,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ], $isAjax);
     }
 
-    if ($order_type === 'Delivery') {
-        if ($address === '') {
-            respond_menu_order([
-                'success' => false,
-                'message' => 'Delivery address is required for delivery orders.',
-            ], $isAjax);
-        }
-        $table_number = null;
-    } elseif ($order_type === 'Dine In') {
-        if ($table_number === '') {
-            respond_menu_order([
-                'success' => false,
-                'message' => 'Table number is required for dine in orders.',
-            ], $isAjax);
-        }
-        $address = '';
-    } elseif ($order_type === 'Takeaway') {
-        $address = '';
-        $table_number = null;
+    // Only Delivery and Takeaway can be placed through the customer cart.
+// Dine In orders are created exclusively via the table QR self-order flow.
+if (!in_array($order_type, ['Delivery', 'Takeaway'], true)) {
+    respond_menu_order([
+        'success' => false,
+        'message' => 'Invalid order type. Dine-in orders must be placed via table QR ordering.',
+    ], $isAjax);
+}
+
+if ($order_type === 'Delivery') {
+    if ($address === '') {
+        respond_menu_order([
+            'success' => false,
+            'message' => 'Delivery address is required for delivery orders.',
+        ], $isAjax);
     }
+    $table_number = null;
+} elseif ($order_type === 'Takeaway') {
+    $address = '';
+    $table_number = null;
+}
 
     // Insert into DB using only columns that exist in the orders table
     $order_number = 'ORD-' . date('Ymd') . '-' . sprintf('%04d', rand(1000, 9999));

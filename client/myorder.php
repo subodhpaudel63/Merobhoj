@@ -99,7 +99,6 @@ if (isset($_COOKIE['user_img'])) {
             <li class="list-unstyled py-2"><a class="text-dark text-decoration-none text-uppercase p-4" href="./menu.php">Menu</a></li>
             <li class="list-unstyled py-2"><a class="text-dark text-decoration-none text-uppercase p-4" href="./myorder.php">My Order</a></li>
             <li class="list-unstyled py-2"><a class="text-dark text-decoration-none text-uppercase p-4" href="./booking.php">My Booking</a></li>
-            <li class="list-unstyled py-2"><a class="text-dark text-decoration-none text-uppercase p-4" href="./booking.php">My Booking</a></li>
             <?php if (!$currentUser): ?>
               <li class="list-unstyled py-2"><a class="btn btn-gradient" href="<?php echo url('/login.php'); ?>">Login</a></li>
             <?php endif; ?>
