@@ -3197,3 +3197,702 @@ MEDIA QUERY PHONE
   from { transform: scale(0.5); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
+
+/* ===========================================================
+   QR Management Page (table_qr.php)
+   =========================================================== */
+
+.qrm-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.8rem;
+  flex-wrap: wrap;
+}
+
+.qrm-page-header h1 {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--clr-dark);
+  margin-bottom: 0.2rem;
+}
+
+.qrm-page-header > div > p {
+  color: var(--clr-dark-variant);
+  font-size: 0.9rem;
+}
+
+/* Stats Row */
+.qrm-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.8rem;
+}
+
+.qrm-stat-card {
+  background: var(--clr-white);
+  border-radius: var(--card-border-radius);
+  padding: 1.2rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: var(--box-shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.qrm-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 35px -5px rgba(0,0,0,0.1);
+}
+
+.qrm-stat-icon {
+  font-size: 2rem;
+  background: var(--clr-info-light);
+  border-radius: var(--border-radius-2);
+  padding: 0.5rem;
+}
+
+.qrm-stat-value {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--clr-dark);
+  line-height: 1;
+}
+
+.qrm-stat-label {
+  font-size: 0.78rem;
+  color: var(--clr-dark-variant);
+  margin-top: 0.2rem;
+  font-weight: 500;
+}
+
+/* Table Grid */
+.qrm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Table Card */
+.qrm-card {
+  background: var(--clr-white);
+  border-radius: var(--card-border-radius);
+  box-shadow: var(--box-shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  border-top: 4px solid var(--clr-border);
+  animation: slideUp 0.35s ease both;
+}
+
+.qrm-card.has-qr {
+  border-top-color: var(--clr-success);
+}
+
+.qrm-card.no-qr {
+  border-top-color: var(--clr-warnig);
+}
+
+.qrm-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -8px rgba(0,0,0,0.12);
+}
+
+.qrm-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.2rem 0.8rem;
+  border-bottom: 1px solid var(--clr-border);
+}
+
+.qrm-table-info {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.qrm-table-icon {
+  font-size: 1.5rem;
+  color: var(--clr-primary);
+  background: var(--clr-light);
+  border-radius: var(--border-radius-1);
+  padding: 0.35rem;
+}
+
+.qrm-table-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--clr-dark);
+}
+
+.qrm-table-cap {
+  font-size: 0.75rem;
+  color: var(--clr-dark-variant);
+}
+
+/* Badges */
+.qrm-badge {
+  padding: 0.25rem 0.7rem;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-active {
+  background: rgba(46, 213, 115, 0.12);
+  color: var(--clr-success);
+}
+
+.badge-none {
+  background: rgba(255, 165, 2, 0.12);
+  color: var(--clr-warnig);
+}
+
+/* QR Area */
+.qrm-qr-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.2rem;
+}
+
+.qrm-qr-wrapper {
+  background: white;
+  border-radius: var(--border-radius-2);
+  padding: 10px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  display: inline-block;
+  margin-bottom: 0.8rem;
+}
+
+.qrm-qr-canvas img, .qrm-qr-canvas canvas {
+  display: block;
+}
+
+.qrm-qr-url {
+  font-size: 0.68rem;
+  color: var(--clr-dark-variant);
+  word-break: break-all;
+  text-align: center;
+  max-width: 200px;
+  background: var(--clr-info-light);
+  padding: 0.35rem 0.6rem;
+  border-radius: var(--border-radius-1);
+}
+
+.qrm-no-qr-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  color: var(--clr-dark-variant);
+}
+
+.qrm-no-qr-placeholder .material-symbols-sharp {
+  font-size: 3rem;
+  color: var(--clr-border);
+}
+
+.qrm-no-qr-placeholder p {
+  font-size: 0.85rem;
+}
+
+/* Card Actions */
+.qrm-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.9rem 1.2rem;
+  border-top: 1px solid var(--clr-border);
+  flex-wrap: wrap;
+}
+
+/* Buttons */
+.qrm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.65rem 1.2rem;
+  border-radius: var(--border-radius-1);
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.qrm-btn .material-symbols-sharp {
+  font-size: 1rem;
+}
+
+.qrm-btn-sm {
+  padding: 0.45rem 0.85rem;
+  font-size: 0.8rem;
+  flex: 1;
+  justify-content: center;
+}
+
+.qrm-btn-primary {
+  background: var(--clr-primary);
+  color: white;
+}
+.qrm-btn-primary:hover { background: var(--clr-primary-dark); }
+
+.qrm-btn-success {
+  background: rgba(46, 213, 115, 0.12);
+  color: var(--clr-success);
+}
+.qrm-btn-success:hover { background: var(--clr-success); color: white; }
+
+.qrm-btn-warning {
+  background: rgba(255, 165, 2, 0.12);
+  color: var(--clr-warnig);
+}
+.qrm-btn-warning:hover { background: var(--clr-warnig); color: white; }
+
+.qrm-btn-info {
+  background: rgba(71, 85, 105, 0.08);
+  color: var(--clr-info-dark);
+}
+.qrm-btn-info:hover { background: var(--clr-info-dark); color: white; }
+
+.qrm-btn-danger {
+  background: rgba(255, 71, 87, 0.1);
+  color: var(--clr-danger);
+}
+.qrm-btn-danger:hover { background: var(--clr-danger); color: white; }
+
+.qrm-btn-copied {
+  background: var(--clr-success) !important;
+  color: white !important;
+}
+
+/* Loading state */
+.qrm-loading {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 3rem;
+  color: var(--clr-dark-variant);
+}
+
+.qrm-spinner, .qrm-spin {
+  font-size: 2.5rem;
+  color: var(--clr-primary);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ===========================================================
+   Self Orders Page (self_orders.php)
+   =========================================================== */
+
+/* Live Badge */
+.so-live-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(46,213,115,0.1);
+  border: 1px solid rgba(46,213,115,0.3);
+  color: var(--clr-success);
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  align-self: center;
+}
+
+.so-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--clr-success);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.3); }
+}
+
+/* Filter Tabs */
+.so-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  background: var(--clr-white);
+  padding: 0.4rem;
+  border-radius: var(--border-radius-2);
+  box-shadow: var(--box-shadow);
+  width: fit-content;
+  flex-wrap: wrap;
+}
+
+.so-tab {
+  padding: 0.5rem 1.1rem;
+  border-radius: var(--border-radius-1);
+  border: none;
+  background: transparent;
+  color: var(--clr-dark-variant);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.so-tab:hover {
+  background: var(--clr-info-light);
+  color: var(--clr-dark);
+}
+
+.so-tab.active {
+  background: var(--clr-primary);
+  color: white;
+  font-weight: 600;
+}
+
+.so-tab-badge {
+  background: var(--clr-danger);
+  color: white;
+  border-radius: 50px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+/* Orders Grid */
+.so-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.4rem;
+}
+
+/* Order Card */
+.so-card {
+  background: var(--clr-white);
+  border-radius: var(--card-border-radius);
+  box-shadow: var(--box-shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-left: 5px solid var(--clr-border);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  animation: slideUp 0.3s ease both;
+}
+
+.so-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 38px -6px rgba(0,0,0,0.12);
+}
+
+.so-pending { border-left-color: var(--clr-warnig); }
+.so-approved { border-left-color: var(--clr-success); }
+.so-rejected { border-left-color: var(--clr-danger); }
+
+.so-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.2rem 0.8rem;
+  border-bottom: 1px solid var(--clr-border);
+}
+
+.so-table-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--clr-dark);
+}
+
+.so-table-tag .material-symbols-sharp {
+  font-size: 1.1rem;
+  color: var(--clr-primary);
+}
+
+/* Status Badges */
+.so-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 50px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.so-status-badge .material-symbols-sharp {
+  font-size: 0.85rem;
+}
+
+.so-badge-pending {
+  background: rgba(255,165,2,0.12);
+  color: var(--clr-warnig);
+}
+
+.so-badge-approved {
+  background: rgba(46,213,115,0.12);
+  color: var(--clr-success);
+}
+
+.so-badge-rejected {
+  background: rgba(255,71,87,0.1);
+  color: var(--clr-danger);
+}
+
+/* Customer Info */
+.so-customer-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1.2rem 0.5rem;
+}
+
+.so-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--clr-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.so-customer-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--clr-dark);
+}
+
+.so-customer-phone {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+  color: var(--clr-dark-variant);
+  margin-top: 0.1rem;
+}
+
+/* Note */
+.so-note {
+  margin: 0 1.2rem 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(240, 90, 34, 0.06);
+  border-radius: var(--border-radius-1);
+  font-size: 0.8rem;
+  color: var(--clr-info-dark);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.so-note .material-symbols-sharp {
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  color: var(--clr-primary);
+  margin-top: 0.05rem;
+}
+
+/* Items List */
+.so-items-list {
+  list-style: none;
+  margin: 0.5rem 1.2rem;
+  border: 1px solid var(--clr-border);
+  border-radius: var(--border-radius-1);
+  overflow: hidden;
+}
+
+.so-item-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.82rem;
+}
+
+.so-item-row:not(:last-child) {
+  border-bottom: 1px solid var(--clr-border);
+}
+
+.so-item-name {
+  color: var(--clr-dark);
+  font-weight: 500;
+}
+
+.so-item-detail {
+  color: var(--clr-dark-variant);
+  background: var(--clr-info-light);
+  border-radius: 4px;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.so-item-price {
+  color: var(--clr-primary);
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+
+/* Total */
+.so-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 1.2rem;
+  border-top: 1px solid var(--clr-border);
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--clr-dark-variant);
+}
+
+.so-total-amount {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--clr-dark);
+}
+
+/* Meta Row */
+.so-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 1.2rem 0.6rem;
+}
+
+.so-payment-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--clr-dark-variant);
+  background: var(--clr-info-light);
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--border-radius-1);
+}
+
+.so-payment-tag .material-symbols-sharp { font-size: 0.85rem; }
+
+.so-time {
+  font-size: 0.72rem;
+  color: var(--clr-dark-variant);
+}
+
+/* Order Code */
+.so-order-code {
+  margin: 0 1.2rem 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--clr-success);
+  background: rgba(46,213,115,0.08);
+  padding: 0.4rem 0.7rem;
+  border-radius: var(--border-radius-1);
+}
+
+.so-order-code .material-symbols-sharp {
+  font-size: 0.9rem;
+}
+
+/* Action Buttons */
+.so-action-row {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.8rem 1.2rem 1rem;
+  border-top: 1px solid var(--clr-border);
+}
+
+.so-approve-btn, .so-reject-btn {
+  flex: 1;
+  justify-content: center;
+}
+
+/* Empty State */
+.so-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--clr-dark-variant);
+  gap: 0.75rem;
+}
+
+.so-empty .material-symbols-sharp {
+  font-size: 4rem;
+  color: var(--clr-border);
+}
+
+.so-empty h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--clr-dark);
+}
+
+.so-empty p {
+  font-size: 0.85rem;
+}
+
+/* ===========================================================
+   Responsive: QR & Self Orders
+   =========================================================== */
+@media (max-width: 900px) {
+  .qrm-stats-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .qrm-stats-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .qrm-grid {
+    grid-template-columns: 1fr;
+  }
+  .so-grid {
+    grid-template-columns: 1fr;
+  }
+  .qrm-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .so-tabs {
+    width: 100%;
+  }
+  .so-tab { flex: 1; justify-content: center; }
+}

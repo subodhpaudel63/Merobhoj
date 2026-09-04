@@ -40,6 +40,61 @@ function mkjBindFormBusyState(formSelector) {
   });
 }
 
+// Validate the customer details before the QR order request is sent.
+function validateOrderDetails() {
+  const fields = [
+    {
+      input: document.getElementById('custName'),
+      error: document.getElementById('custNameError'),
+      message: 'Please enter your name.'
+    },
+    {
+      input: document.getElementById('custPhone'),
+      error: document.getElementById('custPhoneError'),
+      message: 'Please enter your phone number.',
+      invalidMessage: 'Enter a valid Nepali mobile number' 
+    }
+  ];
+  let firstInvalidInput = null;
+
+  fields.forEach(function (field) {
+    const value = field.input.value.trim();
+    let message = value ? '' : field.message;
+
+    // Accept only a 10-digit Nepali mobile number, optionally prefixed with +977.
+    if (!message && field.input.id === 'custPhone') {
+      const normalizedPhone = value.replace(/[\s-]/g, '');
+      if (!/^(?:\+977)?9[678][0-9]{8}$/.test(normalizedPhone)) {
+        message = field.invalidMessage;
+      }
+    }
+
+    field.input.classList.toggle('mb-input-invalid', Boolean(message));
+    field.input.setAttribute('aria-invalid', message ? 'true' : 'false');
+    field.error.textContent = message;
+    if (message && !firstInvalidInput) firstInvalidInput = field.input;
+  });
+
+  if (firstInvalidInput) {
+    firstInvalidInput.focus();
+    return false;
+  }
+  return true;
+}
+
+// Remove validation feedback when a new order is started.
+function clearOrderValidation() {
+  ['custName', 'custPhone'].forEach(function (id) {
+    const input = document.getElementById(id);
+    const error = document.getElementById(id + 'Error');
+    if (input) {
+      input.classList.remove('mb-input-invalid');
+      input.setAttribute('aria-invalid', 'false');
+    }
+    if (error) error.textContent = '';
+  });
+}
+
 function mkjInitBookingForm() {
   const bookingForm = document.getElementById('bookingForm');
   const reservationDate = document.getElementById('reservationDate');
@@ -1333,4 +1388,3 @@ function togglePw(id, iconId) {
         }, false);
     });
 })();
-

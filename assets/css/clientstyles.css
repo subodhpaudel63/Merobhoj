@@ -67,6 +67,8 @@ body { background: #f8f8f6; }
 #menuTab .nav-link:hover { background: rgba(255,106,0,.08); color: var(--orange); transform: translateY(-1px); }
 #menuTab .nav-link.active { background: var(--orange); color: #fff !important; box-shadow: 0 5px 18px var(--orange-glow); transform: translateY(-1px); }
 .tab-content { position: relative; }
+.menu #menuTabContent { min-height: 620px; }
+.menu #menuTabContent .tab-pane.show.active { display: block; }
 .tab-pane { transition: opacity .38s var(--ease-out), transform .38s var(--ease-out); opacity: 0; transform: translateY(14px); pointer-events: none; }
 .tab-pane.show.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
 .menu .card { border-radius: 18px; overflow: hidden; border: 0; background: #fff; box-shadow: 0 4px 18px rgba(0,0,0,.07); transition: transform .32s var(--ease-out), box-shadow .32s var(--ease-out); position: relative; }

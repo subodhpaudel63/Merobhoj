@@ -230,12 +230,8 @@ redirect_user();
 // Function to redirect user
 function redirect_user()
 {
-    // Check if the referrer is from client directory
-    if (isset($_SERVER['HTTP_REFERER']) && strpos($_SERVER['HTTP_REFERER'], '/client/') !== false) {
-        header("Location: ../client/index.php");
-    } else {
-        header("Location: ../index.php");
-    }
+    // Return customers to their bookings page after every booking attempt.
+    header("Location: ../client/booking.php");
     exit;
 }
 ?>

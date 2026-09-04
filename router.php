@@ -14,6 +14,17 @@ $request_uri = trim($request_uri, '/');
 
 
 
+// Handle dynamic routes before the switch
+if (preg_match('/^order\/([a-zA-Z0-9]+)$/', $request_uri, $matches)) {
+    $_GET['token'] = $matches[1];
+    require __DIR__ . '/order_qr.php';
+    exit;
+}
+if ($request_uri === 'api_qr_requests_client') {
+    require __DIR__ . '/api_qr_requests_client.php';
+    exit;
+}
+
 switch ($request_uri) {
     // Public routes
     case '':

@@ -215,6 +215,25 @@
   font-style: normal;
 }
 
+/* QR order form validation states */
+.mb-field-error {
+  display: block;
+  min-height: 1.1rem;
+  margin-top: 0.25rem;
+  color: #c62828;
+  font-size: 0.72rem;
+}
+
+.mb-input.mb-input-invalid {
+  border-color: #c62828;
+  background-color: #fff8f8;
+}
+
+.mb-input.mb-input-invalid:focus {
+  border-color: #c62828;
+  box-shadow: 0 0 0 2px rgba(198, 40, 40, 0.12);
+}
+
 /* Color Variables */
 :root {
   --primary-color: #e5612f; /* Example Primary Color */
@@ -2622,6 +2641,22 @@ footer p {
   font-size: 0.88rem;
   color: #444;
   line-height: 1.6;
+}
+
+.contact-info-text .contact-email-list {
+  overflow-wrap: anywhere;
+}
+
+.contact-info-text .contact-email-list a {
+  color: #444;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.contact-info-text .contact-email-list a:hover,
+.contact-info-text .contact-email-list a:focus {
+  color: #ff6a00;
+  text-decoration: underline;
 }
 
 

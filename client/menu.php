@@ -68,7 +68,7 @@ if ($catResult) {
     <!-- Include toast styles -->
     <link rel="stylesheet" href="<?php echo asset('css/toast_styles.css'); ?>" />
   </head>
-<body>
+<body class="menu-page">
     
 
     <div class="loader">

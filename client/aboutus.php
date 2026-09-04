@@ -117,11 +117,13 @@ if (isset($_COOKIE['user_img'])) {
                 class="text-dark text-decoration-none text-uppercase p-4"
                 href="./myorder.php"
                 >My Order</a>
-    </li>
-
-    <a class="text-decoration-none text-uppercase p-4" href="./booking.php"
-                >MY Booking</a>
-            </li>
+           <li class="list-unstyled py-2">
+             <a
+               class="text-dark text-decoration-none text-uppercase p-4"
+               href="./booking.php"
+               >My Booking</a
+             >
+           </li>
             
             <?php if (!$currentUser): ?>
               <li class="list-unstyled py-2">
@@ -222,9 +224,13 @@ if (isset($_COOKIE['user_img'])) {
                 >
               </li>
 
-              <a class="text-decoration-none text-uppercase p-4" href="./booking.php"
-                >MY Booking</a>
-            </li>
+              <li class="list-unstyled py-2">
+                <a
+                  class="text-dark text-decoration-none text-uppercase p-4"
+                  href="./booking.php"
+                  >My Booking</a
+                >
+              </li>
               <?php if (!$currentUser): ?>
                 <li class="list-unstyled py-2">
                   <a class="btn btn-gradient" href="<?php echo url('/login.php'); ?>">Login</a>

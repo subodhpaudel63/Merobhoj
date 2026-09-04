@@ -269,6 +269,9 @@
   backdrop?.addEventListener('click', closeDrawer);
   clearBtn?.addEventListener('click', clearCart);
 
+  // Close the cart drawer before opening the checkout modal.
+  document.getElementById('cartDrawerCheckout')?.addEventListener('click', closeDrawer);
+
   document.addEventListener('keydown', function (event) {
     if (event.key === 'Escape') closeDrawer();
   });
@@ -341,4 +344,3 @@
 
   renderCart();
 })();
-

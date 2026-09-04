@@ -49,6 +49,16 @@ if (isset($conn)) {
             <h3>Bookings</h3>
         </a>
 
+        <a href="table_qr.php" class="sidebar-link <?php echo ($current_page === 'table_qr.php') ? 'active' : ''; ?>">
+            <span class="material-symbols-sharp">qr_code_2</span>
+            <h3>Table QR</h3>
+        </a>
+
+        <a href="self_orders.php" class="sidebar-link <?php echo ($current_page === 'self_orders.php') ? 'active' : ''; ?>">
+            <span class="material-symbols-sharp">fact_check</span>
+            <h3>Self Orders</h3>
+        </a>
+
         <a href="feedback.php" class="sidebar-link <?php echo ($current_page === 'feedback.php') ? 'active' : ''; ?>">
             <span class="material-symbols-sharp">chat_bubble</span>
             <h3>Feedback</h3>

@@ -916,23 +916,31 @@ function closeAddressModal() {
    ============================================================ */
 window.openDeleteConfirm = function (options) {
     const opts = options || {};
+    const type = opts.type || 'danger'; // 'danger' or 'success'
 
     const existing = document.getElementById('deleteConfirmModal');
     if (existing) existing.remove();
+
+    const iconColor = type === 'success' ? '#10b981' : '#dc2626';
+    const btnClass = type === 'success' ? 'btn-success-confirm' : 'btn-delete-confirm';
+    
+    // Icon SVG based on type
+    const svgIcon = type === 'success' 
+        ? `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>`
+        : `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>`;
 
     const modalHtml = `
         <div id="deleteConfirmModal" class="delete-confirm-overlay">
             <div class="delete-confirm-modal">
                 <div class="icon-wrapper">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2">
-                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
-                    </svg>
+                    ${svgIcon}
                 </div>
                 <h3></h3>
                 <p></p>
+                ${opts.showInput ? `<textarea id="confirmInput" class="mb-input" placeholder="${opts.inputPlaceholder || ''}" style="width:100%; margin-bottom:1rem; padding:0.5rem; border:1px solid #ccc; border-radius:4px; font-family:inherit; resize:vertical; min-height:60px;"></textarea>` : ''}
                 <div class="delete-confirm-buttons">
                     <button type="button" class="btn-cancel">Cancel</button>
-                    <button type="button" class="btn-delete-confirm"></button>
+                    <button type="button" class="${btnClass}"></button>
                 </div>
             </div>
         </div>
@@ -945,11 +953,26 @@ window.openDeleteConfirm = function (options) {
     modal.querySelector('p').textContent = opts.message
         || 'This item will be permanently deleted. This action cannot be undone.';
 
-    const confirmBtn = modal.querySelector('.btn-delete-confirm');
+    const confirmBtn = modal.querySelector(`.${btnClass}`);
     confirmBtn.textContent = opts.confirmText || 'Delete';
+    if (type === 'success') {
+        confirmBtn.style.background = 'var(--clr-success, #2ed573)';
+        confirmBtn.style.color = 'white';
+        confirmBtn.style.border = 'none';
+        confirmBtn.style.padding = '0.6rem 1.2rem';
+        confirmBtn.style.borderRadius = 'var(--border-radius-1, 6px)';
+        confirmBtn.style.cursor = 'pointer';
+        confirmBtn.style.fontWeight = '600';
+    }
+    
     confirmBtn.addEventListener('click', function () {
+        const inputVal = opts.showInput ? document.getElementById('confirmInput').value.trim() : '';
+        if (opts.showInput && opts.requireInput && !inputVal) {
+            alert('Please provide a reason.');
+            return;
+        }
         closeDeleteConfirm();
-        if (typeof opts.onConfirm === 'function') opts.onConfirm();
+        if (typeof opts.onConfirm === 'function') opts.onConfirm(inputVal);
     });
 
     const cancelBtn = modal.querySelector('.btn-cancel');

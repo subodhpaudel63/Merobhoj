@@ -112,7 +112,7 @@ if (isset($_COOKIE['user_img'])) {
             
              <li class="list-unstyled py-2">
               <a class="text-decoration-none text-uppercase p-4" href="./booking.php"
-                >Booking</a>
+                >My Booking</a>
             </li>
 
             <?php if (!$currentUser): ?>

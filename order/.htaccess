@@ -1,0 +1,10 @@
+Options -Indexes
+
+# Route /order/{token} to order/index.php
+RewriteEngine On
+RewriteBase /Merobhoj/order/
+
+# If it's not a real file or directory, send to index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [L,QSA]

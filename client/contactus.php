@@ -105,7 +105,7 @@ if (isset($_COOKIE['user_img'])) {
             </li>
 
             <li class="list-unstyled py-2">
-              <a class="text-dark text-decoration-none text-uppercase p-4" href="./myorder.php">My Booking</a>
+              <a class="text-dark text-decoration-none text-uppercase p-4" href="./booking.php">My Booking</a>
             </li>
 
             <?php if (!$currentUser): ?>
@@ -183,7 +183,7 @@ if (isset($_COOKIE['user_img'])) {
                 >
               </li>
               <li class="list-unstyled py-2">
-                <a class="text-dark text-decoration-none text-uppercase p-4" href="./myorder.php"
+                <a class="text-dark text-decoration-none text-uppercase p-4" href="./booking.php"
                   >My Order</a
                 >
               </li>
@@ -448,7 +448,10 @@ if (isset($_COOKIE['user_img'])) {
             </div>
             <div class="contact-info-text">
               <h6 class="text-center mb-2 auth-title">Email</h6>
-              <p>MasukoJhol@gmail.com<br>sample@gmail.com</p>
+              <p class="contact-email-list">
+                <a href="mailto:MasukoJhol@gmail.com">MasukoJhol@gmail.com</a><br>
+                <a href="mailto:sample@gmail.com">sample@gmail.com</a>
+              </p>
             </div>
           </div>
 
