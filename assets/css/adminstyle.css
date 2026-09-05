@@ -613,20 +613,58 @@ aside.admin-sidebar .sidebar-footer {
 }
 
 /* ===================
-   Sidebar Collapsed State (slides out of view)
+   Sidebar Collapsed State (icon rail)
 =================== */
 
 body.sidebar-collapsed .admin-page > .container,
 body.sidebar-collapsed .admin-orders-page > .container {
-    margin-left: 0;
+    margin-left: 4.5rem;
+    grid-template-columns: 4.5rem auto 16rem;
 }
 
 body.sidebar-collapsed .admin-page aside.admin-sidebar,
 body.sidebar-collapsed .admin-orders-page aside.admin-sidebar,
 .admin-page aside.admin-sidebar.is-collapsed,
 .admin-orders-page aside.admin-sidebar.is-collapsed {
-    transform: translateX(-105%);
-    border-right: none;
+    width: 4.5rem;
+    transform: translateX(0);
+    border-right: 1px solid var(--clr-border);
+}
+
+body.sidebar-collapsed .admin-topbar {
+    margin-left: 4.5rem;
+}
+
+body.sidebar-collapsed aside.admin-sidebar .sidebar-logo {
+    justify-content: center;
+    padding: 0;
+}
+
+body.sidebar-collapsed aside.admin-sidebar .sidebar-logo h2,
+body.sidebar-collapsed aside.admin-sidebar .sidebar-link h3 {
+    display: none;
+}
+
+body.sidebar-collapsed aside.admin-sidebar .sidebar-nav,
+body.sidebar-collapsed aside.admin-sidebar .sidebar-footer {
+    padding-left: 0.65rem;
+    padding-right: 0.65rem;
+}
+
+body.sidebar-collapsed aside.admin-sidebar .sidebar-link {
+    justify-content: center;
+    gap: 0;
+    padding-left: 0.7rem;
+    padding-right: 0.7rem;
+}
+
+body.sidebar-collapsed aside.admin-sidebar .sidebar-badge {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.2rem;
+    margin-left: 0;
+    padding: 0.08rem 0.3rem;
+    font-size: 0.6rem;
 }
  /* ----------------------------
  --------- Main--------------
@@ -1958,6 +1996,8 @@ MEDIA QUERY PHONE
   .admin-topbar {
     margin-left: 0;
     padding: 0.6rem 1rem;
+    position: sticky;
+    z-index: 1300;
   }
 
   .daterange-btn {
@@ -1980,6 +2020,37 @@ MEDIA QUERY PHONE
     scroll-behavior: auto !important;
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* Final panel navigation overrides. Keep the mobile drawer above page content
+   and make its open state win over the desktop icon-rail rules. */
+@media screen and (max-width: 768px) {
+    body.admin-page .admin-topbar,
+    body.admin-orders-page .admin-topbar {
+      position: sticky;
+      z-index: 1500;
+    }
+
+    body.admin-page aside.admin-sidebar,
+    body.admin-orders-page aside.admin-sidebar {
+      width: 16rem !important;
+      max-width: 85vw;
+      transform: translateX(-105%) !important;
+      visibility: hidden;
+      z-index: 1400;
+    }
+
+    body.admin-page.sidebar-open aside.admin-sidebar,
+    body.admin-orders-page.sidebar-open aside.admin-sidebar {
+      transform: translateX(0) !important;
+      visibility: visible;
+    }
+
+    body.admin-page.sidebar-open .sidebar-backdrop,
+    body.admin-orders-page.sidebar-open .sidebar-backdrop {
+      display: block !important;
+      z-index: 1350;
   }
 }
 

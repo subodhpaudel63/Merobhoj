@@ -79,18 +79,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const isMobileView = () => window.innerWidth <= 768;
 
-    // Central handler â€” exposed globally so the header button's inline
-    // onclick="mkjToggleSidebar(event)" always works.
+    // Shared handler for every admin, chef, staff, and rider panel.
     window.mkjToggleSidebar = function(e) {
-        if (e && e.__mkjSidebarHandled) return; // avoid double-toggle from inline + listener
-        if (e) e.__mkjSidebarHandled = true;
         if (e && e.preventDefault) e.preventDefault();
         const btn = document.getElementById('menu_toggle');
         const icon = btn ? btn.querySelector('span') : null;
 
         if (isMobileView()) {
+            body.classList.remove('sidebar-collapsed');
+            if (sidebar) sidebar.classList.remove('is-collapsed');
             body.classList.toggle('sidebar-open');
         } else {
+            body.classList.remove('sidebar-open');
             body.classList.toggle('sidebar-collapsed');
             if (sidebar) sidebar.classList.toggle('is-collapsed');
         }
@@ -100,11 +100,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (icon) icon.textContent = hidden ? 'menu' : 'menu_open';
     };
 
-    const menuToggle = document.getElementById('menu_toggle');
-    if (menuToggle) {
-        // Direct binding (primary). Inline onclick in topbar.php is the fallback.
-        menuToggle.addEventListener('click', window.mkjToggleSidebar);
-    }
+    document.addEventListener('click', function(e) {
+        const menuToggle = e.target.closest('#menu_toggle');
+        if (menuToggle) window.mkjToggleSidebar(e);
+    });
 
     if (backdrop) {
         backdrop.addEventListener('click', function() {
@@ -118,7 +117,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     window.addEventListener('resize', function() {
-        if (!isMobileView()) {
+        if (isMobileView()) {
+            body.classList.remove('sidebar-collapsed');
+            if (sidebar) sidebar.classList.remove('is-collapsed');
+        } else {
             body.classList.remove('sidebar-open');
             if (sidebar) sidebar.classList.remove('is-collapsed');
         }
@@ -1009,5 +1011,3 @@ window.confirmFormDelete = function (event, title, message) {
 document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') closeDeleteConfirm();
 });
-
-

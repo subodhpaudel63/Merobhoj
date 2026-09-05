@@ -556,10 +556,11 @@ function renderTrackPage(cfg) {
   document.getElementById('cfgPaymentMethod').textContent = o.payment;
   document.getElementById('cfgTotalAmount').textContent = o.amount;
 
-  // No rider/dispatch data exists in the database yet â€” hide the demo rider card
-  const riderName = document.getElementById('cfgRiderName');
-  const riderCard = riderName ? riderName.closest('.card') : null;
-  if (riderCard) riderCard.style.display = 'none';
+  // The rider + handover cards are driven exclusively by
+  // includes/delivery_track.php (the only place the handover code is served).
+  // Hide them for any order that is not out with a rider; syncDeliveryFeed()
+  // reveals and fills them once the backend confirms one.
+  if (o.rawStatus !== 'Ready' && o.rawStatus !== 'Delivering') hideDeliveryCards();
 
   const itemsHtml = (o.itemsList || []).map((it) => `
     <div class="item-row">
@@ -716,6 +717,8 @@ let riderTimer = null;                 // rider animation interval handle
 
 function resetMap() {
   if (riderTimer) { clearInterval(riderTimer); riderTimer = null; }
+  if (deliveryTimer) { clearInterval(deliveryTimer); deliveryTimer = null; }
+  deliveryFeedOrder = null; riderFixSeen = false;
   if (map) { try { map.remove(); } catch (err) { /* already gone */ } }
   map = null; riderMarker = null; routeLine = null; routePath = [];
   distanceKm = 0; etaMinutes = 0;
@@ -1060,6 +1063,145 @@ function animateRider() {
 }
 
 /* =================================================================
+   REAL DELIVERY FEED — the rider's identity, their live GPS position and
+   the handover code all come from includes/delivery_track.php, which scopes
+   every answer to the logged-in customer's own order.
+
+   The simulation above stays as the fallback: it keeps running until the
+   first real fix lands, so a rider with GPS off (or an order nobody has
+   claimed yet) behaves exactly as it did before this feed existed.
+   ================================================================= */
+const DELIVERY_FEED_MS = 8000;
+const RIDER_SPEED_KMH  = 18;     // city scooter average, used for the ETA
+
+let deliveryTimer = null;        // feed interval handle
+let deliveryFeedOrder = null;    // order the feed is currently following
+let deliveryInFlight = false;
+let riderFixSeen = false;        // a real GPS fix has arrived at least once
+
+function hideDeliveryCards() {
+  const rc = document.getElementById('riderCard');
+  if (rc) rc.style.display = 'none';
+  const hc = document.getElementById('handoverCard');
+  if (hc) hc.style.display = 'none';
+}
+
+/* Run the feed only while an order is genuinely out (Ready = a rider is being
+   found / has it in hand; Delivering = on the road). Re-entrant: called on
+   every poll tick of the orders feed, but only acts when the target changes. */
+function syncDeliveryFeed(cfg) {
+  const o = cfg && cfg.ORDER;
+  const live = o && o.orderNumber && (o.rawStatus === 'Ready' || o.rawStatus === 'Delivering');
+  const wanted = live ? o.orderNumber : null;
+  if (wanted === deliveryFeedOrder) return;
+
+  if (deliveryTimer) { clearInterval(deliveryTimer); deliveryTimer = null; }
+  deliveryFeedOrder = wanted;
+  riderFixSeen = false;
+
+  if (!wanted) { hideDeliveryCards(); return; }
+  pollDeliveryInfo();
+  deliveryTimer = setInterval(pollDeliveryInfo, DELIVERY_FEED_MS);
+}
+
+async function pollDeliveryInfo() {
+  if (deliveryInFlight || document.hidden || !deliveryFeedOrder) return;
+  deliveryInFlight = true;
+  try {
+    const res = await fetch('../includes/delivery_track.php?order=' + encodeURIComponent(deliveryFeedOrder), {
+      credentials: 'same-origin'
+    });
+    const data = await res.json();
+    if (data && data.ok) applyDeliveryInfo(data);
+  } catch (err) {
+    /* transient — keep the last known rider and code on screen */
+  } finally {
+    deliveryInFlight = false;
+  }
+}
+
+function applyDeliveryInfo(d) {
+  /* ---- Rider card ---- */
+  const card = document.getElementById('riderCard');
+  if (card) {
+    if (d.has_rider && d.rider) {
+      card.style.display = '';
+      const avatar = document.getElementById('cfgRiderAvatar');
+      if (avatar && d.rider.avatar) avatar.src = d.rider.avatar;
+      const name = document.getElementById('cfgRiderName');
+      if (name) name.textContent = d.rider.name;
+      const state = document.getElementById('cfgRiderState');
+      if (state) state.textContent = d.status === 'Delivering' ? 'On the way to you' : 'Picking up your order';
+
+      const phone = (d.rider.phone || '').trim();
+      const phoneText = document.getElementById('cfgRiderPhone');
+      if (phoneText) phoneText.textContent = phone || 'No number shared';
+      const callBtn = document.getElementById('cfgRiderCall');
+      if (callBtn) {
+        if (phone) callBtn.href = 'tel:' + phone.replace(/[^0-9+]/g, '');
+        else callBtn.removeAttribute('href');
+      }
+    } else {
+      card.style.display = 'none';
+    }
+  }
+
+  /* ---- Handover code ---- */
+  const hc = document.getElementById('handoverCard');
+  if (hc) {
+    const code = String(d.otp || '').replace(/\D/g, '');
+    if (code.length === 4) {
+      hc.style.display = '';
+      const box = document.getElementById('cfgHandoverCode');
+      if (box && box.dataset.code !== code) {
+        box.dataset.code = code;
+        box.innerHTML = code.split('').map((ch) => `<span>${ch}</span>`).join('');
+      }
+    } else {
+      hc.style.display = 'none';
+    }
+  }
+
+  /* ---- Real GPS ---- */
+  if (d.fix) applyRiderFix(d.fix);
+}
+
+/* Move the marker to the rider's real position and recompute distance/ETA from
+   how much of the routed path is still ahead of them. */
+function applyRiderFix(fix) {
+  if (!map || !riderMarker) return;   // map not booted yet; the next tick retries
+
+  // The first real fix retires the simulated ride for good.
+  if (!riderFixSeen) {
+    riderFixSeen = true;
+    if (riderTimer) { clearInterval(riderTimer); riderTimer = null; }
+  }
+
+  const here = [fix.lat, fix.lng];
+  riderMarker.setLatLng(here);
+
+  const dest = routePath.length ? routePath[routePath.length - 1] : null;
+  let remainingKm = dest ? haversine(here, dest) : 0;
+
+  if (routePath.length > 1) {
+    // Snap onto the route: the nearest vertex tells us how much of the path is
+    // already behind the rider, which tracks road distance far better than a
+    // straight line. Ignore the snap when they are clearly off-route.
+    const cum = cumulativeDistances(routePath);
+    let nearest = 0, best = Infinity;
+    for (let i = 0; i < routePath.length; i++) {
+      const dd = haversine(here, routePath[i]);
+      if (dd < best) { best = dd; nearest = i; }
+    }
+    if (best <= 0.5) remainingKm = Math.max(cum[cum.length - 1] - cum[nearest], 0);
+  }
+
+  distanceKm = Math.max(remainingKm, 0.02);
+  etaMinutes = Math.max(Math.ceil((distanceKm / RIDER_SPEED_KMH) * 60), remainingKm <= 0.05 ? 0 : 1);
+  updateEtaUI();
+}
+
+/* =================================================================
    DATA LOADING â€” pulls the logged-in user's orders from
    includes/orders_fetch.php and boots the whole page from it.
    ================================================================= */
@@ -1107,6 +1249,8 @@ function myorderApplyData(rawOrders) {
   CONFIG = myorderBuildConfig(tracked);
   renderTrackPage(CONFIG);
   renderTrackStatus(CONFIG);
+  // Follow (or stop following) the real rider/GPS/handover feed for this order
+  syncDeliveryFeed(CONFIG);
   // Boot the map once; afterwards just refresh the UI on status changes
   if (!mapBooted) initMap();
   else if (previousStatus && previousStatus !== tracked.rawStatus) {
