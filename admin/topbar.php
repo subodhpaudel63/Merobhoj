@@ -6,7 +6,7 @@
 ?>
 <header class="admin-topbar" id="admin_topbar">
     <div class="admin-topbar-left">
-        <button type="button" id="menu_toggle" class="admin-menu-button" aria-label="Toggle navigation" aria-expanded="true" onclick="mkjToggleSidebar(event)">
+        <button type="button" id="menu_toggle" class="admin-menu-button" aria-label="Toggle navigation" aria-expanded="true">
             <span class="material-symbols-sharp">menu</span>
         </button>
     </div>

@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 $upd->bind_param("si", $orderCode, $requestId);
                 $upd->execute();
 
-                $stmtInsert = $conn->prepare("INSERT INTO orders (order_number, menu_id, email, full_name, order_type, table_number, special_instructions, payment_method, menu_name, quantity, price, total_price, mobile, address, status) VALUES (?, ?, '', ?, 'Dine In', ?, ?, ?, ?, ?, ?, ?, ?, ?, '', 'Pending')");
+                $stmtInsert = $conn->prepare("INSERT INTO orders (order_number, menu_id, email, full_name, order_type, table_number, special_instructions, payment_method, menu_name, quantity, price, total_price, mobile, address, status) VALUES (?, ?, '', ?, 'Dine In', ?, ?, ?, ?, ?, ?, ?, ?, '', 'Pending')");
                 if (!$stmtInsert) {
                     throw new Exception('Could not prepare the kitchen order.');
                 }
@@ -86,8 +86,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
 
     if ($postAction === 'reject') {
-        $stmt = $conn->prepare("UPDATE qr_requests SET status = 'rejected' WHERE id = ?");
-        $stmt->bind_param("i", $requestId);
+        // Persist the reason the UI collects (previously dropped on the floor).
+        $reason = trim((string)($data['reason'] ?? ''));
+        if ($reason === '') { $reason = 'No reason provided'; }
+        if (mb_strlen($reason) > 255) { $reason = mb_substr($reason, 0, 255); }
+        $stmt = $conn->prepare("UPDATE qr_requests SET status = 'rejected', rejection_reason = ? WHERE id = ?");
+        $stmt->bind_param("si", $reason, $requestId);
         if ($stmt->execute()) {
             echo json_encode(['success' => true]);
         } else {

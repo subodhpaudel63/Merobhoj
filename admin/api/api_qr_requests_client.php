@@ -43,11 +43,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $tableId = $table['id'];
         $itemsJson = json_encode($items);
-        
+
+        // Re-check availability server-side (mirrors includes/cart.php): a chef
+        // marking an item Out of Stock must also block QR table orders, and we
+        // never trust the client's price/stock. Also computes the order total.
         $total = 0;
+        $stockCheck = $conn->prepare("SELECT menu_name, menu_status FROM menu WHERE menu_id = ? LIMIT 1");
         foreach ($items as $item) {
-            $total += $item['price'] * $item['quantity'];
+            $menuId = (int)($item['id'] ?? 0);
+            $qty    = (int)($item['quantity'] ?? 0);
+            $price  = (float)($item['price'] ?? 0);
+            if ($menuId <= 0 || $qty <= 0) {
+                echo json_encode(['success' => false, 'message' => 'Your order contains an invalid item. Please refresh and try again.']);
+                if ($stockCheck) $stockCheck->close();
+                exit;
+            }
+            $stockCheck->bind_param("i", $menuId);
+            $stockCheck->execute();
+            $stockRow = $stockCheck->get_result()->fetch_assoc();
+            if (!$stockRow || ($stockRow['menu_status'] ?? 'In Stock') === 'Out of Stock') {
+                $label = $stockRow['menu_name'] ?? ('Item #' . $menuId);
+                echo json_encode(['success' => false, 'message' => $label . ' is currently unavailable. Please remove it and try again.']);
+                $stockCheck->close();
+                exit;
+            }
+            $total += $price * $qty;
         }
+        if ($stockCheck) $stockCheck->close();
 
         $stmt = $conn->prepare("INSERT INTO qr_requests (table_id, customer_name, phone, note, payment_method, items_json, total_price, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')");
         $stmt->bind_param("isssssd", $tableId, $name, $phone, $note, $payment, $itemsJson, $total);

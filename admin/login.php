@@ -1,383 +1,199 @@
 <?php
+declare(strict_types=1);
 session_start();
-if (isset($_COOKIE['admin_type'])) {
-    require_once __DIR__ . '/../includes/auth_check.php';
-    $userType = decrypt($_COOKIE['admin_type'], SECRET_KEY);
-    if ($userType === 'admin') {
-        header('Location: /Merobhoj/admin/index.php');
-        exit();
-    }
-}
+
+require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/role_check.php';
+
+$msg = $_SESSION['msg'] ?? null;
+unset($_SESSION['msg']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Login | Mero Bhoj</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-
-<link rel="stylesheet" href="./adminstyles.css">
-<style>
-*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-
-:root {
-  --orange: #ff512f;
-  --gold:   #ffb347;
-  --dark:   #1a1a2e;
-  --text:   #2d2d2d;
-  --muted:  #888;
-  --border: #e8e8e8;
-}
-
-html, body {
-  height: 100%;
-  font-family: 'Poppins', sans-serif;
-  overflow: hidden;
-  background: linear-gradient(135deg, #1e1e1e, #2c3e50, #8e2de2, #ff512f);
-  background-size: 400% 400%;
-  animation: gradientMove 12s ease infinite;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-@keyframes gradientMove {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-/* ── FLOATING FOOD OBJECTS ── */
-.floater {
-  position: fixed;
-  pointer-events: none;
-  z-index: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  animation: floatUp var(--ft, 6s) ease-in-out infinite var(--delay, 0s);
-  opacity: 0.78;
-}
-@keyframes floatUp {
-  0%,100% { transform: translateY(0) rotate(var(--r0, 0deg)); }
-  50%      { transform: translateY(-22px) rotate(var(--r1, 8deg)); }
-}
-
-/* bowl */
-.f-bowl {
-  width: 72px; height: 72px;
-  background: white;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.15);
-}
-/* plate */
-.f-plate {
-  width: 64px; height: 64px;
-  background: white;
-  border: 4px solid var(--gold);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.13);
-}
-/* spice jar */
-.f-jar {
-  width: 46px; height: 64px;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-}
-/* pepper */
-.f-pepper {
-  width: 58px; height: 58px;
-  background: white;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.13);
-}
-/* ladle */
-.f-ladle {
-  width: 52px; height: 76px;
-  background: white;
-  border-radius: 50% 50% 20px 20px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.13);
-}
-
-.floater i {
-  font-size: var(--fs, 28px);
-  color: var(--fc, #ff512f);
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
-}
-
-/* ── CARD ── */
-.card {
-  position: relative; z-index: 2;
-  width: 400px;
-  background: #ffffff;
-  border-radius: 24px;
-  padding: 40px 40px 36px;
-  box-shadow:
-    0 20px 60px rgba(0,0,0,0.35),
-    0 0 0 1px rgba(255,255,255,0.8);
-  animation: cardIn .7s cubic-bezier(.22,1,.36,1) both;
-}
-@keyframes cardIn {
-  from { opacity:0; transform: translateY(28px) scale(.96); }
-  to   { opacity:1; transform: translateY(0) scale(1); }
-}
-
-/* orange top stripe */
-.card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; height: 5px;
-  background: linear-gradient(90deg, #ff512f, #ffb347, #ff512f);
-  background-size: 200% 100%;
-  animation: stripeMove 3s linear infinite;
-  border-radius: 24px 24px 0 0;
-}
-@keyframes stripeMove {
-  0%   { background-position: 0% 0%; }
-  100% { background-position: 200% 0%; }
-}
-
-/* ── LOGO ── */
-.logo-area {
-  text-align: center;
-  margin-bottom: 20px;
-}
-.logo-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  background: linear-gradient(135deg, #fff3e0, #ffe0b2);
-  border: 2px solid #ffcc80;
-  border-radius: 50px;
-  padding: 10px 22px;
-  box-shadow: 0 4px 16px rgba(255,165,0,0.2);
-  margin-bottom: 6px;
-}
-.logo-row i {
-  font-size: 24px;
-  color: var(--orange);
-  filter: drop-shadow(0 2px 4px rgba(255,81,47,0.3));
-}
-.logo-row span {
-  font-size: 18px;
-  font-weight: 700;
-  color: #1a1a1a;
-  letter-spacing: 0.3px;
-}
-.logo-sub {
-  font-size: 10px;
-  font-weight: 400;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-/* ── DIVIDER ── */
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 4px 0 20px;
-}
-.divider span { flex:1; height:1px; background: var(--border); }
-.divider-dot {
-  width: 6px; height: 6px;
-  background: var(--gold);
-  border-radius: 50%;
-  opacity: .7;
-}
-
-/* ── WELCOME ── */
-.welcome { text-align: center; margin-bottom: 22px; }
-.welcome h3 { font-size: 15px; font-weight: 600; color: var(--text); }
-.welcome p  { font-size: 12px; color: var(--muted); margin-top: 3px; }
-
-/* ── FIELDS ── */
-.form-group { position: relative; margin-bottom: 18px; }
-.form-group label {
-  display: block;
-  font-size: 10.5px; font-weight: 600;
-  letter-spacing: 1.5px; text-transform: uppercase;
-  color: var(--muted); margin-bottom: 7px;
-  transition: color .2s;
-}
-.form-group:focus-within label { color: var(--orange); }
-
-.input-wrap {
-  position: relative;
-  border-radius: 12px;
-  transition: transform .22s cubic-bezier(.22,1,.36,1), box-shadow .22s;
-}
-.input-wrap:focus-within {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(255,81,47,0.15), 0 0 0 2px var(--orange);
-}
-
-.form-group input {
-  width: 100%;
-  padding: 13px 42px 13px 15px;
-  background: #f9f9f9;
-  border: 1.5px solid var(--border);
-  border-radius: 12px;
-  color: var(--text);
-  font-family: 'Poppins', sans-serif;
-  font-size: 13.5px;
-  outline: none;
-  transition: background .22s, border-color .22s;
-}
-.form-group input::placeholder { color: #bbb; }
-.form-group input:focus {
-  background: #fff;
-  border-color: transparent;
-}
-
-.ficon {
-  position: absolute; right: 13px; top: 50%;
-  transform: translateY(-50%);
-  font-size: 13px; color: #ccc;
-  transition: color .22s; pointer-events: none;
-}
-.input-wrap:focus-within .ficon { color: var(--orange); }
-
-.toggle-pw {
-  position: absolute; right: 13px; top: 50%;
-  transform: translateY(-50%);
-  background: none; border: none; outline: none;
-  cursor: pointer; font-size: 13px;
-  color: #ccc; padding: 0;
-  transition: color .22s;
-}
-.input-wrap:focus-within .toggle-pw { color: var(--orange); }
-
-/* ── BUTTON ── */
-.login-btn {
-  width: 100%; margin-top: 8px; padding: 14px;
-  border: none; border-radius: 30px;
-  background: linear-gradient(to right, #ff512f, #ffb347);
-  color: #fff;
-  font-family: 'Poppins', sans-serif;
-  font-size: 14px; font-weight: 600;
-  cursor: pointer; position: relative; overflow: hidden;
-  box-shadow: 0 8px 24px rgba(255,81,47,0.35);
-  transition: transform .2s, box-shadow .2s;
-}
-.login-btn::before {
-  content: '';
-  position: absolute; top:0; left:-100%; width:55%; height:100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent);
-  transition: left .5s;
-}
-.login-btn:hover::before { left: 160%; }
-.login-btn:hover { transform: translateY(-3px); box-shadow: 0 14px 32px rgba(255,81,47,0.45); }
-.login-btn:active { transform: translateY(0); }
-
-.ripple {
-  position: absolute; border-radius: 50%;
-  background: rgba(255,255,255,0.3);
-  transform: scale(0); pointer-events: none;
-  animation: rip .55s ease-out forwards;
-}
-@keyframes rip { to { transform:scale(4); opacity:0; } }
-
-/* ── FOOTER ── */
-.footer-text {
-  text-align: center; margin-top: 20px;
-  font-size: 11px; color: #bbb; letter-spacing: .3px;
-}
-
-/* ── ALERTS ── */
-.alert {
-  display: flex; align-items: center; gap: 8px;
-  margin-bottom: 16px; padding: 10px 14px;
-  border-radius: 10px; font-size: 12.5px;
-  animation: aIn .3s ease both;
-}
-@keyframes aIn { from{opacity:0;transform:translateY(-5px)} to{opacity:1;transform:none} }
-.alert-success { background:#e8f5e9; border:1px solid #a5d6a7; color:#2e7d32; }
-.alert-danger  { background:#fff3e0; border:1px solid #ffcc80; color:#e65100; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mero Bhoj - Restaurant Management Login</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --red: #f0181d; --black: #15171b; --muted: #757e90; --line: #dde1e7; }
+    html, body { width: 100%; min-height: 100%; font-family: Arial, Helvetica, sans-serif; }
+    body { background: #080808; overflow-x: hidden; }
+    .page { min-height: 100vh; display: flex; background: #080808; }
+    .brand-panel {
+      width: 44%; min-height: 100vh;
+      background-color: #080808;
+      background-image: url("../assets/img/gallery/merobhoj-left-panel(1).png");
+      background-position: center;
+      background-size: contain;
+      background-repeat: no-repeat;
+    }
+    .login-panel {
+      width: 56%; min-height: 100vh; background: #fff; border-radius: 18px 0 0 18px;
+      display: flex; justify-content: center; align-items: flex-start; padding: 96px 24px 48px; position: relative; z-index: 2;
+      overflow-y: auto;
+    }
+    .login-wrap { width: min(100%, 400px); }
+    .welcome-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 24px; }
+    .welcome h1 { font-size: 32px; line-height: 1.05; font-weight: 800; letter-spacing: -1px; color: var(--black); }
+    .welcome p { margin-top: 10px; font-size: 15px; line-height: 1.3; color: var(--muted); }
+    .top-art { width: 72px; height: 56px; object-fit: contain; flex: 0 0 72px; }
+    .role-switch {
+      height: 44px; display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #dedfe3;
+      border-radius: 10px; overflow: hidden; margin-bottom: 26px; background: #f8f9fb; padding: 4px;
+    }
+    .role {
+      position: relative; border: 0; border-radius: 10px; background: transparent; display: flex; align-items: center;
+      justify-content: center; gap: 9px; color: #69717f; font-size: 13px; font-weight: 700; cursor: pointer;
+      transition: color .18s ease, background .18s ease, box-shadow .18s ease;
+    }
+    .role + .role { border-left: 0; }
+    .role.active { color: var(--red); background: #fff; box-shadow: 0 2px 8px rgba(21, 23, 27, .1); }
+    .role svg { width: 16px; height: 16px; stroke: currentColor; }
+    .field { margin-bottom: 20px; }
+    .field label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 700; color: #17191d; }
+    .input-box {
+      height: 43px; border: 1.5px solid var(--line); border-radius: 9px; display: flex;
+      align-items: center; padding: 0 19px; transition: .2s; background: #fff;
+    }
+    .input-box:focus-within { border-color: #f59696; box-shadow: 0 0 0 4px rgba(240, 24, 29, .07); }
+    .input-box > svg { width: 17px; height: 17px; color: var(--red); flex: 0 0 auto; }
+    .input-box input { width: 100%; height: 100%; border: 0; outline: 0; background: transparent; padding: 0 12px; font-size: 14px; color: #222; }
+    .input-box input::placeholder { color: #858c9a; }
+    .password-toggle { border: 0; background: transparent; padding: 4px; cursor: pointer; color: #69717f; }
+    .password-toggle svg { width: 16px; height: 16px; }
+    .error { margin-top: 8px; color: var(--red); font-size: 13px; }
+    .options { display: flex; align-items: center; justify-content: space-between; font-size: 15px; margin: 0 0 24px; }
+    .remember { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+    .remember input { appearance: none; width: 25px; height: 25px; border: 2px solid #9aa1ac; border-radius: 5px; position: relative; }
+    .remember input:checked { background: var(--red); border-color: var(--red); }
+    .remember input:checked::after { content: "✓"; color: #fff; position: absolute; font-size: 17px; left: 4px; top: -1px; }
+    .forgot, .account a { color: var(--red); text-decoration: none; font-weight: 500; }
+    .sign-in {
+      width: 100%; height: 43px; border: 0; border-radius: 8px; background: linear-gradient(180deg, #f71b20, #ec1116);
+      color: #fff; font-size: 14px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 22px rgba(240, 24, 29, .18);
+    }
+    .sign-in:disabled { opacity: .8; cursor: wait; }
+    .divider { display: flex; align-items: center; gap: 14px; color: #202329; font-size: 15px; margin: 14px 0; }
+    .divider::before, .divider::after { content: ""; height: 1px; background: #e0e2e7; flex: 1; }
+    .divider span { width: 38px; height: 38px; border: 1px solid #e0e2e7; border-radius: 50%; display: grid; place-items: center; background: #fff; }
+    .account { text-align: center; color: #7c8390; font-size: 15px; }
+    .alert { margin-bottom: 14px; padding: 10px 14px; border-radius: 10px; font-size: 13px; }
+    .alert-error { color: #b42318; background: #fff1f0; border: 1px solid #ffc7c3; }
+    .alert-success { color: #18794e; background: #ecfdf3; border: 1px solid #a7f3d0; }
+    @media (max-width: 1100px) {
+      .brand-panel { width: 40%; } .login-panel { width: 60%; padding: 72px 24px 40px; }
+      .welcome h1 { font-size: 30px; } .welcome p { font-size: 14px; }
+    }
+    @media (max-width: 760px) {
+      .brand-panel { display: none; } .login-panel { width: 100%; min-height: 100vh; border-radius: 0; padding: 40px 22px 30px; align-items: flex-start; }
+      .welcome-row { margin-bottom: 24px; } .welcome h1 { font-size: 30px; } .welcome p { font-size: 14px; margin-top: 8px; }
+      .top-art { width: 62px; height: 48px; flex-basis: 62px; }
+      .role-switch { height: 44px; margin-bottom: 24px; }
+      .role { font-size: 13px; gap: 8px; } .role svg { width: 16px; height: 16px; } .field { margin-bottom: 18px; }
+      .field label { font-size: 13px; margin-bottom: 8px; } .input-box { height: 43px; padding: 0 13px; }
+      .input-box input { font-size: 14px; padding: 0 10px; } .options { font-size: 13px; margin-bottom: 22px; }
+      .sign-in { height: 43px; font-size: 14px; }
+    }
+    @media (max-width: 420px) {
+      .login-panel { padding-left: 17px; padding-right: 17px; } .welcome h1 { font-size: 28px; }
+      .welcome p { font-size: 13px; } .top-art { width: 52px; height: 42px; flex-basis: 52px; } .role { font-size: 12px; }
+    }
+  </style>
 </head>
 <body>
-
-<!-- ── FLOATING FOOD OBJECTS ── -->
-<div class="floater f-bowl" style="top:8%;left:5%;--ft:7s;--delay:0s;--r0:-6deg;--r1:6deg;">
-  <i class="fas fa-bowl-food" style="--fs:30px;--fc:#ff512f;"></i>
-</div>
-<div class="floater f-plate" style="top:6%;right:6%;--ft:8s;--delay:-2s;--r0:4deg;--r1:-5deg;">
-  <i class="fas fa-utensils" style="--fs:26px;--fc:#ffb347;"></i>
-</div>
-<div class="floater f-pepper" style="top:42%;left:3%;--ft:9s;--delay:-4s;--r0:8deg;--r1:-4deg;">
-  <i class="fas fa-pepper-hot" style="--fs:26px;--fc:#e53935;"></i>
-</div>
-<div class="floater f-jar" style="top:38%;right:4%;--ft:6.5s;--delay:-1s;--r0:-5deg;--r1:7deg;">
-  <i class="fas fa-jar" style="--fs:24px;--fc:#8e24aa;"></i>
-</div>
-<div class="floater f-bowl" style="bottom:10%;left:7%;--ft:10s;--delay:-3s;--r0:-8deg;--r1:5deg;">
-  <i class="fas fa-fire-flame-curved" style="--fs:28px;--fc:#ff7043;"></i>
-</div>
-<div class="floater f-plate" style="bottom:8%;right:7%;--ft:7.5s;--delay:-5s;--r0:6deg;--r1:-8deg;">
-  <i class="fas fa-drumstick-bite" style="--fs:26px;--fc:#f4a300;"></i>
-</div>
-<div class="floater f-ladle" style="top:14%;left:22%;--ft:11s;--delay:-6s;--r0:-3deg;--r1:6deg;">
-  <i class="fas fa-blender" style="--fs:22px;--fc:#0097a7;"></i>
-</div>
-<div class="floater f-pepper" style="bottom:16%;right:22%;--ft:8.5s;--delay:-2.5s;--r0:5deg;--r1:-6deg;">
-  <i class="fas fa-lemon" style="--fs:26px;--fc:#f9a825;"></i>
-</div>
-
-<!-- ── CARD ── -->
-<div class="card">
-
-  <!-- LOGO -->
-  <div class="logo-area">
-    <div class="logo-row">
-      <i class="fas fa-utensils"></i>
-      <span>Mero Bhoj</span>
-    </div>
-    <div class="logo-sub">Admin Panel</div>
-  </div>
-
-  <div class="divider">
-    <span></span><div class="divider-dot"></div><div class="divider-dot"></div><div class="divider-dot"></div><span></span>
-  </div>
-
-  <div class="welcome">
-    <h3>Welcome Back, Admin </h3>
-    <p>Admin Portal</p>
-  </div>
-
-  <!-- Toast container will be added here -->
-  <?php if (isset($_SESSION['msg'])): ?>
-    <div id="admin-session-msg" data-type="<?php echo htmlspecialchars($_SESSION['msg']['type']); ?>" data-message="<?php echo htmlspecialchars($_SESSION['msg']['text']); ?>"></div>
-    <?php unset($_SESSION['msg']); ?>
-  <?php endif; ?>
-
-  <form action="admin_login_process.php" method="POST" id="loginForm">
-
-    <div class="form-group">
-      <label for="email">Admin Email</label>
-      <div class="input-wrap">
-        <input type="email" id="email" name="email" placeholder="admin@gmail.com" required>
-        <i class="fas fa-envelope ficon"></i>
+<div class="page">
+  <section class="brand-panel" aria-label="Mero Bhoj branding"></section>
+  <main class="login-panel">
+    <div class="login-wrap">
+      <div class="welcome-row">
+        <div class="welcome">
+          <h1>Welcome back!</h1>
+          <p>Sign in to your restaurant account</p>
+        </div>
+        <img class="top-art" src="../assets/img/gallery/merobhoj-top-art.png" alt="">
       </div>
-    </div>
 
-    <div class="form-group">
-      <label for="pw">Password</label>
-      <div class="input-wrap">
-        <input type="password" id="pw" name="password" placeholder="••••••••" required>
-        <button type="button" class="toggle-pw" onclick="togglePw()">
-          <i class="fas fa-eye" id="eyeIco"></i>
+      <div class="role-switch" role="tablist" aria-label="Account type">
+        <button class="role active" type="button" data-role="owner" aria-selected="true" aria-pressed="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M7 10V7.5C7 5.57 8.57 4 10.5 4S14 5.57 14 7.5V10"/><path d="M5 10h14l-1 8H6l-1-8Z"/><path d="M9 14h6M8 10V8M16 10V8"/></svg>
+          <span>Owner / Chef</span>
+        </button>
+        <button class="role" type="button" data-role="staff" aria-selected="false" aria-pressed="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M3 15h12v4H3z"/><path d="M15 12h3l3 3v4h-6z"/><circle cx="7" cy="19" r="2"/><circle cx="18" cy="19" r="2"/><path d="M6 15V8h7v7M9 8V6h4"/></svg>
+          <span>Staff / Rider</span>
         </button>
       </div>
+
+      <?php if (is_array($msg)): ?>
+        <div class="alert alert-<?= htmlspecialchars($msg['type'] === 'success' ? 'success' : 'error', ENT_QUOTES, 'UTF-8') ?>">
+          <?= htmlspecialchars((string)($msg['text'] ?? ''), ENT_QUOTES, 'UTF-8') ?>
+        </div>
+      <?php endif; ?>
+
+      <form id="loginForm" action="../includes/panel_login_process.php" method="POST" novalidate>
+        <input type="hidden" name="login_source" value="admin">
+        <input type="hidden" name="portal_role" id="portalRole" value="owner">
+        <div class="field">
+          <label for="identity">Email or Phone Number</label>
+          <div class="input-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 4.5h3l1.5 4-2 1.7a15 15 0 0 0 5.8 5.8l1.7-2 4 1.5v3c0 1.1-.9 2-2 2C11.3 20.5 3.5 12.7 3.5 5.5c0-1.1.9-2 2-2Z"/></svg>
+            <input id="identity" name="email" type="email" autocomplete="username" placeholder="Enter your email" required autofocus>
+          </div>
+          <div class="error" id="identityError" hidden>Please enter your email address.</div>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="input-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg>
+            <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required>
+            <button class="password-toggle" id="togglePassword" type="button" aria-label="Show password">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/><path id="slash" d="M4 4l16 16"/></svg>
+            </button>
+          </div>
+          <div class="error" id="passwordError" hidden>Please enter your password.</div>
+        </div>
+        <div class="options">
+          <label class="remember"><input id="remember" type="checkbox"><span>Remember me</span></label>
+          <a href="mailto:admin@merobhoj.com" class="forgot">Forgot password?</a>
+        </div>
+        <button class="sign-in" id="signIn" type="submit">Sign In</button>
+      </form>
+      <div class="divider"><span>or</span></div>
+      <p class="account">Customer? <a href="../login.php">Go to customer login</a></p>
     </div>
-
-    <button type="submit" class="login-btn" id="submitBtn">
-      Login to Dashboard
-    </button>
-
-    <div class="footer-text">© 2026 Mero Bhoj | Admin Panel</div>
-  </form>
+  </main>
 </div>
-
-<script src="./adminscript.js"></script>
+<script>
+  const roles = document.querySelectorAll('.role');
+  const password = document.getElementById('password');
+  const form = document.getElementById('loginForm');
+  const toggle = document.getElementById('togglePassword');
+  const slash = document.getElementById('slash');
+  const portalRole = document.getElementById('portalRole');
+  roles.forEach((role) => role.addEventListener('click', () => {
+  roles.forEach((item) => { item.classList.remove('active'); item.setAttribute('aria-selected', 'false'); item.setAttribute('aria-pressed', 'false'); });
+    role.classList.add('active');
+    role.setAttribute('aria-selected', 'true');
+  role.setAttribute('aria-pressed', 'true');
+  portalRole.value = role.dataset.role;
+  }));
+  toggle.addEventListener('click', () => {
+    const show = password.type === 'password';
+    password.type = show ? 'text' : 'password';
+    slash.style.display = show ? 'none' : 'block';
+    toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+  });
+  form.addEventListener('submit', (event) => {
+    const identityError = document.getElementById('identityError');
+    const passwordError = document.getElementById('passwordError');
+    const invalidIdentity = !document.getElementById('identity').value.trim();
+    const invalidPassword = !password.value.trim();
+    identityError.hidden = !invalidIdentity;
+    passwordError.hidden = !invalidPassword;
+    if (invalidIdentity || invalidPassword) event.preventDefault();
+    else document.getElementById('signIn').disabled = true;
+  });
+</script>
+</body>
+</html>

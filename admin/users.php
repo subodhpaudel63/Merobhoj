@@ -72,7 +72,7 @@ $userTypeBadgeColors = [
     'admin'   => '#e84118',
     'manager' => '#7380ec',
     'chef'    => '#ffa502',
-    'waiter'  => '#00b894',
+    'staff'   => '#00b894',
     'rider'   => '#0984e3',
     'user'    => '#2ed573',
 ];
@@ -348,7 +348,7 @@ $userTypeBadgeColors = [
                      <option value="admin">Admin</option>
                       <option value="manager">Manager</option>
                       <option value="chef">Chef</option>
-                      <option value="waiter">Waiter</option>
+                      <option value="staff">Staff</option>
                       <option value="rider">Rider</option>
                    </select>
                  </div>

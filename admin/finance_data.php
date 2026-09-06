@@ -105,8 +105,8 @@ $expenses = [];
 $total_expenses = 0;
 try {
     $expense_query = $conn->prepare("
-        SELECT date, category, amount, description 
-        FROM expenses 
+        SELECT date, category, amount, title, description
+        FROM expenses
         WHERE date BETWEEN ? AND ?
         ORDER BY date DESC
     ");
@@ -118,7 +118,12 @@ try {
             'date' => $row['date'],
             'account' => $row['category'] ?? 'General',
             'amount' => (float)$row['amount'],
-            'description' => $row['description'] ?? ''
+            // The note is optional, so fall back to the expense's own short
+            // title before the category — a ledger line reading "Ingredients"
+            // tells the reader nothing about what was actually bought.
+            'description' => ($row['description'] ?? '') !== ''
+                ? $row['description']
+                : ($row['title'] ?? '')
         ];
         $total_expenses += (float)$row['amount'];
     }
