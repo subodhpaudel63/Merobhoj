@@ -90,8 +90,17 @@ $pageTitle = 'Reservations & Bookings';
                 <input type="date" id="bDate" required>
             </div>
             <div class="form-group">
-                <label>Booking Time *</label>
+                <label>Booking Time (Start) *</label>
                 <input type="time" id="bTime" required>
+            </div>
+            <div class="form-group">
+                <label>End Time</label>
+                <input type="time" id="bEndTime">
+                <small class="text-muted">Reservation slot end. Auto-set to 2 hours after start — restaurant is open 7:00 AM to 11:00 PM.</small>
+            </div>
+            <div class="form-group">
+                <label>Special Requests / Notes</label>
+                <textarea id="bMessage" rows="2" maxlength="500" placeholder="e.g., window seat, birthday cake, high chair..."></textarea>
             </div>
             <div class="form-group" id="statusGroup" style="display:none;">
                 <label>Status</label>
@@ -116,10 +125,28 @@ $pageTitle = 'Reservations & Bookings';
 <script>
 let availableTables = [];
 let allBookings = [];
+let bookingEndTouched = false; // becomes true once the user edits End Time manually
 
 document.addEventListener('DOMContentLoaded', () => {
     loadBookings();
     setInterval(loadBookings, 8000);
+
+    // ── End time helper ─────────────────────────────────────────────────
+    // Auto-fills the end time 2 hours after the start time until the user
+    // edits the field manually. Restaurant closes at 11:00 PM.
+    const bTimeInput = document.getElementById('bTime');
+    const bEndTimeInput = document.getElementById('bEndTime');
+
+    bEndTimeInput.addEventListener('input', () => { bookingEndTouched = true; });
+
+    window.syncDefaultEndTime = function () {
+        if (bookingEndTouched || !bTimeInput.value) return;
+        const parts = bTimeInput.value.split(':');
+        let total = (parseInt(parts[0], 10) || 0) * 60 + (parseInt(parts[1], 10) || 0) + 120;
+        if (total > 23 * 60) total = 23 * 60;
+        bEndTimeInput.value = `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+    };
+    bTimeInput.addEventListener('input', syncDefaultEndTime);
 
     function loadBookings() {
         fetch('api/bookings.php?action=list')
@@ -143,11 +170,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     const peopleCount = b.people || b.number_of_guests || 1;
                     const startTimeStr = b.start_time ? b.start_time.substring(0, 5) : b.booking_time;
                     const endTimeStr = b.end_time ? b.end_time.substring(0, 5) : '-';
+                    const msgRaw = (b.message || '').trim();
+                    const msgDisplay = msgRaw
+                        ? `<br><small class="text-muted" title="${esc(msgRaw)}">📝 ${esc(msgRaw.length > 34 ? msgRaw.slice(0, 34) + '…' : msgRaw)}</small>`
+                        : '';
 
                     return `
                         <tr>
                             <td>#${b.id}</td>
-                            <td><strong>${esc(b.name)}</strong></td>
+                            <td><strong>${esc(b.name)}</strong>${msgDisplay}</td>
                             <td>${esc(b.phone)}<br>${emailDisplay}</td>
                             <td><strong>${esc(b.table_name || 'Table ' + b.table_id)}</strong></td>
                             <td>${peopleCount} Persons</td>
@@ -196,8 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    window.deleteBooking = function(id) {
-        if (!confirm('Are you sure you want to delete this booking?')) return;
+    function doDeleteBooking(id) {
         fetch('api/booking_delete.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -206,16 +236,33 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(res => res.json())
         .then(data => {
             if (data.success) {
+                if (window.showToast) showToast('Booking deleted', 'success');
                 loadBookings();
             } else {
                 alert(data.message || 'Delete failed');
             }
         });
+    }
+
+    window.deleteBooking = function(id) {
+        // Shared confirm popup (same UI as the admin-panel delete-confirm modal)
+        if (typeof window.openDeleteConfirm === 'function') {
+            openDeleteConfirm({
+                title: 'Delete Booking #' + id + '?',
+                message: 'This booking will be permanently deleted. This action cannot be undone.',
+                confirmText: 'Delete',
+                onConfirm: function () { doDeleteBooking(id); }
+            });
+            return;
+        }
+        // Fallback to the native dialog if the shared modal is unavailable
+        if (!confirm('Are you sure you want to delete this booking?')) return;
+        doDeleteBooking(id);
     };
 
     function populateTableSelect() {
         const select = document.getElementById('bTable');
-        select.innerHTML = availableTables.map(t => `<option value="${t.id}">${esc(t.table_name)} (Cap: ${t.capacity})</option>`).join('');
+        select.innerHTML = availableTables.map(t => `<option value="${t.id}" data-capacity="${t.capacity}">${esc(t.table_name)} (Cap: ${t.capacity})</option>`).join('');
     }
 
     window.openCreateModal = function() {
@@ -226,7 +273,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('bEmail').value = '';
         document.getElementById('bGuests').value = 2;
         document.getElementById('bDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('bDate').min = new Date().toISOString().split('T')[0];
         document.getElementById('bTime').value = '18:00';
+        bookingEndTouched = false;
+        syncDefaultEndTime();
+        document.getElementById('bMessage').value = '';
         document.getElementById('statusGroup').style.display = 'none';
         document.getElementById('bookingModal').style.display = 'flex';
     };
@@ -244,6 +295,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('bGuests').value = b.people || b.number_of_guests || 1;
         document.getElementById('bDate').value = b.booking_date || '';
         document.getElementById('bTime').value = (b.booking_time || '12:00').substring(0, 5);
+        document.getElementById('bEndTime').value = b.end_time ? b.end_time.substring(0, 5) : '';
+        bookingEndTouched = true; // keep the stored end time, don't auto-overwrite
+        document.getElementById('bMessage').value = b.message || '';
         document.getElementById('bStatus').value = b.status || 'Pending';
         document.getElementById('statusGroup').style.display = 'block';
 
@@ -259,15 +313,36 @@ document.addEventListener('DOMContentLoaded', () => {
         const bId = document.getElementById('bId').value;
         const isEdit = bId !== '';
 
+        const startTime = document.getElementById('bTime').value;
+        const endTime = document.getElementById('bEndTime').value;
+        const guests = parseInt(document.getElementById('bGuests').value);
+        const tableSel = document.getElementById('bTable');
+        const tableOption = tableSel.options[tableSel.selectedIndex];
+
+        // End time must be after the start time (same-day reservations only)
+        if (endTime && startTime && endTime <= startTime) {
+            alert('End time must be after the start time.');
+            return;
+        }
+
+        // Guests must fit the selected table
+        const capacity = tableOption ? parseInt(tableOption.dataset.capacity || '0') : 0;
+        if (capacity && guests > capacity) {
+            alert(`Selected table seats ${capacity} guests. Please choose a bigger table or reduce the party size.`);
+            return;
+        }
+
         const payload = {
             id: bId ? parseInt(bId) : undefined,
-            name: document.getElementById('bName').value,
-            phone: document.getElementById('bPhone').value,
-            email: document.getElementById('bEmail').value,
-            table_id: parseInt(document.getElementById('bTable').value),
-            guests: parseInt(document.getElementById('bGuests').value),
+            name: document.getElementById('bName').value.trim(),
+            phone: document.getElementById('bPhone').value.trim(),
+            email: document.getElementById('bEmail').value.trim(),
+            table_id: parseInt(tableSel.value),
+            guests: guests,
             booking_date: document.getElementById('bDate').value,
-            booking_time: document.getElementById('bTime').value,
+            booking_time: startTime,
+            end_time: endTime,
+            message: document.getElementById('bMessage').value.trim(),
             status: isEdit ? document.getElementById('bStatus').value : undefined
         };
 
