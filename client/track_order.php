@@ -246,19 +246,28 @@ if (isset($_COOKIE['user_img'])) {
                 </div>
               </div>
 
-              <div class="card rider-card">
-                <h3>Rider Details</h3>
+              <!-- Rider card — hidden until includes/delivery_track.php reports a
+                   real rider assigned to this order (applyDeliveryInfo()). -->
+              <div class="card rider-card" id="riderCard" style="display:none;">
+                <h3>Your Rider</h3>
                 <div class="rider-row">
-                  <img id="cfgRiderAvatar" src="https://i.pravatar.cc/80?img=51" alt="Rider">
+                  <img id="cfgRiderAvatar" src="../assets/images/profile.jpg" alt="Rider">
                   <div>
-                    <div class="rider-name" id="cfgRiderName">Ramesh Tamang</div>
-                    <div class="rider-rating">⭐ <span id="cfgRiderRating">4.8</span></div>
+                    <div class="rider-name" id="cfgRiderName">&mdash;</div>
+                    <div class="rider-sub" id="cfgRiderState">Assigned to your order</div>
                   </div>
                 </div>
                 <div class="rider-actions">
-                  <button class="rider-btn"><svg class="ic" style="width:15px;height:15px"><use href="#ic-phone"/></svg> <span id="cfgRiderPhone">+977 9812345678</span></button>
-                  <button class="rider-btn chat"><svg class="ic" style="width:17px;height:17px"><use href="#ic-chat"/></svg></button>
+                  <a class="rider-btn" id="cfgRiderCall"><svg class="ic" style="width:15px;height:15px"><use href="#ic-phone"/></svg> <span id="cfgRiderPhone">&mdash;</span></a>
                 </div>
+              </div>
+
+              <!-- Handover code — the rider must type these 4 digits to close the
+                   delivery. Served only to the owning customer, only while live. -->
+              <div class="card handover-card" id="handoverCard" style="display:none;">
+                <h3>Handover Code</h3>
+                <p class="handover-sub">Show this code to your rider when the food arrives. They cannot complete the delivery without it.</p>
+                <div class="handover-code" id="cfgHandoverCode"></div>
               </div>
 
               <div class="card items-card">
@@ -342,6 +351,7 @@ if (isset($_COOKIE['user_img'])) {
 
           <h3>Payment</h3>
           <div class="modal-bill-row"><span>Payment Method</span><span id="mPayment">Online Payment</span></div>
+          <div class="modal-bill-row"><span>Order Type</span><span id="mOrderType">Delivery</span></div>
           <div class="modal-bill-row"><span>Order Time</span><span id="mOrderTime"></span></div>
         </div>
         <div class="modal-footer">

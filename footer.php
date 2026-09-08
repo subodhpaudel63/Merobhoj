@@ -130,6 +130,9 @@ $isStandalone = isset($_SERVER['SCRIPT_FILENAME'])
     ></script>
     <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
     <script src="<?php echo asset('js/script.js'); ?>"></script>
+    <!-- Shared confirmation popup (same UI as the admin-panel delete-confirm modal) -->
+    <link rel="stylesheet" href="<?php echo asset('css/confirm_modal.css'); ?>">
+    <script src="<?php echo asset('js/confirm_modal.js'); ?>"></script>
     <script src="<?php echo asset('js/clientscript.js'); ?>"></script>
     <script src="<?php echo asset('js/toast_notifications.js'); ?>"></script>
     
