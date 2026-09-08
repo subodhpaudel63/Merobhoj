@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 foreach ($items as $item) {
                     $total = $item['price'] * $item['quantity'];
                     $tableId = $req['table_id'];
-                    $stmtInsert->bind_param("sisssssidds", 
+                    $stmtInsert->bind_param("sissssssidds", 
                         $orderCode, 
                         $item['id'], 
                         $req['customer_name'], 
@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                         $req['phone']
                     );
                     if (!$stmtInsert->execute()) {
-                        throw new Exception('Could not insert item to kitchen queue.');
+                        throw new Exception('Could not insert item to kitchen queue: ' . $stmtInsert->error);
                     }
                 }
                 

@@ -20,7 +20,7 @@ $validTransitions = [
     'No-show'    => []
 ];
 
-$stmt = $conn->prepare("SELECT status, booking_date, end_time FROM bookings WHERE id = ?");
+$stmt = $conn->prepare("SELECT status, booking_date, start_time, booking_time FROM bookings WHERE id = ?");
 $stmt->bind_param("i", $id);
 $stmt->execute();
 $current = $stmt->get_result()->fetch_assoc();
@@ -38,15 +38,20 @@ if (!in_array($newStatus, $allowed, true)) {
     exit;
 }
 
-// Compute grace_end_at on Confirmed
+// Compute grace_end_at (+20 minutes from start_time) on Confirmed
+$startTimeStr = $current['start_time'] ?: $current['booking_time'];
 $graceEnd = null;
 if ($newStatus === 'Confirmed') {
-    // 15 minutes grace window default
-    $graceEnd = date('Y-m-d H:i:s', strtotime($current['booking_date'] . ' ' . $current['end_time']) + 900);
+    $graceEnd = date('Y-m-d H:i:s', strtotime($current['booking_date'] . ' ' . $startTimeStr) + (20 * 60));
+    $upd = $conn->prepare("UPDATE bookings SET status = ?, grace_end_at = ? WHERE id = ?");
+    $upd->bind_param("ssi", $newStatus, $graceEnd, $id);
+} elseif ($newStatus === 'Checked-in') {
+    $upd = $conn->prepare("UPDATE bookings SET status = ?, grace_end_at = NULL WHERE id = ?");
+    $upd->bind_param("si", $newStatus, $id);
+} else {
+    $upd = $conn->prepare("UPDATE bookings SET status = ? WHERE id = ?");
+    $upd->bind_param("si", $newStatus, $id);
 }
-
-$upd = $conn->prepare("UPDATE bookings SET status = ?, grace_end_at = ? WHERE id = ?");
-$upd->bind_param("ssi", $newStatus, $graceEnd, $id);
 
 if ($upd->execute()) {
     echo json_encode(['success' => true]);

@@ -41,6 +41,11 @@ if (isset($conn)) {
             <h3>Orders Queue</h3>
         </a>
 
+        <a href="billing.php" class="sidebar-link <?php echo ($current_page === 'billing.php') ? 'active' : ''; ?>">
+            <span class="material-symbols-sharp">payments</span>
+            <h3>Billing & POS</h3>
+        </a>
+
         <a href="deliveries.php" class="sidebar-link <?php echo ($current_page === 'deliveries.php') ? 'active' : ''; ?>">
             <span class="material-symbols-sharp">local_shipping</span>
             <h3>Deliveries</h3>

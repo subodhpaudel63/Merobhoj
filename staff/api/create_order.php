@@ -69,7 +69,7 @@ try {
 
     foreach ($validatedItems as $vItem) {
         $itemTotal = $vItem['price'] * $vItem['quantity'];
-        $stmtInsert->bind_param("sisssssidds",
+        $stmtInsert->bind_param("sissssssidds",
             $orderCode,
             $vItem['id'],
             $fullName,
@@ -84,7 +84,7 @@ try {
             $phone
         );
         if (!$stmtInsert->execute()) {
-            throw new Exception('Failed to insert order item');
+            throw new Exception('Failed to insert order item: ' . $stmtInsert->error);
         }
     }
 

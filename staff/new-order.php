@@ -46,7 +46,7 @@ if ($resTables) {
     <?php include __DIR__ . '/sidebar.php'; ?>
     <main class="admin-page-main">
 
-<div class="panel-head" style="margin-bottom: 1.5rem;">
+<div class="panel-head panel-head-mb">
     <h2>Walk-in Order Builder</h2>
     <p class="text-muted">Quickly construct and dispatch counter or table-side walk-in orders.</p>
 </div>
@@ -72,13 +72,16 @@ if ($resTables) {
 
     <!-- Right: Order Panel / Cart -->
     <div class="cart-panel">
-        <h3>Order Items</h3>
+        <div class="cart-header-row">
+            <h3 class="cart-title-no-margin">Order Items</h3>
+            <button type="button" class="qrm-btn qrm-btn-danger btn-compact-clear" onclick="clearCart()">Clear Cart</button>
+        </div>
         <div class="cart-items" id="cartItems">
-            <p style="text-align: center; color: var(--clr-info-dark); margin-top: 1rem;">Click menu items to add.</p>
+            <p class="text-center-muted">Click menu items to add.</p>
         </div>
 
-        <div style="border-top: 1px solid var(--clr-border); padding-top: 1rem; margin-bottom: 1rem;">
-            <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 1.1rem; color: var(--clr-dark);">
+        <div class="cart-total-box">
+            <div class="cart-total-row">
                 <span>Total:</span>
                 <span id="cartTotal">Rs. 0.00</span>
             </div>
@@ -127,7 +130,7 @@ if ($resTables) {
                 <input type="text" id="orderNote" placeholder="Less spicy, extra napkin...">
             </div>
 
-            <button type="submit" class="qrm-btn qrm-btn-primary" style="width: 100%; margin-top: 0.5rem;">Dispatch Order</button>
+            <button type="submit" class="qrm-btn qrm-btn-primary btn-full-width">Dispatch Order</button>
         </form>
     </div>
 </div>
@@ -143,6 +146,14 @@ function addToCart(id, name, price) {
         cart.push({ menu_id: id, name: name, price: price, quantity: 1 });
     }
     renderCart();
+}
+
+function clearCart() {
+    if (cart.length === 0) return;
+    if (confirm('Clear all items from the current order?')) {
+        cart = [];
+        renderCart();
+    }
 }
 
 function updateQty(id, delta) {

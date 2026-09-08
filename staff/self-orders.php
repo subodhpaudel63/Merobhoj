@@ -28,9 +28,17 @@ $pageTitle = 'QR Self-Orders Queue';
     <?php include __DIR__ . '/sidebar.php'; ?>
     <main class="admin-page-main">
 
-<div class="panel-head" style="margin-bottom: 1.5rem;">
-    <h2>QR Self-Orders Queue</h2>
-    <p class="text-muted">Review and approve or reject table-side QR requests from dine-in guests.</p>
+<div class="panel-head panel-head-flex">
+    <div>
+        <h2>QR Self-Orders Queue</h2>
+        <p class="text-muted">Review, approve, or reject table-side QR requests from dine-in guests. Auto-refreshes every 5s.</p>
+    </div>
+    <div class="flex-gap-05" id="qrFilterTabs">
+        <button type="button" class="qrm-btn qrm-btn-primary" onclick="setFilter('pending')" id="tab-pending">Pending</button>
+        <button type="button" class="qrm-btn tab-inactive" onclick="setFilter('approved')" id="tab-approved">Approved</button>
+        <button type="button" class="qrm-btn tab-inactive" onclick="setFilter('rejected')" id="tab-rejected">Rejected</button>
+        <button type="button" class="qrm-btn tab-inactive" onclick="setFilter('all')" id="tab-all">All</button>
+    </div>
 </div>
 
 <div class="panel-table-wrap">
@@ -46,12 +54,13 @@ $pageTitle = 'QR Self-Orders Queue';
                 <th>Payment</th>
                 <th>Status</th>
                 <th>Time</th>
+                <th>Order #</th>
                 <th>Actions</th>
             </tr>
         </thead>
         <tbody id="qrRequestsBody">
             <tr>
-                <td colspan="10" style="text-align:center; padding: 2rem;">Loading QR requests...</td>
+                <td colspan="11" class="text-center-muted">Loading QR requests...</td>
             </tr>
         </tbody>
     </table>
@@ -59,7 +68,21 @@ $pageTitle = 'QR Self-Orders Queue';
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    let currentFilter = 'pending';
     loadQRRequests();
+    setInterval(loadQRRequests, 5000);
+
+    window.setFilter = function(filter) {
+        currentFilter = filter;
+        document.querySelectorAll('#qrFilterTabs button').forEach(btn => {
+            btn.className = 'qrm-btn tab-inactive';
+        });
+        const activeBtn = document.getElementById('tab-' + filter);
+        if (activeBtn) {
+            activeBtn.className = 'qrm-btn qrm-btn-primary';
+        }
+        loadQRRequests();
+    };
 
     function loadQRRequests() {
         fetch('api/qr_requests.php?action=list')
@@ -67,12 +90,18 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(data => {
                 if (!data.success) return;
                 const tbody = document.getElementById('qrRequestsBody');
-                if (!data.requests || data.requests.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 2rem;">No QR requests found.</td></tr>';
+                
+                let list = data.requests || [];
+                if (currentFilter !== 'all') {
+                    list = list.filter(r => r.status === currentFilter);
+                }
+
+                if (list.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding: 2rem;">No ${currentFilter === 'all' ? '' : currentFilter} QR requests found.</td></tr>`;
                     return;
                 }
                 
-                tbody.innerHTML = data.requests.map(r => {
+                tbody.innerHTML = list.map(r => {
                     const itemsStr = (r.items || []).map(i => `${i.name} x${i.quantity}`).join('<br>');
                     const statusClass = r.status === 'pending' ? 'st-pending' : (r.status === 'approved' ? 'st-checkedin' : 'st-cancelled');
                     let actions = '-';
@@ -81,7 +110,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             <button class="qrm-btn qrm-btn-success" onclick="approveRequest(${r.id})">Approve</button>
                             <button class="qrm-btn qrm-btn-danger" onclick="rejectRequest(${r.id})">Reject</button>
                         `;
+                    } else if (r.status === 'approved' && r.order_code) {
+                        actions = `<a href="orders.php" class="qrm-btn qrm-btn-primary" style="text-decoration:none; padding:0.25rem 0.5rem; font-size:0.75rem;">Track Order</a>`;
                     }
+
                     return `
                         <tr>
                             <td>#${r.id}</td>
@@ -93,6 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <td>${esc(r.payment_method)}</td>
                             <td><span class="panel-status ${statusClass}">${esc(r.status)}</span></td>
                             <td>${new Date(r.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
+                            <td>${r.order_code ? `<strong>${esc(r.order_code)}</strong>` : '-'}</td>
                             <td>${actions}</td>
                         </tr>
                     `;
@@ -101,20 +134,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.approveRequest = function(id) {
+        var doApprove = function() {
+            fetch('api/qr_requests.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'approve', request_id: id })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    loadQRRequests();
+                } else {
+                    alert(data.message || 'Approval failed');
+                }
+            });
+        };
+
+        if (typeof window.openDeleteConfirm === 'function') {
+            openDeleteConfirm({
+                title: 'Approve QR Order?',
+                message: 'Approve this QR self-order and send it to the kitchen?',
+                confirmText: 'Approve & Send',
+                type: 'success',
+                onConfirm: doApprove
+            });
+            return;
+        }
         if (!confirm('Approve this QR order and send to kitchen?')) return;
-        fetch('api/qr_requests.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'approve', request_id: id })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                loadQRRequests();
-            } else {
-                alert(data.message || 'Approval failed');
-            }
-        });
+        doApprove();
     };
 
     window.rejectRequest = function(id) {
@@ -149,3 +196,4 @@ document.addEventListener('DOMContentLoaded', () => {
   <script src="../assets/js/panel_notifications.js?v=<?= filemtime(__DIR__ . '/../assets/js/panel_notifications.js') ?>"></script>
 </body>
 </html>
+

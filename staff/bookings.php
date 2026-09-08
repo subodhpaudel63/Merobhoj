@@ -20,6 +20,7 @@ $pageTitle = 'Reservations & Bookings';
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@48,400,0,0" />
   <link rel="stylesheet" href="../assets/css/adminstyle.css?v=<?= filemtime(__DIR__ . '/../assets/css/adminstyle.css') ?>">
   <link rel="stylesheet" href="../assets/css/admin2.css?v=<?= filemtime(__DIR__ . '/../assets/css/admin2.css') ?>">
+  <link rel="stylesheet" href="../assets/css/admin_bookings.css?v=<?= filemtime(__DIR__ . '/../assets/css/admin_bookings.css') ?>">
   <link rel="stylesheet" href="../assets/css/panel.css?v=<?= filemtime(__DIR__ . '/../assets/css/panel.css') ?>">
 </head>
 <body class="admin-page">
@@ -28,11 +29,27 @@ $pageTitle = 'Reservations & Bookings';
     <?php include __DIR__ . '/sidebar.php'; ?>
     <main class="admin-page-main">
 
-<div class="panel-head" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+<div class="panel-head" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
     <div>
         <h2>Reservations & Bookings</h2>
         <p class="text-muted">Manage table reservations, edit bookings, and perform state transitions.</p>
     </div>
+    
+    <!-- Top Active Grace Timer Header Widget (Same styling as Frontend) -->
+    <div style="display: flex; align-items: center; background: var(--clr-card-background, #ffffff); border: 1px solid rgba(230,83,10,0.25); border-radius: 12px; padding: 0.75rem 1.25rem; gap: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+        <div style="background: #fff8f1; color: #e6530a; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <svg viewBox="0 0 50 50" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 26px; height: 26px;">
+                <circle cx="24" cy="25" r="16"/>
+                <path d="M24 16v10l7 5M24 5v5M39 11l4-4"/>
+            </svg>
+        </div>
+        <div>
+            <div style="color: #e65312; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Active Grace Timer</div>
+            <div id="topStaffGraceTimer" style="font-size: 22px; font-weight: 700; color: #e6530a; line-height: 1.1; letter-spacing: 0.5px;">--:--</div>
+            <div id="topStaffGraceSub" style="font-size: 11px; color: #606772; margin-top: 2px;">No active countdown</div>
+        </div>
+    </div>
+
     <button class="qrm-btn qrm-btn-primary" onclick="openCreateModal()">+ Create Booking</button>
 </div>
 
@@ -48,6 +65,7 @@ $pageTitle = 'Reservations & Bookings';
                 <th>Booking Date & Time</th>
                 <th>Start / End Time</th>
                 <th>Status</th>
+                <th>Grace Timer</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -185,10 +203,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             <td>${esc(b.booking_date)} @ ${esc(b.booking_time)}</td>
                             <td><small>${esc(startTimeStr)} - ${esc(endTimeStr)}</small></td>
                             <td><span class="panel-status ${statusClass}">${esc(b.status)}</span></td>
+                            <td class="grace-timer-cell" id="timer-badge-${b.id}" data-status="${esc(b.status)}" data-grace-end="${esc(b.grace_end_at || '')}" data-start-time="${esc(b.booking_date)}T${esc(startTimeStr)}:00">-</td>
                             <td>${actions}</td>
                         </tr>
                     `;
                 }).join('');
+                updateGraceTimers();
             });
     }
 
@@ -363,6 +383,72 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    setInterval(updateGraceTimers, 1000);
+
+    function updateGraceTimers() {
+        const now = new Date();
+        let topTimerText = null;
+        let topTimerSubText = 'No active timer';
+
+        document.querySelectorAll('.grace-timer-cell').forEach(container => {
+            const status = container.getAttribute('data-status');
+            const graceEndStr = container.getAttribute('data-grace-end');
+            const startStr = container.getAttribute('data-start-time');
+            
+            if (status === 'Checked-in') {
+                container.innerHTML = `<span class="timer-checkedin">✓ Checked In</span>`;
+            } else if (status === 'Completed') {
+                container.innerHTML = `<span class="timer-completed">✓ Completed</span>`;
+            } else if (status === 'Cancelled') {
+                container.innerHTML = `<span style="color:#ef4444; font-weight:600;">Cancelled</span>`;
+            } else if (status === 'No-show') {
+                container.innerHTML = `<span class="timer-noshow">⚠️ No Show</span>`;
+            } else if (status === 'Pending') {
+                container.innerHTML = `<span style="color:#d97706; font-weight:600;">Awaiting Conf.</span>`;
+            } else if (status === 'Confirmed' && graceEndStr) {
+                const graceEnd = new Date(graceEndStr.replace(' ', 'T'));
+                const bookingTime = new Date(startStr);
+                
+                if (now < bookingTime) {
+                    const diff = bookingTime - now;
+                    const mins = Math.floor(diff / 60000);
+                    if (mins < 60) {
+                        container.innerHTML = `<span class="timer-starts">Starts in ${mins} min</span>`;
+                    } else {
+                        const hrs = Math.ceil(mins / 60);
+                        container.innerHTML = `<span class="timer-starts">Starts in ${hrs} hr</span>`;
+                    }
+                } else if (now >= graceEnd) {
+                    container.innerHTML = '<span class="timer-noshow">Expired</span>';
+                } else {
+                    const diff = graceEnd - now;
+                    const mins = Math.floor(diff / 60000);
+                    const secs = Math.floor((diff % 60000) / 1000);
+                    const timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                    
+                    let styleStr = 'color: #d97706; font-weight:600;';
+                    if (mins < 5) styleStr = 'color: #ef4444; font-weight:700;';
+                    container.innerHTML = `<span style="${styleStr}">⏳ ${timeStr} left</span>`;
+
+                    if (!topTimerText) {
+                        topTimerText = timeStr;
+                        const row = container.closest('tr');
+                        const guestName = row ? row.querySelector('td:nth-child(2)')?.textContent?.trim() : '';
+                        const tableName = row ? row.querySelector('td:nth-child(4)')?.textContent?.trim() : '';
+                        topTimerSubText = `Grace for ${guestName || 'Guest'} (${tableName || 'Table'})`;
+                    }
+                }
+            } else {
+                container.innerHTML = '-';
+            }
+        });
+
+        const topEl = document.getElementById('topStaffGraceTimer');
+        const topSubEl = document.getElementById('topStaffGraceSub');
+        if (topEl) topEl.textContent = topTimerText || '--:--';
+        if (topSubEl) topSubEl.textContent = topTimerSubText;
+    }
 
     function esc(str) {
         if (!str) return '';

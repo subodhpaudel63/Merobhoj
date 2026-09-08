@@ -131,24 +131,41 @@ document.addEventListener('DOMContentLoaded', () => {
             btns.push(`<button class="qrm-btn qrm-btn-danger" onclick="updateStatus('${o.order_number}', 'Cancelled')">Cancel</button>`);
         }
 
+        // Add Settle / Pay button for active unpaid orders
+        btns.push(`<a href="billing.php?order_number=${encodeURIComponent(o.order_number)}" class="qrm-btn" style="background:#00d26a; color:#fff; font-weight:600; padding:0.35rem 0.75rem; display:inline-flex; align-items:center; gap:0.25rem; text-decoration:none;"><span class="material-symbols-sharp" style="font-size:16px;">payments</span> Settle</a>`);
+
         return btns.join(' ');
     }
 
     window.updateStatus = function(orderNumber, targetStatus) {
+        var doUpdate = function() {
+            fetch('api/order_update_status.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ order_number: orderNumber, status: targetStatus })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    loadOrders();
+                } else {
+                    alert(data.message || 'Status update failed');
+                }
+            });
+        };
+
+        if (typeof window.openDeleteConfirm === 'function') {
+            openDeleteConfirm({
+                title: 'Update Order Status?',
+                message: `Are you sure you want to mark ${orderNumber} as ${targetStatus}?`,
+                confirmText: 'Update Status',
+                type: targetStatus === 'Cancelled' ? 'danger' : 'success',
+                onConfirm: doUpdate
+            });
+            return;
+        }
         if (!confirm(`Are you sure you want to mark ${orderNumber} as ${targetStatus}?`)) return;
-        fetch('api/order_update_status.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ order_number: orderNumber, status: targetStatus })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                loadOrders();
-            } else {
-                alert(data.message || 'Status update failed');
-            }
-        });
+        doUpdate();
     };
 
     function esc(str) {

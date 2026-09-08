@@ -84,7 +84,7 @@ $pageTitle = 'Floor Plan';
       </div>
 
       <div class="fp-canvas" id="floorCanvas">
-        <p class="fp-canvas-loading">Loading RestroWave Floor Plan...</p>
+        <p class="fp-canvas-loading">Loading MeroBhoj Floor Plan...</p>
       </div>
 
     </main>
@@ -127,7 +127,7 @@ $pageTitle = 'Floor Plan';
           <div>
             <div class="receipt-preview" id="printableReceipt">
               <div class="r-head">
-                <h4>RESTROWAVE</h4>
+                <h4>MERO BHOJ</h4>
                 <div class="r-subhead">POS SETTLEMENT</div>
                 <div class="r-badge">BILL</div>
               </div>
@@ -245,8 +245,17 @@ $pageTitle = 'Floor Plan';
 
   <div class="toast-container" id="toastContainer"></div>
 
-  <script src="../assets/js/adminscript.js?v=<?= filemtime(__DIR__ . '/../assets/css/adminstyle.css') ?>"></script>
-  <script src="../assets/js/admin2.js?v=<?= filemtime(__DIR__ . '/../assets/js/admin2.js') ?>"></script>
-  <script src="../assets/js/panel_notifications.js?v=<?= filemtime(__DIR__ . '/../assets/js/panel_notifications.js') ?>"></script>
+  <script src="../assets/js/adminscript.js?v=<?= time() ?>"></script>
+  <script src="../assets/js/admin2.js?v=<?= time() ?>"></script>
+  <script src="../assets/js/panel_notifications.js?v=<?= time() ?>"></script>
+  <script src="../assets/js/floor_plan.js?v=<?= time() ?>"></script>
+  <script>
+    window.FP_API_URL        = '../staff/api/floor.php';
+    window.FP_TABLE_API_URL  = '../staff/api/table_details.php';
+    window.FP_SETTLE_API_URL = '../staff/api/settle_bill.php';
+    window.FP_BOOK_API_URL   = '../staff/api/booking_create.php';
+    window.FP_IS_ADMIN       = false;
+    loadFloorPlan();
+  </script>
 </body>
 </html>
