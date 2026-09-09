@@ -30,11 +30,15 @@ function set_panel_cookies(string $email, string $role): void
 {
     global $conn;
     if ($conn) {
-        $upStmt = $conn->prepare('UPDATE users SET last_login = NOW() WHERE email = ?');
-        if ($upStmt) {
-            $upStmt->bind_param('s', $email);
-            $upStmt->execute();
-            $upStmt->close();
+        // Some existing installations do not yet have the optional column.
+        $columnCheck = $conn->query("SHOW COLUMNS FROM users LIKE 'last_login'");
+        if ($columnCheck && $columnCheck->num_rows > 0) {
+            $upStmt = $conn->prepare('UPDATE users SET last_login = NOW() WHERE email = ?');
+            if ($upStmt) {
+                $upStmt->bind_param('s', $email);
+                $upStmt->execute();
+                $upStmt->close();
+            }
         }
     }
     $now    = time();
