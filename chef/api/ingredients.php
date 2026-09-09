@@ -9,6 +9,7 @@
  * Status (Available/Low/Out) is always derived from quantity vs low_threshold.
  */
 require_once __DIR__ . '/_api_guard.php';
+require_once __DIR__ . '/../../helpers/audit_logger.php';
 
 /** Derive the stock status from quantities. */
 function derive_stock_status(float $qty, float $low): string
@@ -26,10 +27,18 @@ if (api_is_post()) {
     if ($action === 'delete') {
         $id = (int)($input['id'] ?? 0);
         if ($id <= 0) api_json(['success' => false, 'message' => 'Invalid ingredient']);
+        $snapshot = $conn->prepare("SELECT name, unit, quantity FROM ingredients WHERE id = ?");
+        $snapshot->bind_param('i', $id);
+        $snapshot->execute();
+        $deletedItem = $snapshot->get_result()->fetch_assoc();
+        $snapshot->close();
         $del = $conn->prepare("DELETE FROM ingredients WHERE id = ?");
         $del->bind_param('i', $id);
         $ok = $del->execute();
         $del->close();
+        if ($ok && $deletedItem) {
+            log_audit_action($conn, $panelUser['id'], $panelUser['user_type'], 'DELETE_ITEM', 'inventory', $id, $deletedItem);
+        }
         api_json(['success' => (bool)$ok, 'message' => $ok ? 'Ingredient removed' : 'Delete failed']);
     }
 

@@ -33,7 +33,7 @@ $pageTitle = $pageTitle ?? 'Kitchen';
   <div class="container">
     <?php include __DIR__ . '/sidebar.php'; ?>
     <main class="admin-page-main">
-?>
+
 
 <div class="panel-page-header">
     <div>

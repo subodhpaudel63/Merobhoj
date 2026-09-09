@@ -1527,6 +1527,15 @@ table.panel-table .qrm-btn + .qrm-btn { margin-left: 0.3rem; }
     font-size: 3rem;
     color: var(--clr-border, #cbd5e1);
 }
+.fp-modal-empty-icon { font-size: 48px; color: #94a3b8; }
+.fp-modal-empty-icon-warning { color: #f59e0b; }
+.fp-modal-empty-text { color: #64748b; margin-top: 8px; }
+.fp-modal-action { margin-top: 12px; }
+.fp-order-items { margin-top: 8px; }
+.fp-order-total { text-align: right; margin-top: 6px; font-weight: 600; }
+.fp-settle-action { margin-top: 10px; width: 100%; }
+.fp-order-divider { border: 0; border-top: 1px solid #e2e8f0; margin: 12px 0; }
+.fp-receipt-placeholder { color: #64748b; padding: 8px 0; }
 
 /* ---- MeroBhoj Floor Plan & POS Settlement (Staff & Admin) ----- */
 
@@ -1673,6 +1682,11 @@ table.panel-table .qrm-btn + .qrm-btn { margin-left: 0.3rem; }
     padding: 3rem 1rem;
     font-size: 0.95rem;
 }
+.fp-canvas-error { color: #ef4444; }
+.reservation-fields { display: flex; gap: 12px; }
+.reservation-field { flex: 1; }
+.form-help-text { color: #64748b; font-size: 12px; }
+#resMessage { width: 100%; resize: vertical; }
 
 /* Table Wrapper */
 .rw-table-wrapper {
@@ -1784,6 +1798,8 @@ table.panel-table .qrm-btn + .qrm-btn { margin-left: 0.3rem; }
     transform: translate(-50%, -50%);
     z-index: 1;
     transition: background-color 0.2s;
+    left: calc(var(--left) * 1px);
+    top: calc(var(--top) * 1px);
 }
 
 /* Square Chair Pills */
@@ -1799,6 +1815,8 @@ table.panel-table .qrm-btn + .qrm-btn { margin-left: 0.3rem; }
     transform: translateX(-50%);
     width: 22px;
     height: 14px;
+    left: calc(var(--position) * 1%);
+    transform: translateX(-50%);
 }
 .rw-chair-pill.chair-bottom {
     bottom: 6px;
@@ -1806,6 +1824,8 @@ table.panel-table .qrm-btn + .qrm-btn { margin-left: 0.3rem; }
     transform: translateX(-50%);
     width: 22px;
     height: 14px;
+    left: calc(var(--position) * 1%);
+    transform: translateX(-50%);
 }
 .rw-chair-pill.chair-left {
     left: 6px;
@@ -1813,6 +1833,8 @@ table.panel-table .qrm-btn + .qrm-btn { margin-left: 0.3rem; }
     transform: translateY(-50%);
     width: 14px;
     height: 22px;
+    top: calc(var(--position) * 1%);
+    transform: translateY(-50%);
 }
 .rw-chair-pill.chair-right {
     right: 6px;
@@ -1820,6 +1842,8 @@ table.panel-table .qrm-btn + .qrm-btn { margin-left: 0.3rem; }
     transform: translateY(-50%);
     width: 14px;
     height: 22px;
+    top: calc(var(--position) * 1%);
+    transform: translateY(-50%);
 }
 
 /* Order block inside table modal */

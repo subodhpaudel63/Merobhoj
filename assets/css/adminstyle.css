@@ -52,12 +52,14 @@
   appearance: none;
 }
 
+html {
+   overflow-x: hidden;
+}
+
 body{
    width: 100vw;
-   height: 100vh;
    font-size: .88rem;
    user-select: none;
-   overflow-x: hidden;
    background: var(--clr-color-background);
    font-family: 'Outfit', sans-serif;
 }
@@ -2032,7 +2034,6 @@ MEDIA QUERY PHONE
       width: 16rem !important;
       max-width: 85vw;
       transform: translateX(-105%) !important;
-      visibility: hidden;
       z-index: 1400;
     }
 
@@ -2040,6 +2041,10 @@ MEDIA QUERY PHONE
     body.admin-orders-page.sidebar-open aside.admin-sidebar {
       transform: translateX(0) !important;
       visibility: visible;
+    }
+
+    body.sidebar-open {
+      overflow: hidden;
     }
 
     body.admin-page.sidebar-open .sidebar-backdrop,

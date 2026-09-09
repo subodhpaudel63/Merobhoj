@@ -23,6 +23,47 @@ document.addEventListener('click', function (e) {
   setTimeout(() => r.remove(), 550);
 });
 
+/* Vendor, purchase order and audit module behaviors */
+(function () {
+  'use strict';
+  const csrf = document.body.dataset.csrf || '';
+  const json = (url, options) => fetch(url, options).then(async r => { const text=await r.text(); let data; try { data=JSON.parse(text); } catch (_) { throw new Error(`Server returned HTTP ${r.status}.`); } if(!r.ok || data.success===false) throw new Error(data.message||`Request failed with HTTP ${r.status}.`); return data; });
+  const post = (url, data) => {
+    const body = new FormData();
+    Object.entries(Object.assign({csrf:csrf}, data)).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) body.append(key, typeof value === 'object' ? JSON.stringify(value) : String(value));
+    });
+    return json(url, {method:'POST', headers:{'X-CSRF-Token':csrf,'X-Requested-With':'XMLHttpRequest'}, body});
+  };
+  const esc = value => String(value == null ? '' : value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+  const modal = id => { const el=document.getElementById(id); if(el) el.hidden=false; };
+  const closeModals = () => document.querySelectorAll('.po-modal').forEach(el => { el.hidden=true; });
+  const supplierMessage = (message, success = false) => { const el=document.getElementById('supplier-form-message'); if(!el)return; el.textContent=message; el.className=`supplier-form-message${success?' success':''}`; el.hidden=!message; };
+  const supplierFormReset = () => { const form=document.getElementById('supplier-form'); if(!form)return; form.reset(); form.elements.id.value=''; supplierMessage(''); document.getElementById('supplier-modal-title').textContent='Add supplier'; document.getElementById('supplier-save').innerHTML='<span class="material-symbols-sharp">save</span> Save supplier'; };
+  const setSupplierBusy = busy => { const button=document.getElementById('supplier-save'); if(!button)return; button.disabled=busy; button.innerHTML=busy?'<span class="material-symbols-sharp">progress_activity</span> Saving...':'<span class="material-symbols-sharp">save</span> Save supplier'; };
+  const supplierApi='api/suppliers_api.php', poApi='api/po_api.php', auditApi='api/audit_api.php';
+  let options=[], supplierRows=[];
+  function loadSuppliers() { const q=encodeURIComponent(document.getElementById('supplier-search')?.value||''); json(`${supplierApi}?q=${q}`).then(d=>{const b=document.getElementById('supplier-body');if(!b)return;supplierRows=d.suppliers||[];b.innerHTML=supplierRows.map(s=>`<tr><td>${esc(s.name)}</td><td>${esc(s.contact_person)}</td><td>${esc(s.phone)}</td><td>${esc(s.email)}</td><td>${esc(s.status)}</td><td><button type="button" class="qrm-btn qrm-btn-secondary" data-action="supplier-edit" data-id="${s.id}">Edit</button>${s.status==='active'?` <button type="button" class="qrm-btn qrm-btn-danger" data-action="supplier-deactivate" data-id="${s.id}">Deactivate</button>`:''}</td></tr>`).join('')||'<tr><td colspan="6">No suppliers found.</td></tr>';}).catch(error=>{const b=document.getElementById('supplier-body');if(b)b.innerHTML=`<tr><td colspan="6" class="module-error">${esc(error.message)}</td></tr>`;});}
+  function loadOrders(){json(poApi).then(d=>{const b=document.getElementById('po-body');if(!b)return;if(!d.success){b.innerHTML=`<tr><td colspan="7" class="module-error">${esc(d.message||'Unable to load purchase orders.')}</td></tr>`;return;}b.innerHTML=(d.orders||[]).map(p=>`<tr><td>${esc(p.po_number)}</td><td>${esc(p.supplier_name)}</td><td>${Number(p.total_amount).toFixed(2)}</td><td><span class="po-status ${esc(p.status)}">${esc(p.status)}</span></td><td>${esc(p.payment_status)}</td><td>${esc(p.created_at)}</td><td>${p.status!=='received'&&p.status!=='canceled'?`<button class="qrm-btn qrm-btn-primary" data-action="po-receive" data-id="${p.id}">Receive</button>`:''}</td></tr>`).join('')||'<tr><td colspan="7">No purchase orders found.</td></tr>';}).catch(()=>{const b=document.getElementById('po-body');if(b)b.innerHTML='<tr><td colspan="7" class="module-error">Unable to connect to the purchase-order service.</td></tr>';});}
+  function loadOptions(){return json(`${poApi}?action=options`).then(d=>{options=d.ingredients||[];const s=document.getElementById('po-supplier');if(s)s.innerHTML='<option value="">Select supplier</option>'+(d.suppliers||[]).map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('');addRow();});}
+  function addRow(){const b=document.getElementById('po-items');if(!b)return;const tr=document.createElement('tr');tr.innerHTML=`<td><select class="po-ingredient" required><option value="">Select ingredient</option>${options.map(x=>`<option value="${x.id}">${esc(x.name)} (${esc(x.unit)})</option>`).join('')}</select></td><td><input class="po-qty" type="number" min="0.01" step="0.01" value="1" required></td><td><input class="po-cost" type="number" min="0" step="0.01" value="0" required></td><td class="po-item-total">0.00</td><td><button type="button" class="qrm-btn qrm-btn-danger" data-action="po-remove-row">Remove</button></td>`;b.appendChild(tr);updateTotal();}
+  function updateTotal(){let total=0;document.querySelectorAll('#po-items tr').forEach(tr=>{const q=Number(tr.querySelector('.po-qty')?.value||0),c=Number(tr.querySelector('.po-cost')?.value||0),v=q*c;total+=v;const cell=tr.querySelector('.po-item-total');if(cell)cell.textContent=v.toFixed(2);});const out=document.getElementById('po-total');if(out)out.textContent=total.toFixed(2);}
+  function loadAudit(){const p=new URLSearchParams({from:document.getElementById('audit-from')?.value||'',to:document.getElementById('audit-to')?.value||'',role:document.getElementById('audit-role')?.value||'',action:document.getElementById('audit-action')?.value||'',user_id:document.getElementById('audit-user')?.value||''});json(`${auditApi}?${p}`).then(d=>{const b=document.getElementById('audit-body');if(!b)return;b.innerHTML=(d.logs||[]).map(x=>`<tr><td>${esc(x.created_at)}</td><td><strong>${esc(x.name||'Unknown user')}</strong><small class="audit-user-id">#${esc(x.user_id)}</small></td><td><span class="audit-role audit-role-${esc(x.user_role)}">${esc(x.user_role)}</span></td><td><span class="audit-action">${esc(x.action)}</span></td><td>${esc(x.target_type||'—')} ${x.target_id?`#${esc(x.target_id)}`:''}</td><td><button type="button" class="audit-view-btn" data-action="audit-detail" data-id="${x.id}"><span class="material-symbols-sharp">visibility</span> View details</button></td><td>${esc(x.ip_address||'—')}</td></tr>`).join('')||'<tr><td colspan="7" class="module-empty">No audit entries found for these filters.</td></tr>';}).catch(error=>{const b=document.getElementById('audit-body');if(b)b.innerHTML=`<tr><td colspan="7" class="module-error">${esc(error.message)}</td></tr>`;});}
+  document.addEventListener('click', e => {const el=e.target.closest('[data-action]');if(!el)return;const action=el.dataset.action;
+    if(action==='supplier-new'){supplierFormReset();modal('supplier-modal');document.querySelector('#supplier-form [name=name]')?.focus();}
+    if(action==='supplier-edit'){const row=supplierRows.find(item=>String(item.id)===String(el.dataset.id));if(!row){supplierMessage('Supplier details could not be loaded. Refresh the list and try again.');return;}supplierFormReset();const form=document.getElementById('supplier-form');['id','name','contact_person','phone','email','address'].forEach(key=>{if(form.elements[key])form.elements[key].value=row[key]||'';});document.getElementById('supplier-modal-title').textContent='Edit supplier';document.getElementById('supplier-save').innerHTML='<span class="material-symbols-sharp">edit</span> Update supplier';modal('supplier-modal');document.querySelector('#supplier-form [name=name]')?.focus();}
+    if(action==='supplier-refresh')loadSuppliers();if(action==='modal-close')closeModals();
+    if(action==='supplier-deactivate'&&confirm('Deactivate this supplier?'))post(supplierApi,{action:'deactivate',id:el.dataset.id}).then(loadSuppliers);
+    if(action==='po-add-row')addRow();if(action==='po-remove-row'){el.closest('tr')?.remove();updateTotal();}
+    if(action==='po-receive'&&confirm('Mark this PO received and update stock?'))post(poApi,{action:'receive',id:el.dataset.id}).then(d=>{if(!d.success)alert(d.message);loadOrders();});
+    if(action==='audit-filter')loadAudit();if(action==='audit-reset'){['audit-from','audit-to','audit-action','audit-user'].forEach(id=>{const field=document.getElementById(id);if(field)field.value='';});const role=document.getElementById('audit-role');if(role)role.value='';loadAudit();}if(action==='audit-detail')json(`${auditApi}?action=detail&id=${el.dataset.id}`).then(d=>{const log=d.log||{};document.getElementById('audit-detail-time').textContent=log.created_at||'—';document.getElementById('audit-detail-user').textContent=`${log.name||'Unknown user'} (#${log.user_id||'—'})`;document.getElementById('audit-detail-role').textContent=log.user_role||'—';document.getElementById('audit-detail-action').textContent=log.action||'—';document.getElementById('audit-detail-target').textContent=`${log.target_type||'—'}${log.target_id?' #'+log.target_id:''}`;document.getElementById('audit-detail-ip').textContent=log.ip_address||'—';let details={};try{details=JSON.parse(log.details||'{}');}catch(_){details={raw:log.details||''};}document.getElementById('audit-detail').textContent=JSON.stringify(details,null,2);modal('audit-modal');}).catch(error=>alert(error.message));
+  });
+  document.addEventListener('input', e => {if(e.target.matches('.po-qty,.po-cost'))updateTotal();});
+  document.addEventListener('keydown', e => {if(e.key==='Escape')closeModals();if(e.key==='Enter'&&e.target.id==='supplier-search'){e.preventDefault();loadSuppliers();}});
+  document.addEventListener('DOMContentLoaded',()=>{if(document.getElementById('supplier-body'))loadSuppliers();if(document.getElementById('po-body'))loadOrders();if(document.getElementById('po-form'))loadOptions();if(document.getElementById('audit-body'))loadAudit();});
+  document.addEventListener('submit', e => {if(e.target.id==='supplier-form'){e.preventDefault();e.stopPropagation();const form=e.target;const data=Object.fromEntries(new FormData(form));data.name=(data.name||'').trim();data.phone=(data.phone||'').trim();data.email=(data.email||'').trim();if(!data.name||!data.phone){supplierMessage('Supplier name and phone number are required.');(!data.name?form.elements.name:form.elements.phone).focus();return;}if(data.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)){supplierMessage('Enter a valid email address or leave it blank.');form.elements.email.focus();return;}setSupplierBusy(true);data.action=data.id?'update':'create';post(supplierApi,data).then(result=>{supplierMessage(result.warning|| (data.id?'Supplier details updated.':'Supplier added successfully.'),true);setTimeout(()=>{closeModals();loadSuppliers();},700);}).catch(error=>supplierMessage(error.message||'Unable to save supplier. Please try again.')).finally(()=>setSupplierBusy(false));}if(e.target.id==='po-form'){e.preventDefault();const submitter=e.submitter||document.activeElement;const status=(submitter&&submitter.dataset&&submitter.dataset.poStatus)?submitter.dataset.poStatus:'draft';const items=[...document.querySelectorAll('#po-items tr')].map(tr=>({ingredient_id:tr.querySelector('.po-ingredient').value,quantity:tr.querySelector('.po-qty').value,unit_cost:tr.querySelector('.po-cost').value}));post(poApi,{action:'create',status:status,supplier_id:document.getElementById('po-supplier').value,notes:document.getElementById('po-notes').value,items:items}).then(d=>{if(!d.success)return alert(d.message);location.href='purchase-orders.php';}).catch(error=>alert(error.message||'Unable to save purchase order.'));}});
+}());
+
 document.addEventListener('DOMContentLoaded', function () {
   const msgEl = document.getElementById('admin-session-msg');
   if (msgEl && window.ToastNotifications) {
@@ -59,15 +100,279 @@ document.addEventListener('DOMContentLoaded', function () {
     dashboardRefresh();
   }
 
-  window.openModal = window.openModal || function () {};
-  window.closeMenuModal = window.closeMenuModal || function () {};
-  window.loadMenuItemData = window.loadMenuItemData || function () {};
-  window.showDeleteConfirmation = window.showDeleteConfirmation || function () {};
-  window.deleteMenuItem = window.deleteMenuItem || function () {};
-  window.selectedIds = window.selectedIds || function () { return []; };
-  window.updateSelectedCount = window.updateSelectedCount || function () {};
-  window.bulkChangeStatus = window.bulkChangeStatus || function () {};
-  window.deleteSelected = window.deleteSelected || function () {};
+  /* Menu management module behaviors */
+  (function () {
+    'use strict';
+    function toast(msg, type) {
+      if (window.ToastNotifications) {
+        if (type === 'success') window.ToastNotifications.success(msg);
+        else window.ToastNotifications.error(msg);
+      } else {
+        alert(msg);
+      }
+    }
+
+    window.openModal = function (mode, menuId) {
+      const modal = document.getElementById('menuModal');
+      const modalTitle = document.getElementById('modalTitle');
+      const formAction = document.getElementById('formAction');
+      const form = document.getElementById('menuForm');
+      const imgPreview = document.getElementById('imagePreview');
+
+      if (!modal) return;
+      if (form) form.reset();
+      if (imgPreview) imgPreview.style.display = 'none';
+
+      if (mode === 'create') {
+        if (modalTitle) modalTitle.textContent = 'Add New Menu Item';
+        if (formAction) formAction.value = 'create';
+        const idField = document.getElementById('menuId');
+        if (idField) idField.value = '';
+        const existImg = document.getElementById('existing_image');
+        if (existImg) existImg.value = '';
+        modal.style.display = 'flex';
+      } else if (mode === 'edit' && menuId) {
+        if (modalTitle) modalTitle.textContent = 'Edit Menu Item';
+        if (formAction) formAction.value = 'update';
+        const idField = document.getElementById('menuId');
+        if (idField) idField.value = menuId;
+
+        fetch('menu_ajax.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: new URLSearchParams({ action: 'get_item', menu_id: menuId })
+        })
+        .then(r => r.json())
+        .then(res => {
+          if (!res.success || !res.data) {
+            toast(res.message || 'Failed to fetch menu item details', 'error');
+            return;
+          }
+          const item = res.data;
+          if (document.getElementById('menu_name')) document.getElementById('menu_name').value = item.menu_name || '';
+          if (document.getElementById('menu_description')) document.getElementById('menu_description').value = item.menu_description || '';
+          if (document.getElementById('menu_price')) document.getElementById('menu_price').value = item.menu_price || '';
+          if (document.getElementById('menu_category')) document.getElementById('menu_category').value = item.menu_category || '';
+          if (document.getElementById('menu_status')) document.getElementById('menu_status').value = item.menu_status || 'In Stock';
+          if (document.getElementById('existing_image')) document.getElementById('existing_image').value = item.menu_image || '';
+
+          if (item.menu_image && imgPreview) {
+            const img = imgPreview.querySelector('img');
+            if (img) img.src = '../' + item.menu_image;
+            imgPreview.style.display = 'block';
+          }
+          modal.style.display = 'flex';
+        })
+        .catch(err => {
+          toast('Error loading menu item', 'error');
+          console.error(err);
+        });
+      }
+    };
+
+    window.closeMenuModal = function () {
+      const modal = document.getElementById('menuModal');
+      if (modal) modal.style.display = 'none';
+    };
+
+    window.deleteMenuItem = function (menuId, menuName) {
+      const doDelete = function () {
+        fetch('menu_ajax.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: new URLSearchParams({ action: 'delete', menu_id: menuId })
+        })
+        .then(r => r.json())
+        .then(res => {
+          if (res.success) {
+            toast('Menu item deleted successfully!', 'success');
+            setTimeout(() => location.reload(), 500);
+          } else {
+            toast(res.message || 'Delete failed', 'error');
+          }
+        })
+        .catch(err => {
+          toast('Network error deleting item', 'error');
+          console.error(err);
+        });
+      };
+
+      if (typeof window.openDeleteConfirm === 'function') {
+        window.openDeleteConfirm({
+          title: 'Delete Menu Item?',
+          message: 'Are you sure you want to delete "' + (menuName || 'this item') + '"?',
+          onConfirm: doDelete
+        });
+      } else if (confirm('Delete menu item "' + (menuName || 'this item') + '"?')) {
+        doDelete();
+      }
+    };
+
+    window.selectedIds = function () {
+      const checked = document.querySelectorAll('.item-checkbox:checked');
+      return Array.from(checked).map(cb => cb.value);
+    };
+
+    window.updateSelectedCount = function () {
+      const ids = window.selectedIds();
+      const countEl = document.getElementById('selectedCount');
+      if (countEl) {
+        countEl.textContent = ids.length + ' item' + (ids.length === 1 ? '' : 's') + ' selected';
+      }
+      const selectAll = document.getElementById('selectAll');
+      if (selectAll) {
+        const allCheckboxes = document.querySelectorAll('.item-checkbox');
+        selectAll.checked = allCheckboxes.length > 0 && ids.length === allCheckboxes.length;
+      }
+    };
+
+    window.bulkChangeStatus = function () {
+      const ids = window.selectedIds();
+      if (ids.length === 0) {
+        toast('Please select at least one menu item', 'error');
+        return;
+      }
+      const newStatus = prompt('Enter new status (In Stock, Low Stock, Out of Stock):', 'In Stock');
+      if (!newStatus) return;
+      if (!['In Stock', 'Low Stock', 'Out of Stock'].includes(newStatus)) {
+        toast('Invalid status choice', 'error');
+        return;
+      }
+
+      fetch('menu_ajax.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: new URLSearchParams({ action: 'bulk_status', menu_ids: ids.join(','), menu_status: newStatus })
+      })
+      .then(r => r.json())
+      .then(res => {
+        if (res.success) {
+          toast(res.message || 'Status updated!', 'success');
+          setTimeout(() => location.reload(), 500);
+        } else {
+          toast(res.message || 'Bulk update failed', 'error');
+        }
+      })
+      .catch(err => toast('Error updating status', 'error'));
+    };
+
+    window.deleteSelected = function () {
+      const ids = window.selectedIds();
+      if (ids.length === 0) {
+        toast('Please select at least one menu item to delete', 'error');
+        return;
+      }
+
+      const doBulkDelete = function () {
+        let completed = 0;
+        let errors = 0;
+        ids.forEach(id => {
+          fetch('menu_ajax.php', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: new URLSearchParams({ action: 'delete', menu_id: id })
+          })
+          .then(r => r.json())
+          .then(res => {
+            if (res.success) completed++;
+            else errors++;
+          })
+          .catch(() => errors++)
+          .finally(() => {
+            if (completed + errors === ids.length) {
+              toast(completed + ' items deleted successfully!', 'success');
+              setTimeout(() => location.reload(), 500);
+            }
+          });
+        });
+      };
+
+      if (typeof window.openDeleteConfirm === 'function') {
+        window.openDeleteConfirm({
+          title: 'Delete Selected Items?',
+          message: 'Are you sure you want to delete ' + ids.length + ' selected item(s)?',
+          onConfirm: doBulkDelete
+        });
+      } else if (confirm('Delete ' + ids.length + ' item(s)?')) {
+        doBulkDelete();
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const menuForm = document.getElementById('menuForm');
+      if (menuForm) {
+        menuForm.addEventListener('submit', function (e) {
+          e.preventDefault();
+          const formData = new FormData(menuForm);
+
+          fetch('menu_ajax.php', {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: formData
+          })
+          .then(r => r.json())
+          .then(res => {
+            if (res.success) {
+              toast(res.message || 'Saved successfully!', 'success');
+              window.closeMenuModal();
+              setTimeout(() => location.reload(), 500);
+            } else {
+              toast(res.message || 'Saving failed', 'error');
+            }
+          })
+          .catch(err => {
+            toast('Error saving menu item', 'error');
+            console.error(err);
+          });
+        });
+      }
+
+      const selectAll = document.getElementById('selectAll');
+      if (selectAll) {
+        selectAll.addEventListener('change', function () {
+          const checkboxes = document.querySelectorAll('.item-checkbox');
+          checkboxes.forEach(cb => cb.checked = selectAll.checked);
+          window.updateSelectedCount();
+        });
+      }
+
+      document.addEventListener('change', function (e) {
+        if (e.target && e.target.classList.contains('item-checkbox')) {
+          window.updateSelectedCount();
+        }
+      });
+
+      const fileInput = document.getElementById('menu_image');
+      if (fileInput) {
+        fileInput.addEventListener('change', function () {
+          const preview = document.getElementById('imagePreview');
+          if (!preview) return;
+          const file = this.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+              const img = preview.querySelector('img');
+              if (img) img.src = e.target.result;
+              preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+      }
+    });
+  }());
   window.toggleAdminOrderItems = window.toggleAdminOrderItems || function () {};
   window.handleOrderUpdate = window.handleOrderUpdate || function () {};
   window.handleOrderDelete = window.handleOrderDelete || function () {};
@@ -871,7 +1176,7 @@ document.addEventListener('DOMContentLoaded', function () {
      6. Tab switching
   --------------------------------------------------------- */
   function initTabs() {
-    const root = document.getElementById("financialDashboard");
+    const root = document.getElementById("finPage") || document.getElementById("financialDashboard");
     if (!root) return;
     const tabs = root.querySelectorAll(".fin-tab");
     tabs.forEach(tab => {
@@ -886,6 +1191,12 @@ document.addEventListener('DOMContentLoaded', function () {
         root.querySelectorAll(".fin-panel").forEach(p => p.classList.remove("is-active"));
         const target = document.getElementById("panel-" + tab.dataset.tab);
         if (target) target.classList.add("is-active");
+        
+        setTimeout(() => {
+          Object.values(charts).forEach(c => {
+            if (c && typeof c.resize === 'function') c.resize();
+          });
+        }, 50);
       });
     });
   }
@@ -901,11 +1212,18 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
+    const fySelect = document.getElementById("finFiscalYear");
+    if (fySelect) {
+      fySelect.addEventListener("change", () => {
+        refreshAll(getFilters());
+      });
+    }
+
     const allReportsBtn = document.getElementById("finAllReportsBtn");
     if (allReportsBtn) {
       allReportsBtn.addEventListener("click", () => {
-        // Placeholder hook for a future "export / view all reports" action.
         allReportsBtn.blur();
+        window.print();
       });
     }
 
@@ -920,7 +1238,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function initFinance() {
-    const root = document.getElementById("financialDashboard");
+    const root = document.getElementById("finPage") || document.getElementById("financialDashboard");
     if (!root) return;
     initTabs();
     initFilters();
@@ -2339,6 +2657,7 @@ function esc(str) {
     }
     if (el('recDateTime'))  el('recDateTime').textContent  = new Date().toLocaleString();
     if (el('discountInput')) el('discountInput').value = 0;
+    if (el('posAmountReceived')) el('posAmountReceived').value = _activeOrderSubtotal.toFixed(2);
 
     /* build receipt items */
     /* (already calculated in order block — just show total in receipt) */
@@ -2361,12 +2680,19 @@ function esc(str) {
   function recalculateSettleTotal() {
     var disc = Number((document.getElementById('discountInput') || {value:0}).value) || 0;
     var total = Math.max(0, _activeOrderSubtotal - disc);
+    var receivedInput = document.getElementById('posAmountReceived');
+    var received = Number(receivedInput ? receivedInput.value : total) || 0;
+    var change = received - total;
     var recDisc = document.getElementById('recDiscount');
     var recSub  = document.getElementById('recSubtotal');
     var recTot  = document.getElementById('recTotal');
     if (recSub)  recSub.textContent  = fmt(_activeOrderSubtotal);
     if (recDisc) recDisc.textContent = disc > 0 ? '-' + fmt(disc) : fmt(0);
     if (recTot)  recTot.textContent  = fmt(total);
+    var recTendered = document.getElementById('recTendered');
+    var recChange = document.getElementById('recChange');
+    if (recTendered) recTendered.textContent = fmt(received);
+    if (recChange) recChange.textContent = fmt(Math.max(0, change));
   }
 
   function selectPM(method, btn) {
@@ -2379,6 +2705,9 @@ function esc(str) {
     if (!_activeOrderNum) { toast('No order selected', 'error'); return; }
     var disc = Number((document.getElementById('discountInput') || {value:0}).value) || 0;
     var total = Math.max(0, _activeOrderSubtotal - disc);
+    var receivedInput = document.getElementById('posAmountReceived');
+    var amountReceived = Number(receivedInput ? receivedInput.value : total) || 0;
+    var changeDue = Math.max(0, amountReceived - total);
     var settleUrl = window.FP_SETTLE_API_URL || '../staff/api/settle_bill.php';
 
     fetch(settleUrl, {
@@ -2396,8 +2725,8 @@ function esc(str) {
         vat_amount:             0,
         grand_total:            total,
         payment_method:         _selectedPM,
-        amount_received:        total,
-        change_due:             0,
+        amount_received:        amountReceived,
+        change_due:             changeDue,
         remarks:                ''
       })
     })

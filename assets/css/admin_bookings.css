@@ -198,7 +198,7 @@ body {
 }
 
 /* Card Icon Colors (HSL) */
-.icon-total { background-color: rgba(37, 99, 235, 0.1); color: #2563eb; }
+.icon-total { background-color: rgba(240, 90, 34, 0.12); color: #f05a22; }
 .icon-pending { background-color: rgba(249, 115, 22, 0.1); color: #f97316; }
 .icon-active { background-color: rgba(22, 163, 74, 0.1); color: #16a34a; }
 .icon-available { background-color: rgba(147, 51, 234, 0.1); color: #9333ea; }

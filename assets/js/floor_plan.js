@@ -1,7 +1,7 @@
 /* ============================================================
    MeroBhoj Floor Plan — loadFloorPlan + all floor-plan logic
    Works for both admin/floor.php and staff/floor.php.
-   Each page sets window.FP_API_URL before calling loadFloorPlan().
+   Each page supplies API paths through data attributes on <body>.
    ============================================================ */
 (function () {
   'use strict';
@@ -14,6 +14,12 @@
   var _activeOrderSub   = 0;
   var _selectedPM       = 'Cash';
   var _refreshTimer     = null;
+
+  function config(name, fallback) {
+    var page = document.body;
+    var value = page && page.dataset ? page.dataset[name] : '';
+    return value || fallback;
+  }
 
   /* ---------- helpers ---------- */
   function esc(str) {
@@ -63,7 +69,7 @@
 
     canvas.innerHTML = '<p class="fp-canvas-loading">Loading MeroBhoj Floor Plan...</p>';
 
-    var apiUrl = window.FP_API_URL || '../staff/api/floor.php';
+    var apiUrl = config('fpApiUrl', '../staff/api/floor.php');
 
     fetch(apiUrl, {
       headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -74,7 +80,7 @@
     })
     .then(function (data) {
       if (!data.success) {
-        canvas.innerHTML = '<p class="fp-canvas-loading" style="color:#ef4444;">Error: ' +
+        canvas.innerHTML = '<p class="fp-canvas-loading fp-canvas-error">Error: ' +
           esc(data.message || 'Failed to load tables') + '</p>';
         return;
       }
@@ -82,7 +88,7 @@
       renderFloor();
     })
     .catch(function (err) {
-      canvas.innerHTML = '<p class="fp-canvas-loading" style="color:#ef4444;">Could not load floor plan. Please refresh.</p>';
+      canvas.innerHTML = '<p class="fp-canvas-loading fp-canvas-error">Could not load floor plan. Please refresh.</p>';
       console.error('[FloorPlan] load error:', err);
     });
   }
@@ -143,7 +149,7 @@
           var angle = (i / cap) * (2 * Math.PI) - (Math.PI / 2);
           var cx = 70 + radius * Math.cos(angle);
           var cy = 70 + radius * Math.sin(angle);
-          chairDotsHtml += '<span class="rw-chair-dot" style="left:' + cx.toFixed(1) + 'px; top:' + cy.toFixed(1) + 'px;" title="Seat ' + (i+1) + '"></span>';
+          chairDotsHtml += '<span class="rw-chair-dot" style="--left: ' + cx.toFixed(1) + '; --top: ' + cy.toFixed(1) + ';" title="Seat ' + (i+1) + '"></span>';
         }
       } else {
         // Square table: distribute exact `cap` chairs evenly across 4 sides (Top, Right, Bottom, Left)
@@ -155,22 +161,22 @@
         // Top chairs
         sides[0].forEach(function(sIdx, pos, arr) {
           var pct = ((pos + 1) / (arr.length + 1)) * 100;
-          chairDotsHtml += '<span class="rw-chair-pill chair-top" style="left:' + pct.toFixed(1) + '%; transform:translateX(-50%);"></span>';
+          chairDotsHtml += '<span class="rw-chair-pill chair-top" style="--position: ' + pct.toFixed(1) + ';"></span>';
         });
         // Right chairs
         sides[1].forEach(function(sIdx, pos, arr) {
           var pct = ((pos + 1) / (arr.length + 1)) * 100;
-          chairDotsHtml += '<span class="rw-chair-pill chair-right" style="top:' + pct.toFixed(1) + '%; transform:translateY(-50%);"></span>';
+          chairDotsHtml += '<span class="rw-chair-pill chair-right" style="--position: ' + pct.toFixed(1) + ';"></span>';
         });
         // Bottom chairs
         sides[2].forEach(function(sIdx, pos, arr) {
           var pct = ((pos + 1) / (arr.length + 1)) * 100;
-          chairDotsHtml += '<span class="rw-chair-pill chair-bottom" style="left:' + pct.toFixed(1) + '%; transform:translateX(-50%);"></span>';
+          chairDotsHtml += '<span class="rw-chair-pill chair-bottom" style="--position: ' + pct.toFixed(1) + ';"></span>';
         });
         // Left chairs
         sides[3].forEach(function(sIdx, pos, arr) {
           var pct = ((pos + 1) / (arr.length + 1)) * 100;
-          chairDotsHtml += '<span class="rw-chair-pill chair-left" style="top:' + pct.toFixed(1) + '%; transform:translateY(-50%);"></span>';
+          chairDotsHtml += '<span class="rw-chair-pill chair-left" style="--position: ' + pct.toFixed(1) + ';"></span>';
         });
       }
 
@@ -204,7 +210,7 @@
      ========================================================= */
   function openTableModal(tableId) {
     _activeTableId = tableId;
-    var apiUrl = window.FP_TABLE_API_URL || '../staff/api/table_details.php';
+    var apiUrl = config('fpTableApiUrl', '../staff/api/table_details.php');
 
     fetch(apiUrl + '?table_id=' + Number(tableId), {
       headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -240,17 +246,17 @@
     if (orders.length === 0 && st === 'free') {
       bodyEl.innerHTML =
         '<div class="fp-modal-empty">' +
-          '<span class="material-symbols-sharp" style="font-size:48px;color:#94a3b8;">table_restaurant</span>' +
-          '<p style="color:#64748b;margin-top:8px;">Table is available</p>' +
-          '<button class="btn-red" style="margin-top:12px;" ' +
+          '<span class="material-symbols-sharp fp-modal-empty-icon">table_restaurant</span>' +
+          '<p class="fp-modal-empty-text">Table is available</p>' +
+          '<button class="btn-red fp-modal-action" ' +
             'onclick="openReserveModal(' + Number(t.id) + ',\'' + esc(t.table_name) + '\')">Reserve This Table</button>' +
         '</div>';
 
     } else if (orders.length === 0) {
       bodyEl.innerHTML =
         '<div class="fp-modal-empty">' +
-          '<span class="material-symbols-sharp" style="font-size:48px;color:#f59e0b;">event_seat</span>' +
-          '<p style="color:#64748b;margin-top:8px;">Table is ' + statusLabel(st).toLowerCase() + '</p>' +
+          '<span class="material-symbols-sharp fp-modal-empty-icon fp-modal-empty-icon-warning">event_seat</span>' +
+          '<p class="fp-modal-empty-text">Table is ' + statusLabel(st).toLowerCase() + '</p>' +
         '</div>';
 
     } else {
@@ -269,18 +275,18 @@
             '<strong>' + esc(ord.order_number) + '</strong>' +
             '<span class="panel-status">' + esc(ord.status) + '</span>' +
           '</div>' +
-          '<table class="receipt-table" style="margin-top:8px;">' +
+          '<table class="receipt-table fp-order-items">' +
             '<thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Total</th></tr></thead>' +
             '<tbody>' + rows + '</tbody>' +
           '</table>' +
-          '<div style="text-align:right;margin-top:6px;font-weight:600;">' + fmt(ord.total_price) + '</div>' +
-          '<button class="btn-red" style="margin-top:10px;width:100%;" ' +
+          '<div class="fp-order-total">' + fmt(ord.total_price) + '</div>' +
+          '<button class="btn-red fp-settle-action" ' +
             'onclick="openSettleModal(\'' + esc(ord.order_number) + '\',' + Number(ord.total_price) + ')">' +
             '<span class="material-symbols-sharp">payments</span> Settle This Order' +
           '</button>' +
         '</div>';
       });
-      bodyEl.innerHTML = html.join('<hr style="border:none;border-top:1px solid #e2e8f0;margin:12px 0;">');
+      bodyEl.innerHTML = html.join('<hr class="fp-order-divider">');
     }
   }
 
@@ -295,7 +301,7 @@
     if (gid('recOrderNum'))  gid('recOrderNum').textContent  = orderNum;
     if (gid('recDateTime'))  gid('recDateTime').textContent  = new Date().toLocaleString();
     if (gid('discountInput')) gid('discountInput').value = 0;
-    if (gid('recItemsBody')) gid('recItemsBody').innerHTML = '<tr><td colspan="3" style="color:#64748b;padding:8px 0;">See order above</td></tr>';
+    if (gid('recItemsBody')) gid('recItemsBody').innerHTML = '<tr><td colspan="3" class="fp-receipt-placeholder">See order above</td></tr>';
 
     /* table name */
     if (gid('recTableName') && _activeTableId) {
@@ -338,7 +344,7 @@
     if (!_activeOrderNum) { toast('No order selected', 'error'); return; }
     var disc  = Number((gid('discountInput') || { value: 0 }).value) || 0;
     var total = Math.max(0, _activeOrderSub - disc);
-    var url   = window.FP_SETTLE_API_URL || '../staff/api/settle_bill.php';
+    var url   = config('fpSettleApiUrl', '../staff/api/settle_bill.php');
 
     fetch(url, {
       method:  'POST',
@@ -397,7 +403,7 @@
     if (form) {
       form.onsubmit = function (e) {
         e.preventDefault();
-        var url  = window.FP_BOOK_API_URL || '../staff/api/booking_create.php';
+        var url  = config('fpBookApiUrl', '../staff/api/booking_create.php');
         var body = {
           table_id:     Number((gid('resTableId') || {}).value),
           guest_name:   ((gid('resGuestName') || {}).value || '').trim(),
@@ -444,7 +450,7 @@
     if (form) {
       form.onsubmit = function (e) {
         e.preventDefault();
-        var url   = window.FP_ADD_TABLE_URL || '../admin/api/api_qr_tables.php';
+        var url   = config('fpAddTableUrl', '../admin/api/api_qr_tables.php');
         var tName = ((gid('addTableName') || {}).value || '').trim();
         var tCap  = Number((gid('addTableCap') || { value: 4 }).value) || 4;
         if (!tName) { toast('Table name is required', 'error'); return; }
@@ -474,7 +480,7 @@
      NEW ORDER
      ========================================================= */
   function openNewOrderForTable() {
-    location.href = window.FP_IS_ADMIN ? 'orders_page.php' : 'new-order.php';
+    location.href = config('fpIsAdmin', 'false') === 'true' ? 'orders_page.php' : 'new-order.php';
   }
 
   /* =========================================================
@@ -525,10 +531,16 @@
   /* Start auto-refresh if on floor plan page */
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () {
-      if (gid('floorCanvas')) startAutoRefresh();
+      if (gid('floorCanvas')) {
+        loadFloorPlan();
+        startAutoRefresh();
+      }
     });
   } else {
-    if (gid('floorCanvas')) startAutoRefresh();
+    if (gid('floorCanvas')) {
+      loadFloorPlan();
+      startAutoRefresh();
+    }
   }
 
 }());

@@ -106,7 +106,7 @@
 }
 
 .toast-notification.info .toast-notification-icon {
-  background: #2563eb;
+  background: #f05a22;
 }
 
 .toast-notification-title {
@@ -146,7 +146,7 @@
 }
 
 .toast-notification.info {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  background: linear-gradient(135deg, #f05a22, #d94814);
   border-color: rgba(255, 255, 255, .18);
   color: #fff;
 }

@@ -541,11 +541,11 @@ function closeAddressModal() {
                 <td>
                     <div class="action">
                         <button class="view-action" data-id="${review.id}">
-                            <i data-lucide="eye"></i>
+                            <span class="material-symbols-sharp">visibility</span>
                             View
                         </button>
                         <button class="delete" data-delete="${review.id}">
-                            <i data-lucide="trash-2"></i>
+                            <span class="material-symbols-sharp">delete</span>
                             Delete
                         </button>
                     </div>
@@ -572,7 +572,7 @@ function closeAddressModal() {
                     <div class="activity-copy">
                         <strong>${escapeHtml(latest.name)}</strong>
                         <p>gave a ${latest.rating}-star rating.</p>
-                        <span class="activity-rating">${latest.rating} â˜…</span>
+                        <span class="activity-rating">${latest.rating} ★</span>
                     </div>
                     <span class="activity-time">${latest.time}</span>
                 </div>
@@ -580,8 +580,6 @@ function closeAddressModal() {
             : `<p>No activity yet.</p>`;
 
         updateFilterSummary();
-
-        lucide.createIcons();
     }
 
     /* Search */
@@ -729,7 +727,6 @@ function closeAddressModal() {
         $("viewTime").textContent = review.time;
 
         $("viewModal").hidden = false;
-        lucide.createIcons();
     }
 
     document.addEventListener("click", e => {
@@ -861,7 +858,6 @@ function closeAddressModal() {
         $("responseModal").hidden = true;
     });
 
-    lucide.createIcons();
     render();
 })();
 
