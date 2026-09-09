@@ -8,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $role = $_POST['role'] ?? '';
 
     // Validate role
-    $allowed_roles = ['user', 'admin', 'manager', 'chef', 'waiter', 'rider'];
+    $allowed_roles = ['user', 'admin', 'manager', 'chef', 'staff', 'rider'];
     if (!in_array($role, $allowed_roles, true)) {
         $response = ['success' => false, 'message' => 'Invalid role.'];
         

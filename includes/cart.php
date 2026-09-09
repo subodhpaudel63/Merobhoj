@@ -88,7 +88,9 @@ if ($action === 'clear') {
 }
 
 if ($action === 'checkout' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim($_POST['email'] ?? '');
+    // Orders must always belong to the authenticated account, not to an
+    // editable form value that can differ from the login cookie.
+    $email = trim((string)($user['email'] ?? ''));
     $mobile = trim($_POST['mobile'] ?? '');
     $address = trim($_POST['address'] ?? '');
     if ($email === '' || !preg_match('/^[0-9]{10}$/', $mobile) || $address === '' || empty($_SESSION['cart'])) {

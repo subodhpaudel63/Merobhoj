@@ -1,0 +1,339 @@
+/* ============================================================
+   MeroBhoj Staff Management & Attendance Styling (assets/css/staff.css)
+   ============================================================ */
+
+.staff-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.75rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.staff-page-header h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--clr-dark, #1e293b);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.staff-page-header p {
+  margin: 0.25rem 0 0;
+  color: var(--clr-dark-variant, #64748b);
+  font-size: 0.88rem;
+}
+.staff-date-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #f1f5f9;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #475569;
+}
+
+/* 4 Summary KPI Cards */
+.staff-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.75rem;
+}
+.staff-kpi-card {
+  background: var(--clr-card-background, #ffffff);
+  border-radius: var(--border-radius-2, 14px);
+  padding: 1.25rem 1.4rem;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.03);
+  border: 1px solid var(--clr-border, #e2e8f0);
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+}
+.staff-kpi-icon {
+  width: 3.2rem;
+  height: 3.2rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.staff-kpi-icon i { font-size: 1.4rem; }
+.staff-kpi-data h3 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--clr-dark, #1e293b);
+  margin: 0;
+  line-height: 1.1;
+}
+.staff-kpi-data p {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--clr-dark-variant, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0.3rem 0 0;
+}
+
+/* Panel Sections */
+.staff-card-panel {
+  background: var(--clr-card-background, #ffffff);
+  border-radius: var(--border-radius-3, 16px);
+  padding: 1.4rem 1.6rem;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.03);
+  border: 1px solid var(--clr-border, #e2e8f0);
+  margin-bottom: 1.75rem;
+}
+
+/* Refactored Header & Controls Bar */
+.staff-toolbar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+.staff-controls-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-grow: 1;
+  flex-wrap: wrap;
+}
+.staff-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.staff-search-input {
+  position: relative;
+  min-width: 220px;
+  max-width: 320px;
+  flex-grow: 1;
+}
+.staff-search-input i {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+.staff-search-input input {
+  width: 100%;
+  padding: 0.45rem 0.75rem 0.45rem 2.2rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-family: inherit;
+  font-size: 0.85rem;
+  outline: none;
+}
+.staff-search-input input:focus { border-color: #f05a22; }
+
+/* Status Filter Chips */
+.status-chips-group {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+.chip-btn {
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.chip-btn.active, .chip-btn:hover {
+  background: #f05a22;
+  color: #ffffff;
+  border-color: #f05a22;
+}
+
+/* Action Header Buttons */
+.btn-primary-add {
+  background: linear-gradient(135deg, #f05a22 0%, #d9430c 100%);
+  color: #ffffff;
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: opacity 0.2s;
+}
+.btn-primary-add:hover { opacity: 0.92; }
+
+.btn-secondary-export {
+  background: #ffffff;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: background 0.15s;
+}
+.btn-secondary-export:hover { background: #f1f5f9; color: #0f172a; }
+
+/* Status Badges */
+.att-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.att-badge.st-present  { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+.att-badge.st-absent   { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+.att-badge.st-late     { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+.att-badge.st-leave    { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+.att-badge.st-working  { background: #f0fdf4; color: #16a34a; border: 1px solid #86efac; }
+.att-badge.st-off      { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+
+/* Working Hours Badge */
+.hrs-working {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #16a34a;
+  font-weight: 700;
+  font-size: 0.82rem;
+  animation: pulseWorking 2s infinite;
+}
+@keyframes pulseWorking {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* Action Buttons */
+.btn-att-action {
+  padding: 0.4rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  text-decoration: none;
+  transition: all 0.18s ease;
+}
+.btn-att-in   { background: #22c55e; color: #ffffff; }
+.btn-att-in:hover { background: #16a34a; }
+.btn-att-out  { background: #f97316; color: #ffffff; }
+.btn-att-out:hover { background: #ea580c; }
+.btn-att-view { background: #f1f5f9; color: #475569; }
+.btn-att-view:hover { background: #e2e8f0; color: #0f172a; }
+.btn-att-ended { background: #f1f5f9; color: #16a34a; border: 1px solid #bbf7d0; cursor: default; }
+
+/* Modern Table */
+.staff-table-wrap { overflow-x: auto; }
+table.staff-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+table.staff-table th {
+  padding: 0.85rem 1rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--clr-dark-variant, #64748b);
+  border-bottom: 2px solid var(--clr-border, #e2e8f0);
+}
+table.staff-table td {
+  padding: 0.9rem 1rem;
+  font-size: 0.88rem;
+  color: var(--clr-dark, #1e293b);
+  border-bottom: 1px solid var(--clr-border, #f1f5f9);
+  vertical-align: middle;
+}
+table.staff-table tbody tr:hover {
+  background: rgba(240, 90, 34, 0.02);
+}
+
+/* Modals & Backdrop */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.staff-modal-box {
+  width: min(640px, 94vw);
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 1.6rem;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  margin: 2rem auto;
+  max-height: 88vh;
+  overflow-y: auto;
+  transform: translateY(15px);
+  transition: transform 0.25s ease;
+}
+
+.modal-overlay.active .staff-modal-box {
+  transform: translateY(0);
+}
+.staff-grid-fields {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.staff-field-box {
+  background: #f8fafc;
+  padding: 0.8rem 1rem;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+.staff-field-box .lbl {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+.staff-field-box .val {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
+}

@@ -20,19 +20,107 @@ require_once __DIR__ . '/../includes/db.php';
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <link rel="stylesheet" href="../assets/css/admin2.css?v=<?= filemtime(__DIR__ . '/../assets/css/admin2.css') ?>">
   <link rel="stylesheet" href="../assets/css/adminstyle.css?v=<?= filemtime(__DIR__ . '/../assets/css/adminstyle.css') ?>">
+  <style>
+    :root {
+      --fin-bg: #f8fafc;
+      --fin-surface: #ffffff;
+      --fin-border: #e2e8f0;
+      --fin-text: #0f172a;
+      --fin-text-muted: #64748b;
+      --fin-primary: #f05a22;
+      --fin-font: 'Outfit', sans-serif;
+    }
+    body.admin-page { background: #f8fafc; font-family: 'Outfit', sans-serif; color: #0f172a; }
+    body.admin-page .admin-page-main { padding: 28px; max-width: 1600px; margin: 0 auto; }
+    .fin-page { background: transparent; padding: 0; }
+    
+    .fin-page-header {
+      margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 16px; background: #ffffff; padding: 20px 24px; border-radius: 16px;
+      border: 1px solid var(--fin-border); box-shadow: 0 1px 3px rgba(15,23,42,.03);
+    }
+    .fin-page-header h1 { font-size: 22px; font-weight: 700; color: #0f172a; margin: 0; letter-spacing: -0.02em; display: flex; align-items: center; }
+    .fin-page-header p { color: #64748b; font-size: 13px; margin: 4px 0 0; }
+
+    .fin-tabs {
+      display: flex; gap: 8px; background: #ffffff; padding: 8px; border-radius: 14px;
+      border: 1px solid var(--fin-border); margin-bottom: 20px; box-shadow: 0 1px 3px rgba(15,23,42,.03);
+      overflow-x: auto;
+    }
+    .fin-tab {
+      display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px;
+      border: none; background: transparent; color: #64748b; font-size: 13.5px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s ease; white-space: nowrap; font-family: 'Outfit', sans-serif;
+    }
+    .fin-tab:hover { color: #0f172a; background: #f1f5f9; }
+    .fin-tab.is-active { background: #f05a22; color: #ffffff; box-shadow: 0 2px 6px rgba(240,90,34,0.25); }
+
+    .fin-filterbar {
+      background: #ffffff; padding: 16px 20px; border-radius: 14px; border: 1px solid var(--fin-border);
+      display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(15,23,42,.03);
+    }
+    .fin-field label { font-size: 12px; font-weight: 600; text-transform: uppercase; color: #64748b; letter-spacing: 0.03em; }
+    .fin-select, .fin-input {
+      padding: 8px 14px; border: 1px solid var(--fin-border); border-radius: 10px; font-size: 13px;
+      background: #f8fafc; color: #0f172a; font-family: inherit; font-weight: 500; outline: none; transition: all 0.2s ease;
+    }
+    .fin-select:focus, .fin-input:focus { border-color: #f05a22; background: #fff; box-shadow: 0 0 0 3px rgba(240,90,34,0.12); }
+    .fin-btn--primary {
+      padding: 8px 18px; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer;
+      background: #f05a22; color: #fff; font-family: inherit; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(240,90,34,0.25);
+    }
+    .fin-btn--primary:hover { background: #d94814; transform: translateY(-1px); }
+    .fin-btn--ghost {
+      padding: 8px 18px; border: 1px solid var(--fin-border); border-radius: 10px; font-size: 13px; font-weight: 600;
+      cursor: pointer; background: #ffffff; color: #0f172a; font-family: inherit; transition: all 0.2s ease;
+    }
+    .fin-btn--ghost:hover { background: #f8fafc; border-color: #cbd5e1; }
+
+    .fin-card {
+      background: #ffffff; border: 1px solid var(--fin-border); border-radius: 16px; padding: 22px;
+      box-shadow: 0 1px 3px rgba(15,23,42,.03); margin-bottom: 24px; transition: all 0.2s ease;
+    }
+    .fin-card:hover { box-shadow: 0 6px 16px -4px rgba(15,23,42,.06); }
+    .fin-card__head h3 { font-size: 16px; font-weight: 700; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 8px; }
+    
+    .fin-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+    .fin-table th {
+      text-align: left; padding: 10px 12px; border-bottom: 2px solid var(--fin-border);
+      color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: .05em; background: #f8fafc;
+    }
+    .fin-table th:first-child { border-top-left-radius: 8px; }
+    .fin-table th:last-child { border-top-right-radius: 8px; }
+    .fin-table td { padding: 11px 12px; border-bottom: 1px solid var(--fin-border); color: #0f172a; font-weight: 500; }
+    .fin-table tbody tr:hover td { background: #f8fafc; }
+    .fin-table .ar { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+
+    .fin-metric-card {
+      background: #ffffff; border: 1px solid var(--fin-border); border-radius: 16px; padding: 20px;
+      box-shadow: 0 1px 3px rgba(15,23,42,.03); transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .fin-metric-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px -5px rgba(15,23,42,.08); border-color: #cbd5e1; }
+    .fin-metric-card__value { font-size: 26px; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; }
+    .fin-metric-card__label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #64748b; }
+    .fin-metric-card__icon {
+      width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+      background: #fff0eb; color: #f05a22; font-size: 18px;
+    }
+  </style>
 </head>
 <body class="admin-page">
    <?php include_once __DIR__ . '/topbar.php'; ?>
    <div class="container">
       <?php include_once __DIR__ . '/sidebar.php'; ?>
-      <!-- --------------
-        end asid
-      -------------------- -->
-      <!-- --------------
-        start main part
-      --------------- -->
       <main class="admin-page-main">
 <div class="fin-page" id="finPage">
+
+  <div class="fin-page-header">
+    <div>
+      <h1><span class="material-symbols-sharp" style="color:#f05a22;vertical-align:middle;margin-right:8px;">account_balance</span> Financial Dashboard</h1>
+      <p>Real-time financial performance, balance sheets, cash flow tracking, tax summaries &amp; ledger reporting</p>
+    </div>
+  </div>
 
   <!-- ================= FINANCE TABS ================= -->
   <nav class="fin-tabs" id="finTabs" role="tablist" aria-label="Finance sections">
@@ -1182,7 +1270,7 @@ require_once __DIR__ . '/../includes/db.php';
    </div>
 
 <!-- Chart.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="../assets/js/chart.umd.js?v=<?= filemtime(__DIR__ . '/../assets/js/chart.umd.js') ?>"></script>
 <!-- Finance JavaScript -->
 <script src="../assets/js/admin2.js"></script>
 <script src="../assets/js/adminscript.js"></script>

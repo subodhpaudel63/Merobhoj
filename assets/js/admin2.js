@@ -857,10 +857,13 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function getFilters() {
+    const fy = document.getElementById("finFiscalYear");
+    const sd = document.getElementById("finStartDate");
+    const ed = document.getElementById("finEndDate");
     return {
-      fiscalYear: document.getElementById("finFiscalYear").value,
-      startDate: document.getElementById("finStartDate").value,
-      endDate: document.getElementById("finEndDate").value
+      fiscalYear: fy ? fy.value : '',
+      startDate: sd ? sd.value : '',
+      endDate: ed ? ed.value : ''
     };
   }
 
@@ -868,6 +871,8 @@ document.addEventListener('DOMContentLoaded', function () {
      6. Tab switching
   --------------------------------------------------------- */
   function initTabs() {
+    const root = document.getElementById("financialDashboard");
+    if (!root) return;
     const tabs = root.querySelectorAll(".fin-tab");
     tabs.forEach(tab => {
       tab.addEventListener("click", () => {
@@ -908,46 +913,1638 @@ document.addEventListener('DOMContentLoaded', function () {
     if (glBtn) {
       glBtn.addEventListener("click", () => {
         if (!currentData) return;
-        renderGeneralLedger(currentData, document.getElementById("finGlAccount").value);
+        const glAcc = document.getElementById("finGlAccount");
+        renderGeneralLedger(currentData, glAcc ? glAcc.value : '');
       });
     }
   }
 
-  /* ---------------------------------------------------------
-     8. Init
-  --------------------------------------------------------- */
-  document.addEventListener("DOMContentLoaded", function () {
+  function initFinance() {
+    const root = document.getElementById("financialDashboard");
+    if (!root) return;
     initTabs();
     initFilters();
-    refreshAll(getFilters()).then(data => {
-      // Start live updates after initial load
-      if (data && data.orders) {
-        lastOrderCount = data.orders.length;
-      }
-      startLiveUpdates(30000); // Poll every 30 seconds
-    });
-  });
-
-  // If the script loads after DOMContentLoaded already fired (e.g. injected
-  // into an existing admin page via AJAX), run init immediately.
-  if (document.readyState !== "loading") {
-    initTabs();
-    initFilters();
-    refreshAll(getFilters()).then(data => {
-      // Start live updates after initial load
-      if (data && data.orders) {
-        lastOrderCount = data.orders.length;
-      }
-      startLiveUpdates(30000); // Poll every 30 seconds
-    });
+    refreshAll(getFilters()).catch(() => {});
   }
 
-  // Pause live updates when tab is hidden to save resources
-  document.addEventListener("visibilitychange", function () {
-    if (document.hidden) {
-      pauseLiveUpdates();
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initFinance);
+  } else {
+    initFinance();
+  }
+})();
+
+/* ============================================================
+   MeroBhoj Floor Plan & POS Settlement Logic (Staff & Admin)
+   ============================================================ */
+
+/** HTML-escape helper used by floor plan & table modal renderers. */
+function esc(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+let allTables = [];
+let currentFilter = 'all';
+let activeSelectedTable = null;
+let activeSelectedOrder = null;
+let selectedPaymentMethod = 'Cash';
+
+function initFloorPlan() {
+  if (document.getElementById('floorCanvas')) {
+    loadFloorPlan();
+    if (!window._floorPlanInterval) {
+      window._floorPlanInterval = setInterval(loadFloorPlan, 8000);
+    }
+  }
+
+  // Form listener for reserving available table
+  const resForm = document.getElementById('reserveTableForm');
+  if (resForm) {
+    resForm.removeEventListener('submit', handleReserveSubmit);
+    resForm.addEventListener('submit', handleReserveSubmit);
+  }
+
+  // Form listener for adding a new table
+  const addForm = document.getElementById('addTableForm');
+  if (addForm) {
+    addForm.removeEventListener('submit', handleAddTableSubmit);
+    addForm.addEventListener('submit', handleAddTableSubmit);
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initFloorPlan);
+} else {
+  initFloorPlan();
+}
+
+function loadFloorPlan() {
+  const isStaff = window.location.pathname.includes('/staff/');
+  const apiUrl = isStaff ? 'api/floor.php' : '../staff/api/floor.php';
+
+  fetch(apiUrl)
+    .then(r => r.json())
+    .then(data => {
+      if (!data.success) {
+        const canvas = document.getElementById('floorCanvas');
+        if (canvas) canvas.innerHTML = `<p class="fp-canvas-empty">${esc(data.message || 'Failed to load floor plan.')}</p>`;
+        return;
+      }
+      allTables = data.tables || [];
+      renderFloorPlan();
+    })
+    .catch(err => {
+      console.error('Error loading floor plan:', err);
+      const canvas = document.getElementById('floorCanvas');
+      if (canvas) canvas.innerHTML = '<p class="fp-canvas-empty">Error loading floor plan. Please try refreshing.</p>';
+    });
+}
+
+function setStatusFilter(filter, el) {
+  currentFilter = filter;
+  document.querySelectorAll('.fp-pill-filter').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderFloorPlan();
+}
+
+function filterTables() {
+  renderFloorPlan();
+}
+
+function renderFloorPlan() {
+  const searchInput = document.getElementById('searchInput');
+  const search = searchInput ? searchInput.value.toLowerCase().trim() : '';
+  const canvas = document.getElementById('floorCanvas');
+  if (!canvas) return;
+
+  let filtered = allTables.filter(t => {
+    const tableNameStr = String(t.table_name || '');
+    const matchesSearch = tableNameStr.toLowerCase().includes(search);
+    const st = t.current_status || 'free';
+    let matchesFilter = true;
+    if (currentFilter !== 'all') {
+      matchesFilter = (st === currentFilter);
+    }
+    return matchesSearch && matchesFilter;
+  });
+
+  // Update Top Stats
+  const elTotal = document.getElementById('statTotal');
+  const elAvail = document.getElementById('statAvailable');
+  const elOcc = document.getElementById('statOccupied');
+  const elRes = document.getElementById('statReservations');
+  const elAreaCount = document.getElementById('areaCount');
+
+  if (elTotal) elTotal.innerText = allTables.length;
+  if (elAvail) elAvail.innerText = allTables.filter(t => (t.current_status || 'free') === 'free').length;
+  if (elOcc) elOcc.innerText = allTables.filter(t => t.current_status === 'occupied').length;
+  if (elRes) elRes.innerText = allTables.filter(t => t.current_status === 'reserved').length;
+  if (elAreaCount) elAreaCount.innerText = filtered.length;
+
+  if (filtered.length === 0) {
+    canvas.innerHTML = '<p class="fp-canvas-empty">No tables found.</p>';
+    return;
+  }
+
+  canvas.innerHTML = filtered.map((t, idx) => {
+    const st = t.current_status || 'free';
+    const cap = parseInt(t.capacity) || 4;
+    const isRound = (idx % 3 === 0);
+    const shapeClass = isRound ? 'table-shape-circle' : 'table-shape-rect';
+    const rawName = String(t.table_name || `Table ${t.id}`);
+    const shortName = rawName.replace(/Table\s*/i, 'A');
+    const chairsHtml = renderChairs(cap, isRound);
+
+    return `
+      <div class="table-wrapper" onclick="openTableDetails(${t.id}, '${esc(rawName)}')">
+        ${chairsHtml}
+        <div class="table-body ${shapeClass} is-${st}">
+          <div class="t-title">${esc(shortName)}</div>
+          <div class="t-status-lbl">${st.toUpperCase()}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderChairs(capacity, isRound) {
+  let chairs = '';
+  const total = Math.min(capacity, 20);
+
+  if (isRound) {
+    const radius = 82;
+    for (let i = 0; i < total; i++) {
+      const angle = (i / total) * (2 * Math.PI);
+      const x = Math.round(70 + radius * Math.cos(angle) - 8);
+      const y = Math.round(70 + radius * Math.sin(angle) - 8);
+      chairs += `<div class="chair-dot" style="left:${x}px; top:${y}px;"></div>`;
+    }
+  } else {
+    const sideCount = Math.ceil(total / 2);
+    for (let i = 0; i < sideCount; i++) {
+      const offsetX = 25 + (i * (100 / sideCount));
+      chairs += `<div class="chair-dot" style="top:-12px; left:${offsetX}px;"></div>`;
+      chairs += `<div class="chair-dot" style="bottom:-12px; left:${offsetX}px;"></div>`;
+    }
+  }
+  return chairs;
+}
+
+/* Modal Handlers */
+function openTableDetails(tableId, tableName) {
+  activeSelectedTable = { id: tableId, name: tableName };
+  const title = tableName.replace(/Table\s*/i, 'Table A');
+  const isStaff = window.location.pathname.includes('/staff/');
+  const detailsApiUrl = isStaff ? `api/table_details.php?table_id=${tableId}` : `../staff/api/table_details.php?table_id=${tableId}`;
+
+  document.getElementById('modalTableTitle').innerText = title;
+
+  fetch(detailsApiUrl)
+    .then(r => r.json())
+    .then(data => {
+      if (!data.success) return;
+      const modalBody = document.getElementById('modalTableBody');
+      const statusBadge = document.getElementById('modalTableStatusBadge');
+      const st = data.current_status || 'free';
+
+      statusBadge.innerText = st.toUpperCase();
+      statusBadge.className = `panel-status st-${st === 'free' ? 'checkedin' : (st === 'reserved' ? 'pending' : 'cancelled')}`;
+      document.getElementById('modalTableSubtitle').innerText = `${data.table.capacity} Seats · ${data.orders ? data.orders.length : 0} Active Orders`;
+
+      const deleteBtnHtml = !isStaff ? `
+        <div class="modal-card-footer-toolbar" style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid var(--clr-border, #e2e8f0); display:flex; justify-content:flex-end;">
+          <button class="btn-outline btn-icon-danger" onclick="deleteTableWithValidation(${tableId}, '${esc(tableName)}')">
+            <span class="material-symbols-sharp">delete</span> Delete Table
+          </button>
+        </div>
+      ` : '';
+
+      if (!data.orders || data.orders.length === 0) {
+        modalBody.innerHTML = `
+          <div class="fp-modal-empty">
+            <span class="material-symbols-sharp fp-empty-icon">table_restaurant</span>
+            <p style="margin-top:0.5rem; font-weight:600; color:var(--clr-dark, #1e293b);">${esc(tableName)} is currently ${st.toUpperCase()}.</p>
+            <div class="modal-action-row" style="margin-top:1.2rem; display:flex; gap:0.75rem; justify-content:center;">
+              <button class="btn-red" style="flex:1;" onclick="openNewOrderForTable()">
+                <span class="material-symbols-sharp">add_circle</span> Start Order
+              </button>
+              <button class="btn-outline" style="flex:1;" onclick="openReserveModal(${tableId}, '${esc(tableName)}')">
+                <span class="material-symbols-sharp">event_seat</span> Reserve Table
+              </button>
+            </div>
+          </div>
+          ${deleteBtnHtml}
+        `;
+      } else {
+        const ordersHtml = data.orders.map(o => {
+          const summary = o.items ? o.items.map(i => esc(i.menu_name)).join(', ') : 'Order items';
+          return `
+            <div class="split-order-card">
+              <div class="soc-head">
+                <span class="soc-title">Split Order #${esc(o.order_number)}</span>
+                <span class="soc-price">NPR ${parseFloat(o.total_price).toFixed(0)}</span>
+              </div>
+              <div class="soc-meta">${o.items ? o.items.length : 0} items &bull; ${esc(o.full_name || 'Guest')}</div>
+              <div class="soc-summary-box">
+                ${summary}
+              </div>
+              <div class="soc-actions">
+                <button class="btn-outline" style="flex:1;" onclick="viewOrder('${esc(o.order_number)}')">View</button>
+                <button class="btn-red" style="flex:1;" onclick="openSettleModal('${esc(o.order_number)}')">Settle</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        modalBody.innerHTML = `
+          ${ordersHtml}
+          ${deleteBtnHtml}
+        `;
+      }
+
+      document.getElementById('tableModal').classList.add('active');
+    });
+}
+
+function viewOrder(orderNum) {
+  const isStaff = window.location.pathname.includes('/staff/');
+  window.location.href = isStaff ? `orders.php?q=${orderNum}` : `orders_page.php?q=${orderNum}`;
+}
+
+function openNewOrderForTable() {
+  const isStaff = window.location.pathname.includes('/staff/');
+  if (activeSelectedTable) {
+    window.location.href = isStaff ? `new-order.php?table=${encodeURIComponent(activeSelectedTable.name)}` : `orders_page.php?table=${encodeURIComponent(activeSelectedTable.name)}`;
+  } else {
+    window.location.href = isStaff ? 'new-order.php' : 'orders_page.php';
+  }
+}
+
+function openReserveModal(tableId, tableName) {
+  closeModal('tableModal');
+  document.getElementById('reserveModalTitle').innerText = `Reserve ${tableName}`;
+  document.getElementById('resTableId').value = tableId;
+  document.getElementById('resGuestName').value = '';
+  document.getElementById('resGuestPhone').value = '';
+  document.getElementById('resGuestEmail').value = '';
+  document.getElementById('resGuests').value = 2;
+  document.getElementById('resDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('resTime').value = '18:00';
+  document.getElementById('resEndTime').value = '';
+  document.getElementById('resMessage').value = '';
+  document.getElementById('reserveModal').classList.add('active');
+}
+
+function handleReserveSubmit(e) {
+  e.preventDefault();
+  const isStaff = window.location.pathname.includes('/staff/');
+  const apiUrl = isStaff ? 'api/booking_create.php' : '../staff/api/booking_create.php';
+
+  const payload = {
+    table_id: parseInt(document.getElementById('resTableId').value),
+    name: document.getElementById('resGuestName').value,
+    phone: document.getElementById('resGuestPhone').value,
+    email: document.getElementById('resGuestEmail').value,
+    guests: parseInt(document.getElementById('resGuests').value),
+    booking_date: document.getElementById('resDate').value,
+    booking_time: document.getElementById('resTime').value,
+    end_time: document.getElementById('resEndTime').value,
+    message: document.getElementById('resMessage').value
+  };
+
+  fetch(apiUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      closeModal('reserveModal');
+      loadFloorPlan();
+      showToastNotification('Table reserved successfully', 'success');
     } else {
-      resumeLiveUpdates();
+      alert(data.message || 'Failed to create reservation');
+    }
+  })
+  .catch(err => {
+    alert('Network error. Please try again.');
+  });
+}
+
+function openAddTableModal() {
+  const isStaff = window.location.pathname.includes("/staff/");
+  if (isStaff) {
+    alert("Staff members are not authorized to add tables");
+    return;
+  }
+  var nameEl = document.getElementById("addTableName");
+  var capEl = document.getElementById("addTableCap");
+  var modalEl = document.getElementById("addTableModal");
+  if (nameEl) nameEl.value = "";
+  if (capEl) capEl.value = 4;
+  if (modalEl) modalEl.classList.add("active");
+}
+
+function handleAddTableSubmit(e) {
+  e.preventDefault();
+  const isStaff = window.location.pathname.includes("/staff/");
+  if (isStaff) {
+    alert("Staff members are not authorized to add tables");
+    return;
+  }
+  var apiUrl = "api/api_qr_tables.php";
+  var tableName = document.getElementById("addTableName").value.trim();
+  var capacity = parseInt(document.getElementById("addTableCap").value);
+
+  if (!tableName) {
+    alert("Please enter a table name");
+    return;
+  }
+  if (isNaN(capacity) || capacity < 1) {
+    alert("Please enter a valid capacity");
+    return;
+  }
+
+  var payload = {
+    action: "create",
+    table_name: tableName,
+    capacity: capacity
+  };
+
+  fetch(apiUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.success) {
+      closeModal("addTableModal");
+      loadFloorPlan();
+      showToastNotification("Table added successfully", "success");
+    } else {
+      alert(data.message || "Failed to add table");
+    }
+  })
+  .catch(function(err) {
+    alert("Network error. Please try again.");
+  });
+}
+
+/* Delete Table with Validation */
+function deleteTableWithValidation(tableId, tableName) {
+  const isStaff = window.location.pathname.includes('/staff/');
+  if (isStaff) {
+    alert('Staff members are not authorized to delete tables');
+    return;
+  }
+  const deleteApiUrl = 'api/api_qr_tables.php';
+
+  const doDelete = () => {
+    fetch(deleteApiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', table_id: tableId })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        closeModal('tableModal');
+        loadFloorPlan();
+        showToastNotification(`${tableName} deleted successfully`, 'success');
+      } else {
+        alert(data.message || 'Cannot delete table');
+      }
+    })
+    .catch(() => alert('Failed to connect to server'));
+  };
+
+  if (typeof window.openDeleteConfirm === 'function') {
+    openDeleteConfirm({
+      title: 'Delete Table?',
+      message: 'Are you sure you want to delete ' + tableName + '? Table data and QR mapping will be removed.',
+      confirmText: 'Delete Table',
+      type: 'danger',
+      onConfirm: function () {
+        doDelete();
+      }
+    });
+    return;
+  }
+
+  if (!confirm(`Are you sure you want to delete ${tableName}?`)) return;
+  doDelete();
+}
+
+/* Settlement Flow */
+function openSettleModal(orderNumber) {
+  closeModal('tableModal');
+  const isStaff = window.location.pathname.includes('/staff/');
+  const listApi = isStaff ? 'api/orders_list.php' : '../staff/api/orders_list.php';
+
+  fetch(listApi)
+    .then(r => r.json())
+    .then(data => {
+      const order = (data.orders || []).find(o => o.order_number === orderNumber);
+      if (!order && activeSelectedTable) {
+        const detailsApi = isStaff ? `api/table_details.php?table_id=${activeSelectedTable.id}` : `../staff/api/table_details.php?table_id=${activeSelectedTable.id}`;
+        fetch(detailsApi)
+          .then(r => r.json())
+          .then(td => {
+            const ord = (td.orders || []).find(o => o.order_number === orderNumber);
+            setupSettleUI(ord, activeSelectedTable.name);
+          });
+      } else {
+        setupSettleUI(order, activeSelectedTable ? activeSelectedTable.name : order.table_number);
+      }
+    });
+}
+
+function setupSettleUI(order, tableName) {
+  if (!order) return;
+  activeSelectedOrder = order;
+
+  const shortTable = (tableName || order.table_number || 'A1').replace(/Table\s*/i, 'A');
+  document.getElementById('recOrderNum').innerText = order.order_number;
+  document.getElementById('recTableName').innerText = shortTable;
+
+  const d = new Date();
+  document.getElementById('recDateTime').innerText = d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true });
+
+  const itemsBody = document.getElementById('recItemsBody');
+  const items = order.items || [];
+  if (items.length > 0) {
+    itemsBody.innerHTML = items.map(i => `
+      <tr>
+        <td>${esc(i.menu_name)}</td>
+        <td class="num">${i.quantity}</td>
+        <td class="num">${parseFloat(i.total_price || (i.price * i.quantity)).toFixed(0)}</td>
+      </tr>
+    `).join('');
+  } else {
+    itemsBody.innerHTML = `
+      <tr>
+        <td colspan="3">${esc(order.items_summary || 'Dine-In Food Order')}</td>
+      </tr>
+    `;
+  }
+
+  document.getElementById('discountInput').value = 0;
+  recalculateSettleTotal();
+  document.getElementById('settleModal').classList.add('active');
+}
+
+function recalculateSettleTotal() {
+  if (!activeSelectedOrder) return;
+  const subtotal = parseFloat(activeSelectedOrder.total_price) || 0;
+  const discount = parseFloat(document.getElementById('discountInput').value) || 0;
+  const finalTotal = Math.max(0, subtotal - discount);
+
+  document.getElementById('recSubtotal').innerText = `NPR ${subtotal.toFixed(0)}`;
+  document.getElementById('recDiscount').innerText = `NPR ${discount.toFixed(0)}`;
+  document.getElementById('recTotal').innerText = `NPR ${finalTotal.toFixed(0)}`;
+}
+
+function selectPM(method, btn) {
+  selectedPaymentMethod = method;
+  document.querySelectorAll('.pm-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function processSettle(shouldPrint) {
+  if (!activeSelectedOrder) return;
+  const discount = parseFloat(document.getElementById('discountInput').value) || 0;
+  const isStaff = window.location.pathname.includes('/staff/');
+  const settleApi = isStaff ? 'api/settle_order.php' : '../staff/api/settle_order.php';
+
+  fetch(settleApi, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      order_number: activeSelectedOrder.order_number,
+      discount_amount: discount,
+      payment_method: selectedPaymentMethod
+    })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      if (shouldPrint) {
+        window.print();
+      }
+      closeModal('settleModal');
+      loadFloorPlan();
+      showToastNotification('Order settled successfully', 'success');
+    } else {
+      alert(data.message || 'Settlement failed');
     }
   });
+}
+
+function closeModal(modalId) {
+  const el = document.getElementById(modalId);
+  if (el) el.classList.remove('active');
+}
+
+function showToastNotification(msg, type) {
+  if (typeof showToast === 'function') {
+    showToast(msg, type);
+  }
+}
+
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/* ============================================================
+   MENU MANAGEMENT PAGE (admin/menu.php)
+   Extracted from the page's inline <script> block. Guarded so it
+   only activates on the menu page (see the #menuModal check).
+   The helper functions are exposed on window for the inline
+   onclick handlers in menu.php; on other pages the no-op stubs
+   assigned in the DOMContentLoaded handler above remain active.
+   ============================================================ */
+(function () {
+    'use strict';
+
+    // Menu page only — admin2.js is shared with the finance and floor pages,
+    // where #menuModal does not exist and everything below is a no-op.
+    if (!document.getElementById('menuModal')) return;
+
+    function initMenuPage() {
+    // Modal functionality
+           window.openModal = function openModal(action, menuId = null, category = null) {
+               const modal = document.getElementById('menuModal');
+               const form = document.getElementById('menuForm');
+               const modalTitle = document.getElementById('modalTitle');
+               const formAction = document.getElementById('formAction');
+               const menuIdInput = document.getElementById('menuId');
+           
+               // Reset form
+               form.reset();
+               document.getElementById('imagePreview').style.display = 'none';
+               document.getElementById('existing_image').value = '';
+           
+               if (action === 'create') {
+                   modalTitle.textContent = 'Add New Menu Item';
+                   formAction.value = 'create';
+                   menuIdInput.value = '';
+                   if (category) {
+                       document.getElementById('menu_category').value = category;
+                   }
+               } else if (action === 'edit' && menuId) {
+                   modalTitle.textContent = 'Edit Menu Item';
+                   formAction.value = 'update';
+                   menuIdInput.value = menuId;
+               
+                   // Load existing data
+                   loadMenuItemData(menuId);
+               }
+           
+               modal.classList.add('show');
+           }
+       
+           window.closeMenuModal = function closeMenuModal() {
+               document.getElementById('menuModal').classList.remove('show');
+           }
+       
+           window.loadMenuItemData = function loadMenuItemData(menuId) {
+               // Show loading state
+               const nameField = document.getElementById('menu_name');
+               const descField = document.getElementById('menu_description');
+               const priceField = document.getElementById('menu_price');
+               const categoryField = document.getElementById('menu_category');
+           
+               nameField.value = 'Loading...';
+               descField.value = 'Loading...';
+               priceField.value = '';
+               categoryField.value = '';
+           
+               fetch('menu_ajax.php', {
+                   method: 'POST',
+                   headers: {
+                       'Content-Type': 'application/x-www-form-urlencoded',
+                   },
+                   body: 'action=get_item&menu_id=' + menuId
+               })
+               .then(response => {
+                   if (!response.ok) {
+                       throw new Error('Network response was not ok');
+                   }
+                   return response.json();
+               })
+               .then(data => {
+                   if (data.success) {
+                       const item = data.data;
+                       document.getElementById('menu_name').value = item.menu_name || '';
+                       document.getElementById('menu_description').value = item.menu_description || '';
+                       document.getElementById('menu_price').value = item.menu_price || '';
+                       document.getElementById('menu_category').value = item.menu_category || '';
+                       document.getElementById('menu_status').value = item.menu_status || 'In Stock';
+                       document.getElementById('existing_image').value = item.menu_image || '';
+                   
+                       // Show existing image preview
+                       if (item.menu_image) {
+                           const preview = document.getElementById('imagePreview');
+                           const img = preview.querySelector('img');
+                           img.src = '../' + item.menu_image;
+                           preview.style.display = 'block';
+                       }
+                   } else {
+                       alert('Error loading menu item: ' + data.message);
+                       // Reset fields on error
+                       document.getElementById('menu_name').value = '';
+                       document.getElementById('menu_description').value = '';
+                       document.getElementById('menu_price').value = '';
+                       document.getElementById('menu_category').value = '';
+                       document.getElementById('menu_status').value = 'In Stock';
+                   }
+               })
+               .catch(error => {
+                   console.error('Error:', error);
+                   alert('Error loading menu item: ' + error.message);
+                   // Reset fields on error
+                   document.getElementById('menu_name').value = '';
+                   document.getElementById('menu_description').value = '';
+                   document.getElementById('menu_price').value = '';
+                   document.getElementById('menu_category').value = '';
+                   document.getElementById('menu_status').value = 'In Stock';
+               });
+           }
+       
+           // Create confirmation modal for delete operations
+            // (delegates to the shared delete-confirm-modal helper in adminscript.js)
+            window.showDeleteConfirmation = function showDeleteConfirmation(itemName, onDeleteCallback) {
+                openDeleteConfirm({
+                    title: 'Confirm Deletion',
+                    message: `Are you sure you want to delete ${itemName}? This action cannot be undone.`,
+                    onConfirm: onDeleteCallback
+                });
+            }
+
+           window.deleteMenuItem = function deleteMenuItem(menuId, itemName) {
+               showDeleteConfirmation(itemName, function() {
+                   fetch('menu_ajax.php', {
+                       method: 'POST',
+                       headers: {
+                           'Content-Type': 'application/x-www-form-urlencoded',
+                       },
+                       body: 'action=delete&menu_id=' + menuId
+                   })
+                   .then(response => response.json())
+                   .then(data => {
+                       if (data.success) {
+                           setTimeout(() => {
+                               location.reload(); // Refresh to show updated data
+                           }, 1500);
+                       }
+                   })
+                   .catch(error => {
+                       console.error('Error:', error);
+                   
+                   });
+               });
+           }
+
+           window.selectedIds = function selectedIds() {
+               return Array.from(document.querySelectorAll('.item-checkbox:checked')).map(input => input.value);
+           }
+
+           window.updateSelectedCount = function updateSelectedCount() {
+               const count = selectedIds().length;
+               document.getElementById('selectedCount').textContent = `${count} item${count === 1 ? '' : 's'} selected`;
+           }
+
+           document.querySelectorAll('.item-checkbox').forEach(input => input.addEventListener('change', updateSelectedCount));
+           document.getElementById('selectAll').addEventListener('change', function () {
+               document.querySelectorAll('.item-checkbox').forEach(input => { input.checked = this.checked; });
+               updateSelectedCount();
+           });
+
+           window.bulkChangeStatus = function bulkChangeStatus() {
+               const ids = selectedIds();
+               if (!ids.length) {
+                   alert('Select at least one menu item first.');
+                   return;
+               }
+               const status = prompt('Set stock status: In Stock, Low Stock, or Out of Stock', 'In Stock');
+               if (!status) return;
+
+               fetch('menu_ajax.php', {
+                   method: 'POST',
+                   headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                   body: new URLSearchParams({ action: 'bulk_status', menu_ids: ids.join(','), menu_status: status.trim() })
+               })
+               .then(response => response.json())
+               .then(data => {
+                   if (!data.success) throw new Error(data.message || 'Unable to update stock status.');
+                   location.reload();
+               })
+               .catch(error => alert(error.message));
+           }
+
+           window.deleteSelected = function deleteSelected() {
+               const ids = selectedIds();
+               if (!ids.length) {
+                   alert('Select at least one menu item first.');
+                   return;
+               }
+               openDeleteConfirm({
+                    title: `Delete ${ids.length} Menu Item${ids.length === 1 ? '' : 's'}`,
+                    message: 'The selected menu item(s) will be permanently deleted. This action cannot be undone.',
+                    onConfirm: function () { performBulkMenuDelete(ids); }
+                });
+            }
+
+            window.performBulkMenuDelete = function performBulkMenuDelete(ids) {
+               Promise.all(ids.map(menuId => fetch('menu_ajax.php', {
+                   method: 'POST',
+                   headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                   body: `action=delete&menu_id=${encodeURIComponent(menuId)}`
+               }).then(response => response.json())))
+               .then(results => {
+                   if (results.some(result => !result.success)) throw new Error('One or more items could not be deleted.');
+                   location.reload();
+               })
+               .catch(error => alert(error.message));
+           }
+       
+           // Image preview functionality
+           document.getElementById('menu_image').addEventListener('change', function(e) {
+               const file = e.target.files[0];
+               if (file) {
+                   const reader = new FileReader();
+                   reader.onload = function(e) {
+                       const preview = document.getElementById('imagePreview');
+                       const img = preview.querySelector('img');
+                       img.src = e.target.result;
+                       preview.style.display = 'block';
+                   };
+                   reader.readAsDataURL(file);
+               }
+           });
+       
+           // Handle form submission
+           document.getElementById('menuForm').addEventListener('submit', function(e) {
+               e.preventDefault();
+           
+               const formData = new FormData(this);
+               const submitBtn = this.querySelector('button[type="submit"]');
+               const originalText = submitBtn.textContent;
+           
+               // Show loading state
+               submitBtn.textContent = 'Saving...';
+               submitBtn.disabled = true;
+           
+               fetch('menu_ajax.php', {
+                   method: 'POST',
+                   body: formData
+               })
+               .then(response => response.json())
+               .then(data => {
+                   if (data.success) {
+                       setTimeout(() => {
+                           closeMenuModal();
+                           location.reload(); // Refresh to show updated data
+                       }, 1500);
+                   }
+               })
+               .catch(error => {
+                   console.error('Error:', error);
+               
+               })
+               .finally(() => {
+                   // Reset button
+                   submitBtn.textContent = originalText;
+                   submitBtn.disabled = false;
+               });
+           });
+       
+           // Close modal when clicking outside
+           document.getElementById('menuModal').addEventListener('click', function(e) {
+               if (e.target === this) {
+                   closeMenuModal();
+               }
+           });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initMenuPage);
+    } else {
+        initMenuPage();
+    }
 })();
+
+/* ============================================================
+   ORDERS PAGE (admin/orders_page.php)
+   Extracted from the page's inline <script> block. Guarded so it
+   only activates on the orders pages (body.admin-orders-page);
+   the helper functions are exposed on window for the inline
+   onclick handlers in orders_page.php.
+   ============================================================ */
+(function () {
+    'use strict';
+
+    // Orders pages only — admin2.js is shared with finance/floor/menu pages.
+    if (!document.body.classList.contains('admin-orders-page')) return;
+
+    // The global helpers below are called from inline onclick handlers in
+    // orders_page.php (toggle/handleOrderUpdate/handleOrderDelete/...). They
+    // overwrite the no-op stubs assigned in the main admin2.js DOMContentLoaded
+    // handler. showDeleteConfirmation/closeDeleteConfirmation deliberately
+    // reuse the shared delete-confirm modal from adminscript.js.
+    window.toggleAdminOrderItems = function toggleAdminOrderItems(orderId) {
+        const list = document.getElementById('items-list-' + orderId);
+        const btn = document.getElementById('btn-toggle-' + orderId);
+        if (!list) return;
+        if (list.style.display === 'none') {
+            list.style.display = 'block';
+            if (btn) btn.innerHTML = '<i class="fa fa-chevron-up"></i> Hide items';
+        } else {
+            list.style.display = 'none';
+            if (btn) btn.innerHTML = '<i class="fa fa-chevron-down"></i> View items';
+        }
+    }
+
+    // AJAX Order Status Update
+    window.handleOrderUpdate = function handleOrderUpdate(orderNumber, orderId) {
+        const statusSelect = document.getElementById('status-' + orderId);
+        const currentStatus = statusSelect ? statusSelect.getAttribute('data-current-status') : '';
+        const newStatus = statusSelect.value;
+
+        const allowedStatuses = ['Pending', 'Confirmed', 'Preparing', 'Ready', 'Delivering', 'Completed', 'Cancelled'];
+        if (!statusSelect || !Number.isInteger(Number(orderId)) || Number(orderId) <= 0) {
+            alert('Invalid order selection.');
+            return;
+        }
+
+        if (!allowedStatuses.includes(newStatus)) {
+            alert('Please choose a valid order status.');
+            statusSelect.value = currentStatus || 'Pending';
+            return;
+        }
+
+        if (newStatus === currentStatus) {
+            return;
+        }
+
+        statusSelect.disabled = true;
+    
+        fetch('update_order_status_ajax.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                order_number: orderNumber,
+                order_id: parseInt(orderId),
+                status: newStatus
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                statusSelect.value = newStatus;
+                statusSelect.setAttribute('data-current-status', newStatus);
+                statusSelect.className = 'booking-status-select status-' + newStatus.toLowerCase();
+            } else {
+                alert(data.message || 'Unable to update the order status.');
+                statusSelect.value = currentStatus || statusSelect.value;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Something went wrong while updating the order.');
+            statusSelect.value = currentStatus || statusSelect.value;
+        })
+        .finally(() => {
+            statusSelect.disabled = false;
+        });
+    }
+
+    window.handleOrderDelete = function handleOrderDelete(orderNumber, orderId) {
+        if (window.event) {
+            window.event.preventDefault();
+            window.event.stopPropagation();
+        }
+        showDeleteConfirmation(orderNumber, orderId);
+    }
+
+    window.showDeleteConfirmation = function showDeleteConfirmation(orderNumber, orderId) {
+        openDeleteConfirm({
+            title: 'Delete Order?',
+            message: `Order ${orderNumber} will be permanently deleted. This action cannot be undone.`,
+            onConfirm: function () {
+                confirmDelete(orderNumber, orderId);
+            }
+        });
+    }
+    window.toggleAdminOrderItems = function toggleAdminOrderItems(orderId) {
+        const list = document.getElementById('items-list-' + orderId);
+        const btn = document.getElementById('btn-toggle-' + orderId);
+        if (!list) return;
+        if (list.style.display === 'none') {
+            list.style.display = 'block';
+            if (btn) btn.innerHTML = '<i class="fa fa-chevron-up"></i> Hide items';
+        } else {
+            list.style.display = 'none';
+            if (btn) btn.innerHTML = '<i class="fa fa-chevron-down"></i> View items';
+        }
+    }
+
+    // AJAX Order Status Update
+    window.handleOrderUpdate = function handleOrderUpdate(orderNumber, orderId) {
+        const statusSelect = document.getElementById('status-' + orderId);
+        const currentStatus = statusSelect ? statusSelect.getAttribute('data-current-status') : '';
+        const newStatus = statusSelect.value;
+
+        const allowedStatuses = ['Pending', 'Confirmed', 'Preparing', 'Ready', 'Delivering', 'Completed', 'Cancelled'];
+        if (!statusSelect || !Number.isInteger(Number(orderId)) || Number(orderId) <= 0) {
+            alert('Invalid order selection.');
+            return;
+        }
+
+        if (!allowedStatuses.includes(newStatus)) {
+            alert('Please choose a valid order status.');
+            statusSelect.value = currentStatus || 'Pending';
+            return;
+        }
+
+        if (newStatus === currentStatus) {
+            return;
+        }
+
+        statusSelect.disabled = true;
+    
+        fetch('update_order_status_ajax.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                order_number: orderNumber,
+                order_id: parseInt(orderId),
+                status: newStatus
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                statusSelect.value = newStatus;
+                statusSelect.setAttribute('data-current-status', newStatus);
+                statusSelect.className = 'booking-status-select status-' + newStatus.toLowerCase();
+            } else {
+                alert(data.message || 'Unable to update the order status.');
+                statusSelect.value = currentStatus || statusSelect.value;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Something went wrong while updating the order.');
+            statusSelect.value = currentStatus || statusSelect.value;
+        })
+        .finally(() => {
+            statusSelect.disabled = false;
+        });
+    }
+
+    window.handleOrderDelete = function handleOrderDelete(orderNumber, orderId) {
+        if (window.event) {
+            window.event.preventDefault();
+            window.event.stopPropagation();
+        }
+        showDeleteConfirmation(orderNumber, orderId);
+    }
+
+    window.showDeleteConfirmation = function showDeleteConfirmation(orderNumber, orderId) {
+        openDeleteConfirm({
+            title: 'Delete Order?',
+            message: `Order ${orderNumber} will be permanently deleted. This action cannot be undone.`,
+            onConfirm: function () {
+                confirmDelete(orderNumber, orderId);
+            }
+        });
+    }
+
+    window.closeDeleteConfirmation = function closeDeleteConfirmation() {
+        closeDeleteConfirm();
+    }
+
+    window.confirmDelete = function confirmDelete(orderNumber, orderId) {
+        closeDeleteConfirmation();
+    
+        fetch('../includes/delete_order.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                order_number: orderNumber,
+                order_id: parseInt(orderId)
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const row = document.getElementById('order-row-' + orderId);
+                if (row) {
+                    row.style.opacity = '0';
+                    row.style.transform = 'translateX(100px)';
+                    setTimeout(() => row.remove(), 300);
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    };
+
+    window.toggleAdminOrderItems = function toggleAdminOrderItems(orderId) {
+        const list = document.getElementById('items-list-' + orderId);
+        const btn = document.getElementById('btn-toggle-' + orderId);
+        if (!list) return;
+        if (list.style.display === 'none') {
+            list.style.display = 'block';
+            if (btn) btn.innerHTML = '<i class="fa fa-chevron-up"></i> Hide items';
+        } else {
+            list.style.display = 'none';
+            if (btn) btn.innerHTML = '<i class="fa fa-chevron-down"></i> View items';
+        }
+    }
+
+    // AJAX Order Status Update
+    window.handleOrderUpdate = function handleOrderUpdate(orderNumber, orderId) {
+        const statusSelect = document.getElementById('status-' + orderId);
+        const currentStatus = statusSelect ? statusSelect.getAttribute('data-current-status') : '';
+        const newStatus = statusSelect.value;
+
+        const allowedStatuses = ['Pending', 'Confirmed', 'Preparing', 'Ready', 'Delivering', 'Completed', 'Cancelled'];
+        if (!statusSelect || !Number.isInteger(Number(orderId)) || Number(orderId) <= 0) {
+            alert('Invalid order selection.');
+            return;
+        }
+
+        if (!allowedStatuses.includes(newStatus)) {
+            alert('Please choose a valid order status.');
+            statusSelect.value = currentStatus || 'Pending';
+            return;
+        }
+
+        if (newStatus === currentStatus) {
+            return;
+        }
+
+        statusSelect.disabled = true;
+    
+        fetch('update_order_status_ajax.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                order_number: orderNumber,
+                order_id: parseInt(orderId),
+                status: newStatus
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                statusSelect.value = newStatus;
+                statusSelect.setAttribute('data-current-status', newStatus);
+                statusSelect.className = 'booking-status-select status-' + newStatus.toLowerCase();
+            } else {
+                alert(data.message || 'Unable to update the order status.');
+                statusSelect.value = currentStatus || statusSelect.value;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Something went wrong while updating the order.');
+            statusSelect.value = currentStatus || statusSelect.value;
+        })
+        .finally(() => {
+            statusSelect.disabled = false;
+        });
+    }
+
+    window.handleOrderDelete = function handleOrderDelete(orderNumber, orderId) {
+        if (window.event) {
+            window.event.preventDefault();
+            window.event.stopPropagation();
+        }
+        showDeleteConfirmation(orderNumber, orderId);
+    }
+
+    window.showDeleteConfirmation = function showDeleteConfirmation(orderNumber, orderId) {
+        openDeleteConfirm({
+            title: 'Delete Order?',
+            message: `Order ${orderNumber} will be permanently deleted. This action cannot be undone.`,
+            onConfirm: function () {
+                confirmDelete(orderNumber, orderId);
+            }
+        });
+    }
+
+    window.closeDeleteConfirmation = function closeDeleteConfirmation() {
+        closeDeleteConfirm();
+    }
+
+    window.confirmDelete = function confirmDelete(orderNumber, orderId) {
+        closeDeleteConfirmation();
+    
+        fetch('../includes/delete_order.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                order_number: orderNumber,
+                order_id: parseInt(orderId)
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const row = document.getElementById('order-row-' + orderId);
+                if (row) {
+                    row.style.opacity = '0';
+                    row.style.transform = 'translateX(100px)';
+                    setTimeout(() => row.remove(), 300);
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    };
+
+    window.closeAddressModal = function closeAddressModal() {
+        const modal = document.getElementById('addressModal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+
+    // Close modal when clicking outside the content
+    document.addEventListener('click', function(event) {
+        const modalOverlay = document.getElementById('addressModal');
+        if (modalOverlay && event.target === modalOverlay) {
+            closeAddressModal();
+        }
+    });
+
+    // Printer & Thermal Receipt Modal Functions
+    window.openPrintModal = function openPrintModal() {
+        const modal = document.getElementById('printModal');
+        if (modal) modal.classList.add('active');
+    };
+
+    window.closePrintModal = function closePrintModal() {
+        const modal = document.getElementById('printModal');
+        if (modal) modal.classList.remove('active');
+    };
+
+    window.triggerThermalPrint = function triggerThermalPrint() {
+        window.print();
+    };
+
+})();
+
+/* ============================================================
+   MeroBhoj Floor Plan — loadFloorPlan + table card logic
+   Works for both admin/floor.php and staff/floor.php.
+   Each page sets window.FP_API_URL before calling loadFloorPlan().
+   ============================================================ */
+(function () {
+  'use strict';
+
+  /* ---------- state ---------- */
+  let _allTables   = [];
+  let _statusFilter = 'all';
+  let _activeTableId = null;   // table currently open in modal
+  let _activeOrderNum = null;  // order being settled
+  let _activeOrderSubtotal = 0;
+  let _selectedPM = 'Cash';
+
+  /* ---------- helpers ---------- */
+  function esc(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+  function fmt(n) { return 'NPR ' + (Number(n) || 0).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+  function toast(msg, type) {
+    if (window.ToastNotifications) {
+      if (type === 'success') ToastNotifications.success(msg);
+      else ToastNotifications.error(msg);
+    }
+  }
+  function statusLabel(s) {
+    switch(s) {
+      case 'occupied': return 'OCCUPIED';
+      case 'reserved': return 'RESERVED';
+      case 'dirty':    return 'DIRTY';
+      default:         return 'AVAILABLE';
+    }
+  }
+  function statusClass(s) {
+    switch(s) {
+      case 'occupied': return 'st-cancelled';
+      case 'reserved': return 'st-pending';
+      case 'dirty':    return 'st-dirty';
+      default:         return 'st-confirmed';
+    }
+  }
+
+  /* ---------- load + render ---------- */
+  function loadFloorPlan() {
+    const canvas = document.getElementById('floorCanvas');
+    if (!canvas) return;
+
+    const apiUrl = window.FP_API_URL || '../staff/api/floor.php';
+
+    fetch(apiUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function(data) {
+        if (!data.success) {
+          canvas.innerHTML = '<p class="fp-canvas-loading" style="color:#ef4444;">Failed to load floor plan: ' + esc(data.message || 'Unknown error') + '</p>';
+          return;
+        }
+        _allTables = data.tables || [];
+        renderFloor();
+      })
+      .catch(function(err) {
+        canvas.innerHTML = '<p class="fp-canvas-loading" style="color:#ef4444;">Could not load floor plan. Please refresh the page.</p>';
+        console.error('loadFloorPlan error:', err);
+      });
+  }
+
+  function renderFloor() {
+    const canvas = document.getElementById('floorCanvas');
+    if (!canvas) return;
+
+    const search = (document.getElementById('searchInput') || {value:''}).value.toLowerCase();
+    let tables = _allTables;
+
+    if (_statusFilter !== 'all') {
+      tables = tables.filter(function(t) { return t.current_status === _statusFilter; });
+    }
+    if (search) {
+      tables = tables.filter(function(t) {
+        return (t.table_name || '').toLowerCase().includes(search) ||
+               String(t.capacity || '').includes(search);
+      });
+    }
+
+    /* stats */
+    const total   = _allTables.length;
+    const free     = _allTables.filter(function(t){ return t.current_status === 'free'; }).length;
+    const occupied = _allTables.filter(function(t){ return t.current_status === 'occupied'; }).length;
+    const reserved = _allTables.filter(function(t){ return t.current_status === 'reserved'; }).length;
+
+    var el = function(id){ return document.getElementById(id); };
+    if (el('statTotal'))        el('statTotal').textContent        = total;
+    if (el('statAvailable'))    el('statAvailable').textContent    = free;
+    if (el('statOccupied'))     el('statOccupied').textContent     = occupied;
+    if (el('statReservations')) el('statReservations').textContent = reserved;
+    if (el('areaCount'))        el('areaCount').textContent        = tables.length;
+
+    if (tables.length === 0) {
+      canvas.innerHTML = '<p class="fp-canvas-loading">No tables match your filter.</p>';
+      return;
+    }
+
+    canvas.innerHTML = tables.map(function(t) {
+      var st  = t.current_status || 'free';
+      var cnt = Number(t.active_orders_count) || 0;
+      var cap = Number(t.capacity) || 0;
+      var tName = esc(t.table_name || ('Table ' + t.id));
+
+      return '<div class="fp-table-card fp-st-' + st + '" ' +
+             'data-id="' + t.id + '" data-status="' + st + '" ' +
+             'onclick="openTableModal(' + t.id + ')">' +
+               '<div class="fp-table-name">' + tName + '</div>' +
+               '<div class="fp-table-icon"><span class="material-symbols-sharp">table_restaurant</span></div>' +
+               '<div class="fp-table-cap">' + cap + ' seats</div>' +
+               (cnt > 0 ? '<div class="fp-table-orders">' + cnt + ' order' + (cnt > 1 ? 's' : '') + '</div>' : '') +
+               '<div class="fp-table-badge">' + statusLabel(st) + '</div>' +
+             '</div>';
+    }).join('');
+  }
+
+  /* ---------- filter ---------- */
+  function setStatusFilter(status, btn) {
+    _statusFilter = status;
+    document.querySelectorAll('.fp-pill-filter').forEach(function(b){ b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    renderFloor();
+  }
+
+  function filterTables() {
+    renderFloor();
+  }
+
+  /* ---------- table modal ---------- */
+  function openTableModal(tableId) {
+    _activeTableId = tableId;
+    const tableApiUrl = window.FP_TABLE_API_URL || '../staff/api/table_details.php';
+
+    fetch(tableApiUrl + '?table_id=' + tableId, { headers: {'X-Requested-With': 'XMLHttpRequest'} })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (!data.success) { toast(data.message || 'Failed to load table', 'error'); return; }
+        var t   = data.table;
+        var st  = data.current_status || 'free';
+        var orders = data.orders || [];
+
+        var titleEl = document.getElementById('modalTableTitle');
+        var subEl   = document.getElementById('modalTableSubtitle');
+        var badgeEl = document.getElementById('modalTableStatusBadge');
+        var bodyEl  = document.getElementById('modalTableBody');
+
+        if (titleEl) titleEl.textContent  = t.table_name || ('Table ' + t.id);
+        if (subEl)   subEl.textContent    = (t.capacity || 0) + ' Seats';
+        if (badgeEl) { badgeEl.textContent = statusLabel(st); badgeEl.className = 'panel-status ' + statusClass(st); }
+
+        if (bodyEl) {
+          if (orders.length === 0 && st === 'free') {
+            bodyEl.innerHTML = '<div class="fp-modal-empty">' +
+              '<span class="material-symbols-sharp" style="font-size:48px;color:#94a3b8;">table_restaurant</span>' +
+              '<p style="color:#64748b;margin-top:8px;">Table is available</p>' +
+              '<button class="btn-red" style="margin-top:12px;" onclick="openReserveModal(' + tableId + ',\'' + esc(t.table_name) + '\')">Reserve This Table</button>' +
+            '</div>';
+          } else if (orders.length === 0 && st === 'reserved') {
+            bodyEl.innerHTML = '<div class="fp-modal-empty">' +
+              '<span class="material-symbols-sharp" style="font-size:48px;color:#f59e0b;">event_seat</span>' +
+              '<p style="color:#64748b;margin-top:8px;">Table is reserved</p>' +
+            '</div>';
+          } else {
+            bodyEl.innerHTML = orders.map(function(ord) {
+              var itemsHtml = (ord.items || []).map(function(item) {
+                return '<tr><td>' + esc(item.menu_name) + '</td><td class="num">×' + item.quantity + '</td><td class="num">' + fmt(item.price * item.quantity) + '</td></tr>';
+              }).join('');
+              return '<div class="fp-order-block">' +
+                '<div class="fp-order-header">' +
+                  '<strong>' + esc(ord.order_number) + '</strong>' +
+                  '<span class="panel-status st-' + ord.status.toLowerCase() + '">' + esc(ord.status) + '</span>' +
+                '</div>' +
+                '<table class="receipt-table" style="margin-top:8px;">' +
+                  '<thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Total</th></tr></thead>' +
+                  '<tbody>' + itemsHtml + '</tbody>' +
+                '</table>' +
+                '<div style="text-align:right;margin-top:6px;font-weight:600;">' + fmt(ord.total_price) + '</div>' +
+                '<button class="btn-red" style="margin-top:10px;width:100%;" ' +
+                  'onclick="openSettleModal(\'' + esc(ord.order_number) + '\',' + ord.total_price + ')">' +
+                  '<span class="material-symbols-sharp">payments</span> Settle This Order' +
+                '</button>' +
+              '</div>';
+            }).join('<hr style="border:none;border-top:1px solid #e2e8f0;margin:12px 0;">');
+          }
+        }
+
+        var modal = document.getElementById('tableModal');
+        if (modal) modal.classList.add('active');
+      })
+      .catch(function(err){ toast('Error loading table details', 'error'); console.error(err); });
+  }
+
+  /* ---------- settle modal ---------- */
+  function openSettleModal(orderNum, subtotal) {
+    _activeOrderNum      = orderNum;
+    _activeOrderSubtotal = Number(subtotal) || 0;
+    _selectedPM          = 'Cash';
+
+    var el = function(id){ return document.getElementById(id); };
+    if (el('recOrderNum'))  el('recOrderNum').textContent  = orderNum;
+    if (el('recTableName') && _activeTableId) {
+      var t = _allTables.find(function(x){ return x.id == _activeTableId; });
+      el('recTableName').textContent = t ? t.table_name : 'Table';
+    }
+    if (el('recDateTime'))  el('recDateTime').textContent  = new Date().toLocaleString();
+    if (el('discountInput')) el('discountInput').value = 0;
+
+    /* build receipt items */
+    /* (already calculated in order block — just show total in receipt) */
+    if (el('recItemsBody')) el('recItemsBody').innerHTML = '<tr><td colspan="3" style="padding:8px 0;color:#64748b;">See order details above</td></tr>';
+
+    recalculateSettleTotal();
+
+    /* reset payment method buttons */
+    document.querySelectorAll('.pm-btn').forEach(function(b){ b.classList.remove('active'); });
+    var cashBtn = document.querySelector('.pm-btn');
+    if (cashBtn) cashBtn.classList.add('active');
+
+    /* close table modal, open settle modal */
+    var tm = document.getElementById('tableModal');
+    if (tm) tm.classList.remove('active');
+    var sm = document.getElementById('settleModal');
+    if (sm) sm.classList.add('active');
+  }
+
+  function recalculateSettleTotal() {
+    var disc = Number((document.getElementById('discountInput') || {value:0}).value) || 0;
+    var total = Math.max(0, _activeOrderSubtotal - disc);
+    var recDisc = document.getElementById('recDiscount');
+    var recSub  = document.getElementById('recSubtotal');
+    var recTot  = document.getElementById('recTotal');
+    if (recSub)  recSub.textContent  = fmt(_activeOrderSubtotal);
+    if (recDisc) recDisc.textContent = disc > 0 ? '-' + fmt(disc) : fmt(0);
+    if (recTot)  recTot.textContent  = fmt(total);
+  }
+
+  function selectPM(method, btn) {
+    _selectedPM = method;
+    document.querySelectorAll('.pm-btn').forEach(function(b){ b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+  }
+
+  function processSettle(doPrint) {
+    if (!_activeOrderNum) { toast('No order selected', 'error'); return; }
+    var disc = Number((document.getElementById('discountInput') || {value:0}).value) || 0;
+    var total = Math.max(0, _activeOrderSubtotal - disc);
+    var settleUrl = window.FP_SETTLE_API_URL || '../staff/api/settle_bill.php';
+
+    fetch(settleUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+      body: JSON.stringify({
+        order_number:           _activeOrderNum,
+        subtotal:               _activeOrderSubtotal,
+        discount_type:          'fixed',
+        discount_value:         disc,
+        discount_amount:        disc,
+        service_charge_rate:    0,
+        service_charge_amount:  0,
+        vat_rate:               0,
+        vat_amount:             0,
+        grand_total:            total,
+        payment_method:         _selectedPM,
+        amount_received:        total,
+        change_due:             0,
+        remarks:                ''
+      })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if (!data.success) { toast(data.message || 'Settlement failed', 'error'); return; }
+      toast('Order settled successfully!', 'success');
+      if (doPrint) { window.print(); }
+      closeModal('settleModal');
+      setTimeout(loadFloorPlan, 600);
+    })
+    .catch(function(err){ toast('Error processing settlement', 'error'); console.error(err); });
+  }
+
+  /* ---------- reserve modal ---------- */
+  function openReserveModal(tableId, tableName) {
+    var titleEl = document.getElementById('reserveModalTitle');
+    if (titleEl) titleEl.textContent = 'Reserve ' + (tableName || ('Table ' + tableId));
+    var idEl = document.getElementById('resTableId');
+    if (idEl) idEl.value = tableId;
+
+    /* set default date to today */
+    var dateEl = document.getElementById('resDate');
+    if (dateEl && !dateEl.value) { dateEl.value = new Date().toISOString().slice(0,10); }
+
+    var tm = document.getElementById('tableModal');
+    if (tm) tm.classList.remove('active');
+    var rm = document.getElementById('reserveModal');
+    if (rm) rm.classList.add('active');
+
+    var form = document.getElementById('reserveTableForm');
+    if (form) {
+      form.onsubmit = function(e) {
+        e.preventDefault();
+        var bookUrl = window.FP_BOOK_API_URL || '../staff/api/booking_create.php';
+        var payload = {
+          table_id:     Number(document.getElementById('resTableId').value),
+          guest_name:   (document.getElementById('resGuestName') || {value:''}).value.trim(),
+          phone:        (document.getElementById('resGuestPhone') || {value:''}).value.trim(),
+          guests:       Number((document.getElementById('resGuests') || {value:2}).value) || 2,
+          booking_date: (document.getElementById('resDate') || {value:''}).value,
+          start_time:   (document.getElementById('resTime') || {value:''}).value,
+          end_time:     (document.getElementById('resEndTime') || {value:''}).value || '',
+          message:      (document.getElementById('resMessage') || {value:''}).value.trim()
+        };
+        if (!payload.guest_name || !payload.phone || !payload.booking_date || !payload.start_time) {
+          toast('Please fill required fields', 'error'); return;
+        }
+        fetch(bookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+          body: JSON.stringify(payload)
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+          if (!data.success) { toast(data.message || 'Reservation failed', 'error'); return; }
+          toast('Reservation created!', 'success');
+          closeModal('reserveModal');
+          form.reset();
+          setTimeout(loadFloorPlan, 600);
+        })
+        .catch(function(err){ toast('Error creating reservation', 'error'); console.error(err); });
+      };
+    }
+  }
+
+  /* ---------- add table (admin only) ---------- */
+  function openAddTableModal() {
+    var modal = document.getElementById('addTableModal');
+    if (modal) modal.classList.add('active');
+    var form = document.getElementById('addTableForm');
+    if (form) {
+      form.onsubmit = function(e) {
+        e.preventDefault();
+        var addUrl = window.FP_ADD_TABLE_URL || '../admin/api/api_qr_tables.php';
+        var tName = (document.getElementById('addTableName') || {value:''}).value.trim();
+        var tCap  = Number((document.getElementById('addTableCap') || {value:4}).value) || 4;
+        if (!tName) { toast('Table name is required', 'error'); return; }
+        fetch(addUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+          body: JSON.stringify({ action: 'create', table_name: tName, capacity: tCap })
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+          if (!data.success) { toast(data.message || 'Failed to add table', 'error'); return; }
+          toast('Table added!', 'success');
+          closeModal('addTableModal');
+          form.reset();
+          setTimeout(loadFloorPlan, 400);
+        })
+        .catch(function(err){ toast('Error adding table', 'error'); console.error(err); });
+      };
+    }
+  }
+
+  /* ---------- new order for table ---------- */
+  function openNewOrderForTable() {
+    if (window.FP_IS_ADMIN) {
+      location.href = 'orders_page.php';
+    } else {
+      location.href = 'new-order.php';
+    }
+  }
+
+  /* ---------- generic modal close ---------- */
+  function closeModal(id) {
+    var m = document.getElementById(id);
+    if (m) m.classList.remove('active');
+  }
+
+  /* ---------- auto-refresh ---------- */
+  var _refreshInterval = null;
+  function startAutoRefresh() {
+    if (_refreshInterval) return;
+    _refreshInterval = setInterval(function() {
+      if (!document.hidden) loadFloorPlan();
+    }, 30000);
+  }
+
+  /* ---------- expose to global scope ---------- */
+  window.loadFloorPlan       = loadFloorPlan;
+  window.setStatusFilter     = window.setStatusFilter || setStatusFilter;
+  window.filterTables        = window.filterTables    || filterTables;
+  window.openTableModal      = openTableModal;
+  window.openSettleModal     = openSettleModal;
+  window.recalculateSettleTotal = recalculateSettleTotal;
+  window.selectPM            = selectPM;
+  window.processSettle       = processSettle;
+  window.openReserveModal    = openReserveModal;
+  window.openAddTableModal   = openAddTableModal;
+  window.openNewOrderForTable = openNewOrderForTable;
+  window.closeModal          = window.closeModal || closeModal;
+
+  /* click-outside to close modals */
+  document.addEventListener('click', function(e) {
+    ['tableModal','settleModal','reserveModal','addTableModal'].forEach(function(id) {
+      var m = document.getElementById(id);
+      if (m && e.target === m) closeModal(id);
+    });
+  });
+
+  /* start auto-refresh when floor canvas is present */
+  document.addEventListener('DOMContentLoaded', function() {
+    if (document.getElementById('floorCanvas')) {
+      startAutoRefresh();
+    }
+  });
+
+}());

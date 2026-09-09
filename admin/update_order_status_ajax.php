@@ -5,6 +5,7 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../includes/order_validation.php';
+require_once __DIR__ . '/../helpers/audit_logger.php';
 
 $response = ['success' => false, 'message' => 'Invalid request'];
 
@@ -85,6 +86,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $response = ['success' => false, 'message' => 'Failed to prepare update statement'];
                 } else {
                     if ($stmt->execute()) {
+                        if (strtolower((string)$status) === 'cancelled' || strtolower((string)$status) === 'canceled') {
+                            $auditUserId = (int)($_SESSION['admin_id'] ?? 0);
+                            if ($auditUserId > 0) {
+                                log_audit_action($conn, $auditUserId, 'admin', 'VOID_ORDER', 'order', (int)$existingOrder['order_id'], ['old_status' => $existingOrder['status'], 'reason' => 'Order status changed to cancelled']);
+                            }
+                        }
                         // Permanent per-status history: record the exact real time
                         // THIS status was set. Re-setting the same status refreshes
                         // only its own entry; every status keeps its own time.

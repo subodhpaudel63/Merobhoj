@@ -1,0 +1,7 @@
+<?php
+declare(strict_types=1);
+header('Content-Type: application/json');
+if(session_status()===PHP_SESSION_NONE)session_start();
+require_once __DIR__.'/../../includes/db.php';require_once __DIR__.'/../../includes/role_check.php';require_role($conn,['admin','manager']);
+$action=trim((string)($_GET['action']??'list'));if($action==='detail'){$id=(int)($_GET['id']??0);$s=$conn->prepare('SELECT a.*,u.name FROM audit_logs a LEFT JOIN users u ON u.id=a.user_id WHERE a.id=?');$s->bind_param('i',$id);$s->execute();$row=$s->get_result()->fetch_assoc();$s->close();if(!$row){http_response_code(404);echo json_encode(['success'=>false,'message'=>'Audit entry not found.']);exit;}echo json_encode(['success'=>true,'log'=>$row]);exit;}
+$where=[];$params=[];$types='';foreach(['from'=>'created_at >= ?','to'=>'created_at < DATE_ADD(?, INTERVAL 1 DAY)','role'=>'user_role = ?','action'=>'action = ?','user_id'=>'user_id = ?'] as $key=>$clause){if(isset($_GET[$key])&&$_GET[$key]!==''){$where[]=$clause;$params[]=$_GET[$key];$types.=$key==='user_id'?'i':'s';}}$sql='SELECT a.*,u.name FROM audit_logs a LEFT JOIN users u ON u.id=a.user_id'.($where?' WHERE '.implode(' AND ',$where):'').' ORDER BY a.created_at DESC LIMIT 500';$s=$conn->prepare($sql);if($params){$bind=[$types];foreach($params as $key=>&$value)$bind[]=&$value;call_user_func_array([$s,'bind_param'],$bind);} $s->execute();$r=$s->get_result();$rows=[];while($x=$r->fetch_assoc())$rows[]=$x;$s->close();echo json_encode(['success'=>true,'logs'=>$rows]);

@@ -1,0 +1,274 @@
+================================================================================
+ MEROBHOJ (Masu ko Jhol) - Restaurant Management & Ordering Platform
+ Project Features Documentation
+================================================================================
+
+Tech Stack:
+ - Backend   : PHP 8.x (procedural, MySQLi), MariaDB (XAMPP)
+ - Frontend  : HTML5, CSS3, JavaScript (vanilla), Bootstrap 5,
+               AOS animations, Bootstrap Icons, Heebo/Nunito fonts
+ - Payments  : eSewa (integration at /esewa: pay, verify, success, failure)
+ - Auth      : Sessions, password_hash (bcrypt), Google OAuth
+ - AI Agent  : Python (LLM chat agent with tool calling, context retrieval,
+               sliding-window memory, token budgeting) in /agent
+ - Server    : Custom front-controller router (router.php) with pretty URLs
+
+Database tables: users, menu, orders, bookings, restaurant_tables, qr_requests,
+feedback, subscribers, admin_notifications (+ delivery/rider data in orders)
+
+================================================================================
+ 1. PUBLIC WEBSITE (customer-facing)
+================================================================================
+ - Landing page (index.php) with hero, menu highlights, gallery
+ - Menu browsing page (menu.php) with categories
+ - About Us page (aboutus.php)
+ - Contact Us page (contactus.php) with feedback form (stored in `feedback`)
+ - Newsletter subscription (footer, includes/suscribe.php -> `subscribers`)
+ - Custom 404 page
+ - Pretty URLs via router.php (/home, /menu, /aboutus, /contactus, ...)
+ - Clean separation: header.php / footer.php shared layout
+
+================================================================================
+ 2. AUTHENTICATION & USER ACCOUNTS
+================================================================================
+ - Customer registration & login (includes/register.php, includes/login.php)
+ - Secure password hashing (bcrypt via password_hash)
+ - Google Sign-In OAuth (includes/google_auth.php, users.google_id column)
+ - Role-based users: user / admin (users.user_type enum)
+ - Profile image support (usersprofiles)
+ - Delete own account (includes/delete_account.php)
+ - Session-based auth guards (includes/auth_check.php, includes/role_check.php)
+ - Separate panel login (panel_login.php, includes/panel_login_process.php)
+   for staff/chef/rider panels, incl. profile updates
+
+================================================================================
+ 3. CUSTOMER PANEL (/client)
+================================================================================
+ - Cart system with sliding cart drawer (cart.php, cart_drawer.php + JS)
+ - Order placement: Delivery, Pickup, Dine-in order types
+ - Order validation (includes/order_validation.php)
+ - My Orders page (myorder.php) with live order status
+ - Order cancellation by customer (includes/order_cancel_customer.php)
+ - Live delivery order tracking (track_order.php, includes/delivery_track.php)
+ - Table booking page (booking.php) with available-table lookup
+   (includes/get_available_tables.php, includes/booking_table.php)
+ - Booking cancellation by customer (includes/cancel_booking_customer.php)
+ - Payment method choice: eSewa, Cash on Delivery, Pay at Restaurant
+ - Order status flow: Pending -> Confirmed -> Cooking/Delivering -> Completed
+   (also Cancelled)
+
+================================================================================
+ 4. QR TABLE ORDERING (self-service dine-in)
+================================================================================
+ - Per-table QR codes with secure 32-char hex tokens
+   (restaurant_tables.qr_token, admin/table_qr.php)
+ - Customer scans QR -> /order/{token} opens a token-validated ordering page
+   (order/index.php + order_qr.php, Apache .htaccess friendly)
+ - Guest orders go into a `qr_requests` queue (items_json, name, phone, note,
+   payment method)
+ - Staff "Self Orders" panel (staff/self-orders.php, admin/self_orders.php)
+   to review/accept QR requests
+ - AJAX APIs: admin/api/api_qr_requests.php (staff),
+   admin/api/api_qr_requests_client.php (customer polling),
+   admin/api/api_qr_tables.php (token/QR generation)
+
+================================================================================
+ 5. PAYMENTS (eSewa integration)
+================================================================================
+ - Full eSewa payment flow: /esewa/pay.php, verify.php, success.php, failure.php
+ - Payment redirect via hidden POST form from the cart drawer (cart_drawer.js)
+ - Order payment status tracking (Paid/Unpaid) with eSewa transaction UUID &
+   product code stored on orders
+ - Fallback methods: Cash on Delivery, Pay at Restaurant
+
+================================================================================
+ 6. ADMIN PANEL (/admin)
+================================================================================
+ - Dashboard with live statistics via AJAX (index.php,
+   get_dashboard_stats.php, includes/admin_stats.php)
+ - Menu management: add / edit / delete items, drag-and-drop ordering,
+   AJAX operations (admin/menu.php, menu_ajax.php,
+   includes/menu_add|edit|delete|order.php, includes/gallery_image_upload.php
+   for food images)
+ - Order management (orders_page.php, order_view.php) with status updates
+   (update_order_status_ajax.php, includes/order_status_update.php),
+   order deletion
+ - Table bookings management (bookings.php) with status updates
+   (update_booking_status_ajax.php), booking deletion
+ - User management (users.php): role changes (includes/update_user_role.php),
+   promote to admin (includes/add_admin.php), block users
+   (includes/block_user.php), delete users
+ - Feedback review & deletion (admin/feedback.php)
+ - Finance module: revenue vs expenses reporting (admin/finance.php,
+   finance_data.php) and expense tracking (admin/expenses.php,
+   admin/api/api_expenses.php)
+ - Delivery/dispatch overview (admin/deliveries.php, includes/dispatch_api.php,
+   includes/delivery_helpers.php)
+ - Floor plan editor: tables with area, shape, shape_config (admin/floor.php)
+ - QR code generation for tables (admin/table_qr.php)
+ - Admin notification system with polling (admin_notifications +
+   admin/api/get_notifications.php, mark_notification_read.php,
+   includes/notifications.php) for new orders, bookings, feedback
+ - Auto no-show processing for bookings (includes/process_no_shows.php)
+
+================================================================================
+ 7. STAFF PANEL (/staff)  [waiter / front-of-house]
+================================================================================
+ - Staff dashboard (dashboard.php)
+ - Interactive floor view with table status (floor.php, api/floor.php,
+   api/table_details.php)
+ - Manual order entry / POS-style new order (new-order.php,
+   api/create_order.php, api/orders_list.php)
+ - Order lifecycle management (orders.php, api/order_update_status.php)
+ - Order settlement / bill payment (api/settle_order.php)
+ - Bookings management (bookings.php + full CRUD API: create, update,
+   delete, status change)
+ - Self Orders (QR request) handling (self-orders.php, api/qr_requests.php)
+ - Deliveries view (deliveries.php)
+ - Notifications (notifications.php, api/notifications.php)
+ - Staff profile management (profile.php, includes/panel_profile_update.php)
+ - API guards for all staff endpoints (api/_api_guard.php)
+
+================================================================================
+ 8. CHEF PANEL / KITCHEN DISPLAY SYSTEM (/chef)
+================================================================================
+ - Kitchen dashboard (dashboard.php) of incoming orders
+ - Kitchen order queue with status updates: cooking -> ready
+   (api/kitchen_orders.php, api/kitchen_update_status.php)
+ - Completed orders view (completed.php)
+ - Ingredients management (ingredients.php, api/ingredients.php)
+ - Kitchen notes (kitchen-notes.php, api/kitchen_notes.php)
+ - Menu item availability toggling / 86'd items (menu-availability.php,
+   api/menu_availability.php)
+ - Kitchen notifications (notifications.php, api/notifications.php)
+ - Chef profile (profile.php)
+
+================================================================================
+ 9. RIDER PANEL (/rider)  [delivery personnel]
+================================================================================
+ - Rider dashboard (dashboard.php)
+ - Delivery job board (deliveries.php) with APIs:
+   claim / pickup / complete / release (api/claim.php, api/pickup.php,
+   api/complete.php, api/release.php, api/deliveries.php)
+ - Live GPS location push (api/location_push.php) for customer tracking
+ - Navigation page (navigate.php)
+ - Earnings view (earnings.php)
+ - Notifications (notifications.php, api/notifications.php)
+ - Rider profile (profile.php)
+ - API guard (api/_api_guard.php)
+
+================================================================================
+ 10. AI AGENT (/agent)  [Python]
+================================================================================
+ - LLM-powered assistant with function calling (minified_tools.json:
+   get_order, search_menu, ...)
+ - Context retrieval with token budget (context_retriever.py)
+ - Sliding-window conversation memory with rolling summarization
+   (memory_manager.py: hot window of 4 messages + running summary)
+ - Prompt state machine loaded from prompts_config.json (prompts_config.py)
+ - Token counting/budgeting utilities (tokens.py) and validation suite
+   (validate.py)
+
+================================================================================
+ 11. INFRASTRUCTURE / MISC
+================================================================================
+ - Custom router with clean URLs + dynamic QR route (/order/{token})
+ - Self-migrating schema: db.php runs idempotent SHOW COLUMNS /
+   CREATE TABLE IF NOT EXISTS migrations on every boot (safe on live DB)
+ - Nepal timezone (+05:45) enforced at DB session level
+ - Admin notifications with unique type+resource dedupe index
+ - Seed data for 7 restaurant tables with capacities
+ - Vendor assets bundled locally (Bootstrap, AOS, fonts) - no CDN dependency
+
+################################################################################
+
+ SUGGESTED NEXT FEATURES (prioritized roadmap)
+================================================================================
+
+ --- HIGH PRIORITY ---
+
+ 1. Security hardening
+    - CSRF tokens on all POST forms & AJAX endpoints
+    - Rate limiting on login/register (brute-force protection)
+    - Move DB credentials out of includes/db.php into an untracked config
+      (db.php currently has hardcoded credentials)
+    - Prepared-statements audit across all includes/*.php files
+    - Password reset via email + email verification on signup
+
+ 2. Real-time updates (WebSocket or Server-Sent Events)
+    - Push new orders to kitchen/chef screen instantly instead of polling
+    - Live order-status push to customer page
+    - Rider GPS streaming to customer tracking map
+
+ 3. Coupons / promo codes & discounts
+    - `coupons` table (code, type: flat/percent, expiry, min order, usage limit)
+    - Apply at cart, validate server-side, track usage per user
+
+ 4. Loyalty / rewards program
+    - Points per order, redeemable at checkout; membership tiers
+
+ 5. Receipt & invoice generation
+    - Printable bill / KOT (Kitchen Order Ticket) from staff settle flow
+    - PDF invoices (e.g., Dompdf) emailed to customer
+    - Thermal-printer friendly 80mm receipt format
+
+ 6. Reports & analytics dashboard
+    - Sales by day/week/month, best-selling items, revenue charts (Chart.js)
+    - Order-type breakdown (dine-in vs delivery vs QR)
+    - Export to CSV/PDF; integrate with existing finance module
+
+ --- MEDIUM PRIORITY ---
+
+ 7. Email / SMS notifications
+    - Order confirmation, status change, booking reminders (PHPMailer)
+    - SMS via Nepali providers (e.g., Sparrow SMS) for delivery updates
+
+ 8. More payment gateways
+    - Khalti, IME Pay, FonePay, or card payments alongside eSewa
+
+ 9. Inventory auto-deduction
+    - Link the chef ingredients module to orders: auto-deduct stock per
+      recipe, low-stock alerts, stock-out auto-hides the menu item
+      (chef/ingredients + menu-availability already exist - connect them)
+
+ 10. Advanced menu UX
+     - Search, filters (veg/non-veg, spicy level, price range), item detail
+       modal with images
+     - Item ratings & photo reviews from verified purchasers
+     - Recommended / "frequently ordered together" suggestions
+
+ 11. Table reservation deposits & waitlist
+     - Advance payment to hold a booking (tie into eSewa)
+     - Waitlist queue fu whenlly booked; SMS confirmation
+
+ 12. AI agent integration
+     - Wire the /agent Python assistant into the site as a customer support
+       chatbot (order status lookup, menu search via its existing tools)
+     - Admin assistant for sales insights
+
+ 13. Multi-language support (Nepali/English toggle) and dark mode
+
+ --- NICE TO HAVE / LONG TERM ---
+
+ 14. Multi-branch support
+     - `branches` table; menu, orders, staff, riders scoped per branch;
+       branch-admin role
+
+ 15. REST API + mobile app / PWA
+     - Token-based (JWT) API layer so an Android/iOS app or PWA can reuse
+       the backend; offline-capable PWA menu
+
+ 16. Rider route optimization (map-based batch dispatch)
+
+ 17. Scheduled / pre-orders (order now, deliver at a future time slot)
+
+ 18. Gift cards & split billing at table settle
+
+ 19. Automated DB backups (cron) and audit log of admin/staff actions
+
+ 20. Automated testing (PHPUnit for includes/, smoke tests via curl) and a
+     proper deployment path (remove hardcoded XAMPP paths)
+
+================================================================================
+
+

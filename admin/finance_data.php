@@ -13,49 +13,65 @@ $fiscal_year = $_GET['fiscalYear'] ?? '';
 $start_date = $_GET['startDate'] ?? '';
 $end_date = $_GET['endDate'] ?? '';
 
-// Default to last 30 days if no dates provided
+// Determine date range from fiscal year if dates are not explicitly set
+if (!empty($fiscal_year) && (empty($_GET['startDate']) || empty($_GET['endDate']))) {
+    if ($fiscal_year === '2083-84') {
+        $start_date = '2026-07-16'; $end_date = '2027-07-15';
+    } elseif ($fiscal_year === '2082-83') {
+        $start_date = '2025-07-16'; $end_date = '2026-07-15';
+    } elseif ($fiscal_year === '2081-82') {
+        $start_date = '2024-07-16'; $end_date = '2025-07-15';
+    }
+}
+
+// Default to last 60 days if no dates provided
 if (empty($start_date)) {
-    $start_date = date('Y-m-d', strtotime('-30 days'));
+    $start_date = date('Y-m-d', strtotime('-60 days'));
 }
 if (empty($end_date)) {
     $end_date = date('Y-m-d');
 }
 
-// Fetch orders within date range
+// Fetch orders within date range with menu categories
 $orders = [];
 $order_query = $conn->prepare("
     SELECT 
-        order_id,
-        order_number,
-        order_date,
-        total_price,
-        status,
-        payment_method,
-        order_type,
-        email,
-        menu_name,
-        quantity,
-        price
-    FROM orders
-    WHERE DATE(order_date) BETWEEN ? AND ?
-    ORDER BY order_date DESC
+        o.order_id,
+        o.order_number,
+        o.order_date,
+        o.total_price,
+        o.status,
+        o.payment_method,
+        o.order_type,
+        o.email,
+        o.menu_name,
+        o.quantity,
+        o.price,
+        COALESCE(m.menu_category, 'Food') as category
+    FROM orders o
+    LEFT JOIN menu m ON (o.menu_id = m.menu_id OR o.menu_name = m.menu_name)
+    WHERE DATE(o.order_date) BETWEEN ? AND ?
+    ORDER BY o.order_date DESC
 ");
 $order_query->bind_param("ss", $start_date, $end_date);
 $order_query->execute();
 $order_result = $order_query->get_result();
 
 while ($row = $order_result->fetch_assoc()) {
+    $catRaw = strtolower(trim((string)($row['category'] ?? 'Food')));
+    $category = ucfirst($catRaw);
+
     $orders[] = [
         'id' => $row['order_number'] ?: ('RW-' . date('Y') . '-' . str_pad((string)$row['order_id'], 6, '0', STR_PAD_LEFT)),
         'date' => $row['order_date'],
-        'orderType' => $row['order_type'] ?? 'Delivery',
-        'paymentMethod' => $row['payment_method'] ?? 'Cash on Delivery',
+        'orderType' => !empty($row['order_type']) ? $row['order_type'] : 'Delivery',
+        'paymentMethod' => !empty($row['payment_method']) ? $row['payment_method'] : 'Cash on Delivery',
         'grossAmount' => (float)$row['total_price'],
         'discount' => 0.00,
-        'status' => $row['status'] ?? 'Pending',
+        'status' => !empty($row['status']) ? $row['status'] : 'Pending',
         'items' => [
             [
-                'category' => 'Food',
+                'category' => $category,
                 'name' => $row['menu_name'] ?? 'Unknown Item',
                 'qty' => (int)$row['quantity'],
                 'unitPrice' => (float)$row['price']
@@ -118,9 +134,6 @@ try {
             'date' => $row['date'],
             'account' => $row['category'] ?? 'General',
             'amount' => (float)$row['amount'],
-            // The note is optional, so fall back to the expense's own short
-            // title before the category — a ledger line reading "Ingredients"
-            // tells the reader nothing about what was actually bought.
             'description' => ($row['description'] ?? '') !== ''
                 ? $row['description']
                 : ($row['title'] ?? '')
@@ -134,9 +147,9 @@ try {
 // Calculate tax (13% VAT)
 $taxable_sales = $gross_revenue;
 $vat_rate = 13;
-$output_vat = $taxable_sales * ($vat_rate / 100);
-$input_vat = $total_expenses * ($vat_rate / 100);
-$net_vat_payable = $output_vat - $input_vat;
+$output_vat = round($taxable_sales * ($vat_rate / 100), 2);
+$input_vat = round($total_expenses * ($vat_rate / 100), 2);
+$net_vat_payable = round($output_vat - $input_vat, 2);
 
 $tax_summary = [
     ['item' => 'Taxable Sales', 'base' => $taxable_sales, 'rate' => $vat_rate, 'tax' => $output_vat],
@@ -144,7 +157,7 @@ $tax_summary = [
 ];
 
 // Calculate net profit
-$net_profit = $gross_revenue - $total_expenses - $output_vat;
+$net_profit = round($gross_revenue - $total_expenses - $output_vat, 2);
 
 // Get unique customers count
 $customer_query = $conn->prepare("
@@ -165,7 +178,8 @@ foreach ($orders as $order) {
         'voucher' => 'SV-' . date('Y') . '-' . substr($order['id'], -6),
         'narration' => 'Sales invoice ' . $order['id'],
         'cashIn' => $order['grossAmount'],
-        'cashOut' => 0.00
+        'cashOut' => 0.00,
+        'method' => $order['paymentMethod']
     ];
 }
 
@@ -212,7 +226,7 @@ foreach ($expenses as $expense) {
     ];
 }
 
-// Return the response
+// Return response
 echo json_encode([
     'success' => true,
     'meta' => [

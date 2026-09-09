@@ -43,7 +43,17 @@ if (!$user || !password_verify($password, $user['password'])) {
     exit();
 }
 
-/* Successful admin login — set session & cookies */
+/* Successful admin login — update last_login in DB & set session/cookies */
+$colCheck = $conn->query("SHOW COLUMNS FROM users LIKE 'last_login'");
+if ($colCheck && $colCheck->num_rows > 0) {
+    $upStmt = $conn->prepare('UPDATE users SET last_login = NOW() WHERE id = ?');
+    if ($upStmt) {
+        $upStmt->bind_param('i', $user['id']);
+        $upStmt->execute();
+        $upStmt->close();
+    }
+}
+
 $now          = time();
 $cookieMaxAge = 86400; // 24h
 

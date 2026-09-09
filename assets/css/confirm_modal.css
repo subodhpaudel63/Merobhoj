@@ -1,0 +1,145 @@
+/* ============================================================
+   SHARED CONFIRMATION POPUP — same UI as the admin-panel
+   delete-confirm-modal, packaged so it can be used on every
+   dashboard (client site, public pages, QR order page, ...).
+
+   Markup is injected by openDeleteConfirm(), which lives in:
+     - assets/js/adminscript.js   (admin / staff / chef / rider panels)
+     - assets/js/confirm_modal.js (client & public pages)
+
+   Keyframes intentionally reuse the same names as
+   adminstyle.css (fadeIn/fadeOut/slideUp/scaleIn) with
+   identical definitions so both stylesheets stay
+   interchangeable without breaking the close animation.
+   ============================================================ */
+
+.delete-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10001;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.delete-confirm-modal {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.delete-confirm-modal .icon-wrapper {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 15px;
+  background: #fee2e2;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.delete-confirm-modal .icon-wrapper.success {
+  background: #d1fae5;
+}
+
+.delete-confirm-modal h3 {
+  text-align: center;
+  margin: 15px 0;
+  color: #1f2937;
+  font-size: 20px;
+}
+
+.delete-confirm-modal p {
+  text-align: center;
+  color: #6b7280;
+  margin-bottom: 20px;
+}
+
+.delete-confirm-modal #confirmInput {
+  width: 100%;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 60px;
+}
+
+.delete-confirm-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.delete-confirm-buttons button {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.delete-confirm-buttons .btn-cancel {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.delete-confirm-buttons .btn-cancel:hover {
+  background: #d1d5db;
+}
+
+.delete-confirm-buttons .btn-delete-confirm {
+  background: #ef4444;
+  color: white;
+}
+
+.delete-confirm-buttons .btn-delete-confirm:hover {
+  background: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+}
+
+.delete-confirm-buttons .btn-success-confirm {
+  background: var(--clr-success, #2ed573);
+  color: white;
+}
+
+.delete-confirm-buttons .btn-success-confirm:hover {
+  filter: brightness(0.95);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(46, 213, 115, 0.4);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.5); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}

@@ -96,10 +96,9 @@ foreach ($feedback as $f) {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <script src="https://unpkg.com/lucide@latest"></script>
-
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@48,400,0,0" />
   <link rel="stylesheet" href="../assets/css/adminstyle.css?v=<?= filemtime(__DIR__ . '/../assets/css/adminstyle.css') ?>">
+  <link rel="stylesheet" href="../assets/css/admin2.css?v=<?= filemtime(__DIR__ . '/../assets/css/admin2.css') ?>">
 </head>
 <body class="admin-page">
    <?php include_once __DIR__ . '/topbar.php'; ?>
@@ -115,7 +114,7 @@ foreach ($feedback as $f) {
         <p>Monitor customer reviews and improve service quality.</p>
       </div>
       <button class="add-review-btn" id="openReview">
-        <i data-lucide="plus"></i>
+        <span class="material-symbols-sharp">add</span>
         Add Review
       </button>
     </div>
@@ -127,7 +126,7 @@ foreach ($feedback as $f) {
         <section class="stats-grid">
 
           <article class="stat-card">
-            <div class="stat-icon orange"><i data-lucide="message-square-text"></i></div>
+            <div class="stat-icon orange"><span class="material-symbols-sharp">chat</span></div>
             <div class="stat-copy">
               <span>Total Reviews</span>
               <strong id="totalReviews">1</strong>
@@ -137,7 +136,7 @@ foreach ($feedback as $f) {
           </article>
 
           <article class="stat-card">
-            <div class="stat-icon orange"><i data-lucide="star"></i></div>
+            <div class="stat-icon orange"><span class="material-symbols-sharp">star</span></div>
             <div class="stat-copy">
               <span>Average Rating</span>
               <strong id="averageRating">5.0 / 5</strong>
@@ -147,7 +146,7 @@ foreach ($feedback as $f) {
           </article>
 
           <article class="stat-card">
-            <div class="stat-icon green"><i data-lucide="thumbs-up"></i></div>
+            <div class="stat-icon green"><span class="material-symbols-sharp">thumb_up</span></div>
             <div class="stat-copy">
               <span>Positive Ratio</span>
               <strong id="positiveRatio">100%</strong>
@@ -157,7 +156,7 @@ foreach ($feedback as $f) {
           </article>
 
           <article class="stat-card">
-            <div class="stat-icon purple"><i data-lucide="message-circle"></i></div>
+            <div class="stat-icon purple"><span class="material-symbols-sharp">forum</span></div>
             <div class="stat-copy">
               <span>Response Rate</span>
               <strong id="responseRate">0%</strong>
@@ -171,10 +170,10 @@ foreach ($feedback as $f) {
         <section class="filters card">
 
           <div class="search-box">
-            <i data-lucide="search"></i>
+            <span class="material-symbols-sharp">search</span>
             <input id="searchInput" type="text" placeholder="Search by name or email...">
             <button class="clear-search" id="clearSearch" title="Clear search" hidden>
-              <i data-lucide="x"></i>
+              <span class="material-symbols-sharp">close</span>
             </button>
           </div>
 
@@ -188,13 +187,13 @@ foreach ($feedback as $f) {
           </select>
 
           <button class="date-btn" id="dateBtn">
-            <i data-lucide="calendar-days"></i>
+            <span class="material-symbols-sharp">calendar_month</span>
             <span id="dateBtnText">Select Date Range</span>
-            <i data-lucide="chevron-down"></i>
+            <span class="material-symbols-sharp">expand_more</span>
           </button>
 
           <button class="filter-btn" id="filterBtn">
-            <i data-lucide="sliders-horizontal"></i>
+            <span class="material-symbols-sharp">tune</span>
             Filter
           </button>
 
@@ -205,7 +204,7 @@ foreach ($feedback as $f) {
           <section class="date-popover" id="datePopover" hidden>
             <div class="popover-title">
               <strong>Select date range</strong>
-              <button id="closeDatePopover"><i data-lucide="x"></i></button>
+              <button id="closeDatePopover"><span class="material-symbols-sharp">close</span></button>
             </div>
             <div class="date-fields">
               <label>
@@ -226,7 +225,7 @@ foreach ($feedback as $f) {
         </section>
 
         <section class="filter-summary" id="filterSummary" hidden>
-          <span><i data-lucide="filter"></i><b>Active filters:</b> <span id="summaryText"></span></span>
+          <span><span class="material-symbols-sharp">filter_alt</span><b>Active filters:</b> <span id="summaryText"></span></span>
           <button id="clearAllFilters">Clear all</button>
         </section>
 
@@ -253,7 +252,7 @@ foreach ($feedback as $f) {
           </div>
 
           <div class="empty" id="emptyState" hidden>
-            <i data-lucide="message-square-off"></i>
+            <span class="material-symbols-sharp">comments_disabled</span>
             <strong>No reviews found</strong>
             <span>Try changing your search or filters.</span>
           </div>
@@ -261,18 +260,18 @@ foreach ($feedback as $f) {
           <div class="history-footer">
             <span id="showingText">Showing 1 to 1 of 1 review</span>
             <div class="pagination">
-              <button id="prevPage" disabled><i data-lucide="chevron-left"></i></button>
+              <button id="prevPage" disabled><span class="material-symbols-sharp">chevron_left</span></button>
               <button class="active">1</button>
-              <button id="nextPage" disabled><i data-lucide="chevron-right"></i></button>
+              <button id="nextPage" disabled><span class="material-symbols-sharp">chevron_right</span></button>
             </div>
           </div>
         </section>
 
         <section class="tip">
-          <div class="info"><i data-lucide="info"></i></div>
+          <div class="info"><span class="material-symbols-sharp">info</span></div>
           <span>Responding to reviews shows customers you value their feedback and helps build trust.</span>
           <button id="writeResponse">
-            <i data-lucide="message-square-reply"></i>
+            <span class="material-symbols-sharp">reply</span>
             Write a Response
           </button>
         </section>
@@ -323,7 +322,7 @@ foreach ($feedback as $f) {
 
 <div class="modal" id="reviewModal" hidden>
   <div class="modal-box">
-    <button class="close" id="closeReview"><i data-lucide="x"></i></button>
+    <button class="close" id="closeReview"><span class="material-symbols-sharp">close</span></button>
     <h2>Add Customer Review</h2>
     <p>Create a review and watch the dashboard update instantly.</p>
 
@@ -351,7 +350,7 @@ foreach ($feedback as $f) {
       </label>
 
       <button class="submit-review" type="submit">
-        <i data-lucide="plus"></i>
+        <span class="material-symbols-sharp">add</span>
         Add Review
       </button>
     </form>
@@ -360,7 +359,7 @@ foreach ($feedback as $f) {
 
 <div class="modal" id="viewModal" hidden>
   <div class="modal-box view-box">
-    <button class="close" id="closeView"><i data-lucide="x"></i></button>
+    <button class="close" id="closeView"><span class="material-symbols-sharp">close</span></button>
 
     <div class="view-header">
       <div class="large-avatar" id="viewAvatar"></div>
@@ -378,27 +377,27 @@ foreach ($feedback as $f) {
     </div>
 
     <div class="view-meta">
-      <div><i data-lucide="calendar-days"></i><span><b>Date</b><small id="viewDate"></small></span></div>
-      <div><i data-lucide="clock-3"></i><span><b>Time</b><small id="viewTime"></small></span></div>
+      <div><span class="material-symbols-sharp">calendar_month</span><span><b>Date</b><small id="viewDate"></small></span></div>
+      <div><span class="material-symbols-sharp">schedule</span><span><b>Time</b><small id="viewTime"></small></span></div>
     </div>
 
     <div class="view-actions">
       <button class="secondary-btn" id="closeViewBottom">Close</button>
-      <button class="response-btn" id="viewRespond"><i data-lucide="message-square-reply"></i> Write Response</button>
+      <button class="response-btn" id="viewRespond"><span class="material-symbols-sharp">reply</span> Write Response</button>
     </div>
   </div>
 </div>
 
 <div class="modal" id="responseModal" hidden>
   <div class="modal-box">
-    <button class="close" id="closeResponse"><i data-lucide="x"></i></button>
+    <button class="close" id="closeResponse"><span class="material-symbols-sharp">close</span></button>
     <h2>Write a Response</h2>
     <p id="responseFor">Respond to the customer.</p>
 
     <textarea id="responseTextInput" placeholder="Thank you for your feedback..."></textarea>
 
     <button class="submit-review" id="sendResponse">
-      <i data-lucide="send"></i>
+      <span class="material-symbols-sharp">send</span>
       Send Response
     </button>
   </div>
@@ -407,10 +406,8 @@ foreach ($feedback as $f) {
 <script>
   // Review data from the database, consumed by the feedback section of adminscript.js
   window.__FEEDBACK_DATA__ = <?= json_encode($feedback_js, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?>;
-
-  // Render the lucide icons (the CSS targets the <svg> elements lucide generates)
-  lucide.createIcons();
 </script>
 <script src="../assets/js/adminscript.js?v=<?= filemtime(__DIR__ . '/../assets/js/adminscript.js') ?>"></script>
+<script src="../assets/js/admin2.js?v=<?= filemtime(__DIR__ . '/../assets/js/admin2.js') ?>"></script>
 </body>
 </html>

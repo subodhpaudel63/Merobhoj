@@ -23,7 +23,7 @@ unset($_SESSION['msg']);
     .brand-panel {
       width: 44%; min-height: 100vh;
       background-color: #080808;
-      background-image: url("../assets/img/gallery/merobhoj-left-panel(1).png");
+      background-image: url("../assets/img/gallery/merobhoj-left-panel\(1\).png");
       background-position: center;
       background-size: contain;
       background-repeat: no-repeat;

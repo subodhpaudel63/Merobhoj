@@ -636,7 +636,14 @@ async function cancelTrackedOrder() {
     myorderToast('error', 'This order can no longer be cancelled.');
     return;
   }
-  if (!window.confirm('Are you sure you want to cancel order ' + o.id + '?')) return;
+  const okToCancel = window.confirmAction
+    ? await confirmAction({
+        title: 'Cancel Order ' + o.id + '?',
+        message: 'Your order will be cancelled. This action cannot be undone.',
+        confirmText: 'Yes, Cancel Order'
+      })
+    : window.confirm('Are you sure you want to cancel order ' + o.id + '?');
+  if (!okToCancel) return;
   try {
     const res = await fetch('../includes/order_cancel_customer.php', {
       method: 'POST',
@@ -713,14 +720,13 @@ function openTrackPage(o) {
    myorderSelectedOrderNumber: the order the user explicitly chose to track
    (kept so the order survives polling refreshes and page reloads). */
 let myorderSelectedOrderNumber = null; // user-picked order, survives polling refreshes
-let riderTimer = null;                 // rider animation interval handle
 
 function resetMap() {
-  if (riderTimer) { clearInterval(riderTimer); riderTimer = null; }
   if (deliveryTimer) { clearInterval(deliveryTimer); deliveryTimer = null; }
-  deliveryFeedOrder = null; riderFixSeen = false;
+  deliveryFeedOrder = null;
   if (map) { try { map.remove(); } catch (err) { /* already gone */ } }
   map = null; riderMarker = null; routeLine = null; routePath = [];
+  customerLocation = null;
   distanceKm = 0; etaMinutes = 0;
   mapBooted = false;
 }
@@ -866,6 +872,7 @@ function findOrderById(id) {
       id: CONFIG.ORDER.id,
       date: CONFIG.ORDER.placedDate + ' | ' + CONFIG.ORDER.placedTime,
       name: CONFIG.ORDER.name, addr: CONFIG.ORDER.addr, img: CONFIG.ORDER.img,
+      orderType: CONFIG.ORDER.orderType,
       statusLabel: CONFIG.ORDER.statusLabel, statusSub: CONFIG.ORDER.statusSub, status: CONFIG.ORDER.status,
       itemsList: CONFIG.ORDER.itemsList, bill: CONFIG.ORDER.bill, payment: CONFIG.ORDER.payment
     };
@@ -908,6 +915,8 @@ function openOrderDetails(id) {
     <div class="modal-bill-row total"><span>Total</span><span>${b.total || '--'}</span></div>`;
 
   document.getElementById('mPayment').textContent = o.payment || '--';
+  const orderType = document.getElementById('mOrderType');
+  if (orderType) orderType.textContent = o.orderType || 'Delivery';
   document.getElementById('mOrderTime').textContent = o.date;
 
   document.getElementById('detailsModal').classList.add('open');
@@ -924,11 +933,12 @@ function closeOrderDetails() {
                                  distance & duration between those points
    Both are free, keyless, public OpenStreetMap-ecosystem APIs.
    ================================================================= */
-const GEOCODE_API = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=';
+const GEOCODE_API = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=np&viewbox=83.85,28.30,84.10,28.10&q=';
 const ROUTE_API   = 'https://router.project-osrm.org/route/v1/driving/';
 
 let map, riderMarker, routeLine;
 let routePath = [];
+let customerLocation = null;
 let distanceKm = 0;
 let etaMinutes = 0;
 
@@ -954,10 +964,9 @@ async function fetchRoute(from, to) {
   };
 }
 
-// Restaurant location (fixed) and fallback path (only if live APIs are unreachable)
+// Restaurant location is used only as a map reference; rider movement is never
+// simulated. The customer destination comes from the actual delivery address.
 const fallbackRestaurant = [28.2110, 83.9520];
-const fallbackHome       = [28.2145, 83.9605];
-const fallbackPath = [fallbackRestaurant, [28.2088, 83.9548], [28.2065, 83.9575], [28.2100, 83.9600], [28.2128, 83.9598], fallbackHome];
 
 async function initMap() {
   if (mapBooted || !CONFIG || !CONFIG.ORDER.hasAddress) return;
@@ -965,10 +974,10 @@ async function initMap() {
   mapBooted = true;
 
   map = L.map('map', { zoomControl: true, attributionControl: true }).setView(CONFIG.ROUTE.mapCenter, CONFIG.ROUTE.mapZoom);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    maxZoom: 20,
-    subdomains: 'abcd',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    subdomains: ['a', 'b', 'c'],
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
   }).addTo(map);
   L.control.scale({ position: 'bottomleft', imperial: false }).addTo(map);
 
@@ -978,31 +987,27 @@ async function initMap() {
 
   let restaurantPos, homePos;
   try {
-    // Restaurant position is fixed; the customer point comes from the order's delivery address.
+    // The customer point comes from the actual delivery address.
     restaurantPos = fallbackRestaurant;
     const g = await geocode(CONFIG.ROUTE.homeQuery);
     homePos = [g.lat, g.lng];
-
-    const route = await fetchRoute({ lat: restaurantPos[0], lng: restaurantPos[1] }, { lat: homePos[0], lng: homePos[1] });
-    routePath = route.coords;
-    distanceKm = route.distanceKm;
-    etaMinutes = Math.max(Math.round(route.durationMin), 1);
+    customerLocation = homePos;
   } catch (err) {
-    console.warn('Live routing API unavailable, using fallback route:', err);
+    console.warn('Customer address could not be located:', err);
     restaurantPos = fallbackRestaurant;
-    homePos = fallbackHome;
-    routePath = fallbackPath;
+    homePos = null;
+    customerLocation = null;
   }
 
   L.marker(restaurantPos, { icon: restIcon }).addTo(map);
-  L.marker(homePos, { icon: homeIcon }).addTo(map);
-  routeLine = L.polyline(routePath, { color: '#178a4c', weight: 4, opacity: 0.9 }).addTo(map);
-  riderMarker = L.marker(routePath[0], { icon: riderIcon }).addTo(map);
-  map.fitBounds(routeLine.getBounds(), { padding: [60, 60] });
+  if (homePos) {
+    L.marker(homePos, { icon: homeIcon }).addTo(map);
+    map.setView(homePos, 14);
+  } else {
+    map.setView(restaurantPos, 14);
+  }
 
   updateEtaUI();
-  // The animated rider only makes sense while the order is actually out for delivery
-  if (CONFIG.ORDER.rawStatus === 'Delivering') animateRider();
 }
 
 function haversine(a, b) {
@@ -1044,24 +1049,6 @@ function pointAtFraction(path, cum, frac) {
   };
 }
 
-function animateRider() {
-  const RIDE_DURATION_MS = CONFIG.ROUTE.rideDurationMs;
-  const cum = cumulativeDistances(routePath);
-  const startTime = Date.now();
-
-  riderTimer = setInterval(() => {
-    if (routePath.length < 2) return;
-    const elapsed = Date.now() - startTime;
-    const frac = Math.min(elapsed / RIDE_DURATION_MS, 1);
-    const { lat, lng, remainingKm } = pointAtFraction(routePath, cum, frac);
-    riderMarker.setLatLng([lat, lng]);
-
-    distanceKm = Math.max(remainingKm, 0.02);
-    etaMinutes = Math.max(Math.ceil((1 - frac) * (RIDE_DURATION_MS / 60000)), frac >= 1 ? 0 : 1);
-    updateEtaUI();
-  }, 300);
-}
-
 /* =================================================================
    REAL DELIVERY FEED — the rider's identity, their live GPS position and
    the handover code all come from includes/delivery_track.php, which scopes
@@ -1077,7 +1064,6 @@ const RIDER_SPEED_KMH  = 18;     // city scooter average, used for the ETA
 let deliveryTimer = null;        // feed interval handle
 let deliveryFeedOrder = null;    // order the feed is currently following
 let deliveryInFlight = false;
-let riderFixSeen = false;        // a real GPS fix has arrived at least once
 
 function hideDeliveryCards() {
   const rc = document.getElementById('riderCard');
@@ -1097,7 +1083,6 @@ function syncDeliveryFeed(cfg) {
 
   if (deliveryTimer) { clearInterval(deliveryTimer); deliveryTimer = null; }
   deliveryFeedOrder = wanted;
-  riderFixSeen = false;
 
   if (!wanted) { hideDeliveryCards(); return; }
   pollDeliveryInfo();
@@ -1169,36 +1154,31 @@ function applyDeliveryInfo(d) {
 /* Move the marker to the rider's real position and recompute distance/ETA from
    how much of the routed path is still ahead of them. */
 function applyRiderFix(fix) {
-  if (!map || !riderMarker) return;   // map not booted yet; the next tick retries
+  if (!map || !customerLocation) return;
 
-  // The first real fix retires the simulated ride for good.
-  if (!riderFixSeen) {
-    riderFixSeen = true;
-    if (riderTimer) { clearInterval(riderTimer); riderTimer = null; }
+  if (!riderMarker) {
+    riderMarker = L.circleMarker([fix.lat, fix.lng], {
+    radius: 9, color: '#fff', weight: 3, fillColor: '#178a4c', fillOpacity: 1
+    }).addTo(map).bindPopup('Rider (live GPS)');
+  } else {
+    riderMarker.setLatLng([fix.lat, fix.lng]);
   }
 
   const here = [fix.lat, fix.lng];
-  riderMarker.setLatLng(here);
-
-  const dest = routePath.length ? routePath[routePath.length - 1] : null;
-  let remainingKm = dest ? haversine(here, dest) : 0;
-
-  if (routePath.length > 1) {
-    // Snap onto the route: the nearest vertex tells us how much of the path is
-    // already behind the rider, which tracks road distance far better than a
-    // straight line. Ignore the snap when they are clearly off-route.
-    const cum = cumulativeDistances(routePath);
-    let nearest = 0, best = Infinity;
-    for (let i = 0; i < routePath.length; i++) {
-      const dd = haversine(here, routePath[i]);
-      if (dd < best) { best = dd; nearest = i; }
-    }
-    if (best <= 0.5) remainingKm = Math.max(cum[cum.length - 1] - cum[nearest], 0);
-  }
-
-  distanceKm = Math.max(remainingKm, 0.02);
-  etaMinutes = Math.max(Math.ceil((distanceKm / RIDER_SPEED_KMH) * 60), remainingKm <= 0.05 ? 0 : 1);
-  updateEtaUI();
+  fetchRoute({ lat: here[0], lng: here[1] }, { lat: customerLocation[0], lng: customerLocation[1] })
+    .then((route) => {
+    routePath = route.coords;
+    if (routeLine) map.removeLayer(routeLine);
+    routeLine = L.polyline(routePath, { color: '#178a4c', weight: 4, opacity: 0.9 }).addTo(map);
+    distanceKm = route.distanceKm;
+    etaMinutes = Math.max(Math.round(route.durationMin), 1);
+    updateEtaUI();
+    })
+    .catch(() => {
+    distanceKm = haversine(here, customerLocation);
+    etaMinutes = Math.max(Math.ceil((distanceKm / RIDER_SPEED_KMH) * 60), 1);
+    updateEtaUI();
+    });
 }
 
 /* =================================================================
@@ -1382,12 +1362,12 @@ function computeGraceSeconds() {
     const now = bkServerNow ? parseDb(bkServerNow) : new Date();
 
     for (const b of bkBookings) {
-        if (b.status === 'Checked-in' && b.grace_end_at) {
+        if ((b.status === 'Confirmed' || b.status === 'Checked-in') && b.grace_end_at) {
             const diff = Math.floor((parseDb(b.grace_end_at) - now) / 1000);
             if (diff > 0) {
                 graceSeconds = diff;
                 if (bkTimerSub) {
-                    bkTimerSub.textContent = 'Check-in grace for ' + (b.table_name || 'your table')
+                    bkTimerSub.textContent = 'Hold grace for ' + (b.table_name || 'your table')
                         + (b.grace_deadline_display ? ' until ' + b.grace_deadline_display : '');
                 }
                 break;
@@ -1605,7 +1585,14 @@ async function bkCancelBooking(row, button) {
     const b = row._booking;
     if (!b || button.disabled) return;
 
-    if (!window.confirm('Are you sure you want to cancel this booking?')) return;
+    const okToCancel = window.confirmAction
+        ? await confirmAction({
+              title: 'Cancel this booking?',
+              message: 'Your table reservation will be cancelled. This action cannot be undone.',
+              confirmText: 'Yes, Cancel Booking'
+          })
+        : window.confirm('Are you sure you want to cancel this booking?');
+    if (!okToCancel) return;
 
     button.disabled = true;
     button.textContent = 'Cancelling…';
@@ -1805,5 +1792,3 @@ async function bkLoadBookings() {
 }
 
 bkLoadBookings();
-
-

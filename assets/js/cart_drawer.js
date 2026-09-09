@@ -189,15 +189,33 @@
   }
 
   function clearCart() {
-    if (!cartItems.length || !confirm('Clear all items from your cart?')) return;
-    postCart({ ajax_action: 'clear_cart' }).then(data => {
-      if (data.success) {
-        showSuccess(data.message || 'Cart cleared.', 'Cart cleared');
-        refreshCart();
-      } else {
-        showError(data.message || 'Could not clear cart.', 'Clear failed');
-      }
-    });
+    if (!cartItems.length) return;
+
+    const doClear = () => {
+      postCart({ ajax_action: 'clear_cart' }).then(data => {
+        if (data.success) {
+          showSuccess(data.message || 'Cart cleared.', 'Cart cleared');
+          refreshCart();
+        } else {
+          showError(data.message || 'Could not clear cart.', 'Clear failed');
+        }
+      });
+    };
+
+    // Shared confirm popup (same UI as the admin-panel delete-confirm modal)
+    if (typeof window.openDeleteConfirm === 'function') {
+      openDeleteConfirm({
+        title: 'Clear Cart?',
+        message: 'All items will be removed from your cart. This action cannot be undone.',
+        confirmText: 'Clear Cart',
+        onConfirm: doClear
+      });
+      return;
+    }
+
+    // Fallback to the native dialog if the shared modal is unavailable
+    if (!confirm('Clear all items from your cart?')) return;
+    doClear();
   }
 
   function showSuccess(message, title = 'Success') {

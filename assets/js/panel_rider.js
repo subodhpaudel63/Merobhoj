@@ -403,35 +403,52 @@
       return;
     }
 
-    if (act === 'release' && !window.confirm('Return this delivery to the pool?')) return;
-
-    btn.disabled = true;
-    postJSON(url, body).then(function (d) {
-      if (d && d.success) {
-        toast(d.message || 'Done', 'success');
-        if (act === 'complete' && document.getElementById('riderNavigate')) {
-          window.location.href = 'dashboard.php';
-          return;
+    var submitAction = function () {
+      btn.disabled = true;
+      postJSON(url, body).then(function (d) {
+        if (d && d.success) {
+          toast(d.message || 'Done', 'success');
+          if (act === 'complete' && document.getElementById('riderNavigate')) {
+            window.location.href = 'dashboard.php';
+            return;
+          }
+          if (window.__riderRefresh) window.__riderRefresh();
+          if (window.__riderNavRefresh) window.__riderNavRefresh();
+        } else {
+          toast((d && d.message) || 'Action failed', 'error');
+          if (window.__riderRefresh) window.__riderRefresh();
+          if (window.__riderNavRefresh) window.__riderNavRefresh();
         }
-        if (window.__riderRefresh) window.__riderRefresh();
-        if (window.__riderNavRefresh) window.__riderNavRefresh();
-      } else {
-        toast((d && d.message) || 'Action failed', 'error');
-        if (window.__riderRefresh) window.__riderRefresh();
-        if (window.__riderNavRefresh) window.__riderNavRefresh();
+      }).catch(function () {
+        toast('Network error — try again.', 'error');
+      }).finally(function () {
+        btn.disabled = false;
+      });
+    };
+
+    if (act === 'release') {
+      // Shared confirm popup (same UI as the admin-panel delete-confirm modal)
+      if (typeof window.openDeleteConfirm === 'function') {
+        openDeleteConfirm({
+          title: 'Release this delivery?',
+          message: 'It will be returned to the pool so another rider can claim it.',
+          confirmText: 'Release',
+          onConfirm: submitAction
+        });
+        return;
       }
-    }).catch(function () {
-      toast('Network error — try again.', 'error');
-    }).finally(function () {
-      btn.disabled = false;
-    });
+      // Fallback to the native dialog if the shared modal is unavailable
+      if (!window.confirm('Return this delivery to the pool?')) return;
+    }
+
+    submitAction();
   });
 
   /* ============================ 3. Navigate map ============================ */
 
   var nav = document.getElementById('riderNavigate');
   if (nav && window.L) {
-    var GEOCODE_API = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=';
+    var GEOCODE_API = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=np&viewbox=83.85,28.30,84.10,28.10&q=';
     var ROUTE_API   = 'https://router.project-osrm.org/route/v1/driving/';
     var CENTER      = [28.2105, 83.9565];          // Pokhara — same centre the customer map uses
     var ORDER       = nav.dataset.order;
@@ -439,9 +456,10 @@
     var CACHE_KEY   = 'mkj_dest_' + ORDER;
 
     var map = L.map('riderMap', { zoomControl: true }).setView(CENTER, 14);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      maxZoom: 20,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      subdomains: ['a', 'b', 'c'],
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
     var restMarker = L.marker(CENTER, { title: 'Mero Bhoj' }).addTo(map).bindPopup('Mero Bhoj');

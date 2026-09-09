@@ -206,6 +206,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'bookings') {
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@48,400,0,0" />
   <link rel="stylesheet" href="../assets/css/adminstyle.css?v=<?= filemtime(__DIR__ . '/../assets/css/adminstyle.css') ?>">
+  <link rel="stylesheet" href="../assets/css/admin2.css?v=<?= filemtime(__DIR__ . '/../assets/css/admin2.css') ?>">
   <link rel="stylesheet" href="../assets/css/admin_bookings.css?v=<?= filemtime(__DIR__ . '/../assets/css/admin_bookings.css') ?>">
 </head>
 <body class="admin-page">
@@ -242,7 +243,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'bookings') {
                       <span class="bookings-stat-desc">All time reservations</span>
                   </div>
                   <svg class="bookings-stat-sparkline" viewBox="0 0 90 40">
-                      <path d="<?= $total_path ?>" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                      <path d="<?= $total_path ?>" fill="none" stroke="#f05a22" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
                   </svg>
               </div>
 
@@ -926,7 +927,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'bookings') {
            actions += `<button class="dots-menu-item" onclick="updateStatus(${id}, 'Confirmed')"><span class="material-symbols-sharp" style="font-size:1.1rem;color:#16a34a;">check</span>Confirm</button>`;
            actions += `<button class="dots-menu-item" onclick="updateStatus(${id}, 'Cancelled')"><span class="material-symbols-sharp" style="font-size:1.1rem;color:#dc2626;">close</span>Cancel</button>`;
        } else if (status === 'Confirmed') {
-           actions += `<button class="dots-menu-item" onclick="updateStatus(${id}, 'Checked-in')"><span class="material-symbols-sharp" style="font-size:1.1rem;color:#2563eb;">login</span>Check-in</button>`;
+           actions += `<button class="dots-menu-item" onclick="updateStatus(${id}, 'Checked-in')"><span class="material-symbols-sharp" style="font-size:1.1rem;color:#f05a22;">login</span>Check-in</button>`;
            actions += `<button class="dots-menu-item" onclick="updateStatus(${id}, 'Cancelled')"><span class="material-symbols-sharp" style="font-size:1.1rem;color:#dc2626;">close</span>Cancel</button>`;
        } else if (status === 'Checked-in') {
            actions += `<button class="dots-menu-item" onclick="updateStatus(${id}, 'Completed')"><span class="material-symbols-sharp" style="font-size:1.1rem;color:#16a34a;">done_all</span>Complete</button>`;
@@ -1122,7 +1123,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'bookings') {
        if (b.status === 'Pending') {
            actionBtn += `<button onclick="updateStatus(${b.id}, 'Confirmed'); closeDetailsModal();" class="btn-modal-submit" style="background-color:#16a34a;">Confirm</button>`;
        } else if (b.status === 'Confirmed') {
-           actionBtn += `<button onclick="updateStatus(${b.id}, 'Checked-in'); closeDetailsModal();" class="btn-modal-submit" style="background-color:#2563eb;">Check-in</button>`;
+           actionBtn += `<button onclick="updateStatus(${b.id}, 'Checked-in'); closeDetailsModal();" class="btn-modal-submit" style="background-color:#f05a22;">Check-in</button>`;
        } else if (b.status === 'Checked-in') {
            actionBtn += `<button onclick="updateStatus(${b.id}, 'Completed'); closeDetailsModal();" class="btn-modal-submit" style="background-color:#16a34a;">Complete</button>`;
        }
@@ -1255,13 +1256,13 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'bookings') {
            const isSelectedDate = (fullDateStr === activeDate);
            
            let cellStyle = 'background-color: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px; min-height: 80px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column;';
-           if (isToday) cellStyle += ' border: 2px solid #2563eb; background-color:#eff6ff;';
+           if (isToday) cellStyle += ' border: 2px solid #f05a22; background-color:#fff0eb;';
            else if (isSelectedDate) cellStyle += ' border: 2px solid #c2410c; background-color:#fff7ed;';
            
            grid.innerHTML += `
                <div style="${cellStyle}" onclick="selectDateFromCalendar('${fullDateStr}')">
                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                       <span style="font-weight:700; font-size:0.9rem; color:${isToday ? '#2563eb' : '#1e293b'}">${d}</span>
+                       <span style="font-weight:700; font-size:0.9rem; color:${isToday ? '#f05a22' : '#1e293b'}">${d}</span>
                        ${dayBookings.length > 0 ? `<span style="background-color:#f1f5f9; color:#475569; font-size:10px; font-weight:bold; padding:1px 5px; border-radius:10px;">${dayBookings.length}</span>` : ''}
                    </div>
                    <div style="flex-grow:1; display:flex; flex-direction:column; justify-content:flex-start; margin-top:4px;">
@@ -1440,5 +1441,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'bookings') {
    </script>
    
    <script src="../assets/js/adminscript.js?v=<?= filemtime(__DIR__ . '/../assets/js/adminscript.js') ?>"></script>
+   <script src="../assets/js/admin2.js?v=<?= filemtime(__DIR__ . '/../assets/js/admin2.js') ?>"></script>
 </body>
 </html>

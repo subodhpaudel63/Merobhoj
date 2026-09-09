@@ -47,7 +47,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $quantity = isset($_POST['quantity']) ? intval($_POST['quantity']) : 1;
     $price = isset($_POST['price']) ? floatval($_POST['price']) : 0.0;
     $total_price = isset($_POST['total_price']) ? floatval($_POST['total_price']) : 0.0;
-    $email = isset($_POST['email']) ? trim($_POST['email']) : '';
+    // Keep ownership tied to the authenticated customer account.
+    $email = trim((string)($user['email'] ?? ''));
     $full_name = isset($_POST['full_name']) ? trim($_POST['full_name']) : '';
     $mobile = isset($_POST['mobile']) ? trim($_POST['mobile']) : '';
     $address = isset($_POST['address']) ? trim($_POST['address']) : '';

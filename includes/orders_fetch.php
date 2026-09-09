@@ -20,7 +20,8 @@ $stmt = $conn->prepare("SELECT o.order_id, o.order_number, o.menu_id, o.menu_nam
                                o.payment_method, o.payment_status, m.menu_image
                         FROM orders o
                         LEFT JOIN menu m ON m.menu_id = o.menu_id
-                        WHERE o.email = ? AND o.order_type != 'Dine In'
+                        WHERE LOWER(TRIM(o.email)) = LOWER(TRIM(?))
+                          AND (o.order_type IS NULL OR o.order_type <> 'Dine In')
                         ORDER BY o.created_at DESC, o.order_id DESC");
 $stmt->bind_param("s", $email);
 $stmt->execute();

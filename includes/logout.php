@@ -1,17 +1,9 @@
 <?php
 session_start();
 
-// Clear all session variables
-$_SESSION = [];
-
-// Destroy the session
-session_destroy();
-
-// Remove session cookie
-if (ini_get("session.use_cookies")) {
-    $params = session_get_cookie_params();
-    setcookie(session_name(), '', time() - 3600, $params["path"], $params["domain"]);
-}
+// Customer and panel authentication share the PHP session transport, so do
+// not destroy the session here. Panel state must survive a customer logout.
+unset($_SESSION['msg']);
 
 // Remove your custom cookies
 setcookie('email', '', time() - 3600, '/');

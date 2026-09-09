@@ -633,6 +633,14 @@ $drawerCount = count($drawerCart);
               </div>
               <div class="mkj-field" id="drawer_address_wrapper">
                   <label for="drawerAddress" class="mkj-order-label">Delivery Address *</label>
+                  <div class="input-group mb-2">
+                      <span class="input-group-text bg-white border-end-0"><i class="fa fa-search text-muted"></i></span>
+                      <input type="search" id="drawerAddressSearch" class="form-control mkj-control border-start-0 ps-0" placeholder="Search your delivery location">
+                      <button type="button" class="btn btn-outline-success" id="drawerUseLocation" title="Use current location"><i class="fa fa-location-crosshairs"></i></button>
+                  </div>
+                  <div id="drawerDeliveryMap" style="height:240px;border-radius:12px;margin-bottom:10px;" aria-label="Delivery location map"></div>
+                  <input type="hidden" id="drawerLatitude" name="latitude">
+                  <input type="hidden" id="drawerLongitude" name="longitude">
                   <div class="input-group">
                       <span class="input-group-text bg-white border-end-0 align-items-start pt-2"><i class="fa fa-location-dot text-muted"></i></span>
                       <textarea id="drawerAddress" name="address" class="form-control mkj-control border-start-0 ps-0 mkj-control-textarea" rows="3" required placeholder="Enter your complete address"></textarea>
@@ -730,6 +738,7 @@ $drawerCount = count($drawerCart);
 </script>
 <script src="<?php echo asset('js/cart_drawer.js'); ?>"></script>
 <script>
+  const checkoutForm = document.getElementById('checkoutForm');
   const orderTypeRadios = checkoutForm.querySelectorAll('input[name="order_type"]');
 const addressWrapper = document.getElementById('drawer_address_wrapper');
 const addressField = document.getElementById('drawerAddress');
@@ -766,4 +775,114 @@ function syncOrderTypeFields() {
 
 orderTypeRadios.forEach(r => r.addEventListener('change', syncOrderTypeFields));
 syncOrderTypeFields();
+</script>
+<script>
+  (function () {
+    const addressWrapper = document.getElementById('drawer_address_wrapper');
+    const addressField = document.getElementById('drawerAddress');
+    const search = document.getElementById('drawerAddressSearch');
+    const useLocation = document.getElementById('drawerUseLocation');
+    const mapElement = document.getElementById('drawerDeliveryMap');
+    const latitude = document.getElementById('drawerLatitude');
+    const longitude = document.getElementById('drawerLongitude');
+    let map = null;
+    let marker = null;
+    let searchTimer = null;
+
+    function setLocation(lat, lng, label) {
+      if (!window.L) {
+        alert('The map is still loading. Please try again.');
+        return;
+      }
+      latitude.value = Number(lat).toFixed(7);
+      longitude.value = Number(lng).toFixed(7);
+      if (!map) {
+        map = L.map(mapElement).setView([lat, lng], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+      }
+      if (!marker) {
+        marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+        marker.on('dragend', function () {
+          const point = marker.getLatLng();
+          setLocation(point.lat, point.lng);
+          fillAddressFromCoordinates(point.lat, point.lng);
+        });
+      }
+      marker.setLatLng([lat, lng]);
+      marker.bindPopup('Delivery location').openPopup();
+      map.setView([lat, lng], 16);
+      if (label) addressField.value = label;
+    }
+
+    function findAddress(query) {
+      if (!query || query.length < 3) return;
+      fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=np&q=' + encodeURIComponent(query), {
+        headers: { Accept: 'application/json' }
+      }).then(r => r.json()).then(rows => {
+        if (!rows.length) return;
+        setLocation(rows[0].lat, rows[0].lon, rows[0].display_name);
+      }).catch(() => {});
+    }
+
+    function fillAddressFromCoordinates(lat, lng) {
+      fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + encodeURIComponent(lat) + '&lon=' + encodeURIComponent(lng), {
+        headers: { Accept: 'application/json' }
+      }).then(r => r.json()).then(place => {
+        if (place && place.display_name) addressField.value = place.display_name;
+      }).catch(() => {});
+    }
+
+    search.addEventListener('input', function () {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => findAddress(search.value.trim()), 500);
+    });
+    search.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        findAddress(search.value.trim());
+      }
+    });
+    useLocation.addEventListener('click', function () {
+      if (!navigator.geolocation) {
+        alert('Location is not supported by this browser.');
+        return;
+      }
+      useLocation.disabled = true;
+      navigator.geolocation.getCurrentPosition(function (position) {
+        setLocation(position.coords.latitude, position.coords.longitude);
+        fillAddressFromCoordinates(position.coords.latitude, position.coords.longitude);
+        useLocation.disabled = false;
+      }, function () {
+        useLocation.disabled = false;
+        alert('Unable to read your current location. Please search for your address.');
+      }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+    });
+    addressField.addEventListener('input', function () {
+      if (addressField.value.trim() === '') {
+        latitude.value = '';
+        longitude.value = '';
+      }
+    });
+    const checkoutModal = document.getElementById('checkoutModal');
+    if (checkoutModal) {
+      checkoutModal.addEventListener('shown.bs.modal', function () {
+        if (map) {
+          map.invalidateSize();
+        } else if (window.L && mapElement && !addressWrapper.hidden) {
+          map = L.map(mapElement).setView([28.2096, 83.9856], 13);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+          }).addTo(map);
+          map.on('click', function (event) {
+            setLocation(event.latlng.lat, event.latlng.lng);
+            fillAddressFromCoordinates(event.latlng.lat, event.latlng.lng);
+          });
+        }
+      });
+    }
+  })();
 </script>

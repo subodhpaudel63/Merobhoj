@@ -31,6 +31,11 @@ if (isset($conn)) {
             <h3>Customers</h3>
         </a>
 
+        <a href="staff.php" class="sidebar-link <?php echo ($current_page === 'staff.php') ? 'active' : ''; ?>">
+            <span class="material-symbols-sharp">badge</span>
+            <h3>Staff & Attendance</h3>
+        </a>
+
         <a href="orders_page.php" class="sidebar-link <?php echo ($current_page === 'orders_page.php' || $current_page === 'order_view.php') ? 'active' : ''; ?>">
             <span class="material-symbols-sharp">mail</span>
             <h3>Orders</h3>
@@ -47,6 +52,11 @@ if (isset($conn)) {
         <a href="bookings.php" class="sidebar-link <?php echo ($current_page === 'bookings.php') ? 'active' : ''; ?>">
             <span class="material-symbols-sharp">calendar_month</span>
             <h3>Bookings</h3>
+        </a>
+
+        <a href="floor.php" class="sidebar-link <?php echo ($current_page === 'floor.php') ? 'active' : ''; ?>">
+            <span class="material-symbols-sharp">grid_view</span>
+            <h3>Floor Plan</h3>
         </a>
 
         <a href="table_qr.php" class="sidebar-link <?php echo ($current_page === 'table_qr.php') ? 'active' : ''; ?>">
@@ -69,6 +79,11 @@ if (isset($conn)) {
             <h3>Feedback</h3>
         </a>
 
+        <a href="analytics.php" class="sidebar-link <?php echo ($current_page === 'analytics.php') ? 'active' : ''; ?>">
+            <span class="material-symbols-sharp">monitoring</span>
+            <h3>Analytics</h3>
+        </a>
+
         <a href="finance.php" class="sidebar-link <?php echo ($current_page === 'finance.php') ? 'active' : ''; ?>">
             <span class="material-symbols-sharp">account_balance</span>
             <h3>Finance</h3>
@@ -78,15 +93,18 @@ if (isset($conn)) {
             <span class="material-symbols-sharp">receipt_long</span>
             <h3>Expenses</h3>
         </a>
+        <a href="suppliers.php" class="sidebar-link <?php echo ($current_page === 'suppliers.php') ? 'active' : ''; ?>"><span class="material-symbols-sharp">store</span><h3>Suppliers</h3></a>
+        <a href="purchase-orders.php" class="sidebar-link <?php echo ($current_page === 'purchase-orders.php' || $current_page === 'po-create.php') ? 'active' : ''; ?>"><span class="material-symbols-sharp">inventory</span><h3>Purchase Orders</h3></a>
+        <a href="audit-logs.php" class="sidebar-link <?php echo ($current_page === 'audit-logs.php') ? 'active' : ''; ?>"><span class="material-symbols-sharp">security</span><h3>Audit Logs</h3></a>
 
         <a href="#" class="sidebar-link">
             <span class="material-symbols-sharp">description</span>
             <h3>Reports</h3>
         </a>
 
-        <a href="#" class="sidebar-link">
-            <span class="material-symbols-sharp">settings</span>
-            <h3>Settings</h3>
+        <a href="printer_settings.php" class="sidebar-link <?php echo ($current_page === 'printer_settings.php') ? 'active' : ''; ?>">
+            <span class="material-symbols-sharp">print</span>
+            <h3>Receipt & Printer</h3>
         </a>
 
         <a href="#" class="sidebar-link">
