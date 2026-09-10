@@ -33,7 +33,7 @@ $pageScripts = ['../assets/js/panel_kds.js'];
     <div>
         <h1>Kitchen Board</h1>
         <p>Live tickets update automatically · <span id="kdsUpdated">syncing…</span></p>
-        <small class="kds-shortcut-hint">Shortcuts: <kbd>1</kbd> Accept · <kbd>2</kbd> Cooking · <kbd>3</kbd> Ready</small>
+        <small class="kds-shortcut-hint">Shortcuts: <kbd>1</kbd> Start Preparing · <kbd>2</kbd> Mark Ready</small>
     </div>
     <span class="panel-live-badge"><span class="panel-live-dot"></span> Live</span>
 </div>

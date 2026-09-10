@@ -18,7 +18,7 @@ $input = api_input();
 api_require_csrf($input);
 
 // Chef may only move tickets into these stages.
-const CHEF_ALLOWED_TARGETS = ['Confirmed', 'Preparing', 'Ready'];
+const CHEF_ALLOWED_TARGETS = ['Preparing', 'Ready'];
 
 $order_id     = (int)($input['order_id'] ?? 0);
 $order_number = trim((string)($input['order_number'] ?? ''));
@@ -28,7 +28,7 @@ if ($order_id <= 0 && $order_number === '') {
     api_json(['success' => false, 'message' => 'Missing order identifier']);
 }
 if (!in_array($status, CHEF_ALLOWED_TARGETS, true)) {
-    api_json(['success' => false, 'message' => 'Chefs can only set Confirmed, Preparing or Ready.']);
+    api_json(['success' => false, 'message' => 'Chefs can only Start Preparing or Mark Ready.']);
 }
 
 // Load the current order (by number preferred, else id).
@@ -56,7 +56,12 @@ $historyKey = !empty($existingOrder['order_number'])
     : ($order_number !== '' ? $order_number : 'ORD-' . str_pad((string)$existingOrder['order_id'], 4, '0', STR_PAD_LEFT));
 
 // Validate the transition (chef treated as staff for forward moves).
-$validation = validate_order_transition($existingOrder['order_type'] ?? 'Delivery', (string)$existingOrder['status'], $status, true);
+$validation = validate_role_transition(
+    'chef',
+    $existingOrder['order_type'] ?? 'Delivery',
+    (string)$existingOrder['status'],
+    $status
+);
 if (!$validation['valid']) {
     api_json(['success' => false, 'message' => $validation['error']]);
 }
