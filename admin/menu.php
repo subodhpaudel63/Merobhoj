@@ -5,6 +5,8 @@ require_once __DIR__ . '/../includes/admin_auth.php';
 require_admin();
 require_once __DIR__ . '/../includes/db.php';
 
+$conn->query("CREATE TABLE IF NOT EXISTS menu_categories (id INT AUTO_INCREMENT PRIMARY KEY, category_name VARCHAR(100) NOT NULL UNIQUE, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
+
 // Handle form submissions
 $message = '';
 $message_type = '';
@@ -12,6 +14,36 @@ $message_type = '';
 // Handle menu item creation/update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     switch ($_POST['action']) {
+        case 'add_category':
+            $category_name = trim($_POST['category_name'] ?? '');
+            if ($category_name !== '') {
+                $stmt = $conn->prepare("INSERT IGNORE INTO menu_categories (category_name) VALUES (?)");
+                $stmt->bind_param('s', $category_name);
+                $stmt->execute();
+                $stmt->close();
+            }
+            header('Location: menu.php');
+            exit;
+        case 'delete_category':
+            $category_name = trim($_POST['category_name'] ?? '');
+            if ($category_name !== '') {
+                $check = $conn->prepare("SELECT COUNT(*) FROM menu WHERE LOWER(TRIM(menu_category)) = LOWER(TRIM(?))");
+                $check->bind_param('s', $category_name);
+                $check->execute();
+                $check->bind_result($item_count);
+                $check->fetch();
+                $check->close();
+                if ((int) $item_count === 0) {
+                    $stmt = $conn->prepare("DELETE FROM menu_categories WHERE LOWER(TRIM(category_name)) = LOWER(TRIM(?))");
+                    $stmt->bind_param('s', $category_name);
+                    $stmt->execute();
+                    $stmt->close();
+                } else {
+                    $_SESSION['msg'] = ['type' => 'error', 'text' => 'Delete the items in this category before deleting the category.'];
+                }
+            }
+            header('Location: menu.php');
+            exit;
         case 'create':
             // Handle image upload
             $image_path = '';
@@ -28,18 +60,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 }
             }
             
+            $menu_category = trim($_POST['menu_category_new'] ?? '') ?: trim($_POST['menu_category'] ?? '');
             $menu_status = in_array($_POST['menu_status'] ?? 'In Stock', ['In Stock', 'Low Stock', 'Out of Stock'], true) ? $_POST['menu_status'] : 'In Stock';
             $stmt = $conn->prepare("INSERT INTO menu (menu_name, menu_description, menu_price, menu_category, menu_status, menu_image) VALUES (?, ?, ?, ?, ?, ?)");
             $stmt->bind_param("ssdsss", 
                 $_POST['menu_name'],
                 $_POST['menu_description'],
                 $_POST['menu_price'],
-                $_POST['menu_category'],
+                $menu_category,
                 $menu_status,
                 $image_path
             );
             
             if ($stmt->execute()) {
+                $conn->query("UPDATE menu SET menu_status = CASE WHEN stock_quantity = 0 THEN 'Out of Stock' WHEN stock_quantity < 5 THEN 'Low Stock' ELSE 'In Stock' END WHERE menu_id = " . (int)$conn->insert_id);
                 $message = 'Menu item created successfully!';
                 $message_type = 'success';
             } else {
@@ -65,19 +99,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 }
             }
             
+            $menu_category = trim($_POST['menu_category_new'] ?? '') ?: trim($_POST['menu_category'] ?? '');
             $menu_status = in_array($_POST['menu_status'] ?? 'In Stock', ['In Stock', 'Low Stock', 'Out of Stock'], true) ? $_POST['menu_status'] : 'In Stock';
             $stmt = $conn->prepare("UPDATE menu SET menu_name = ?, menu_description = ?, menu_price = ?, menu_category = ?, menu_status = ?, menu_image = ? WHERE menu_id = ?");
             $stmt->bind_param("ssdsssi",
                 $_POST['menu_name'],
                 $_POST['menu_description'],
                 $_POST['menu_price'],
-                $_POST['menu_category'],
+                $menu_category,
                 $menu_status,
                 $image_path,
                 $_POST['menu_id']
             );
             
             if ($stmt->execute()) {
+                $statusStmt = $conn->prepare("UPDATE menu SET menu_status = CASE WHEN stock_quantity = 0 THEN 'Out of Stock' WHEN stock_quantity < 5 THEN 'Low Stock' ELSE 'In Stock' END WHERE menu_id = ?");
+                $statusStmt->bind_param('i', $_POST['menu_id']); $statusStmt->execute(); $statusStmt->close();
                 $message = 'Menu item updated successfully!';
                 $message_type = 'success';
             } else {
@@ -138,6 +175,15 @@ $available_categories = array_values(array_unique(array_filter(array_map(
     $menu_items
 ))));
 sort($available_categories);
+$category_options = $available_categories;
+$categoryResult = $conn->query("SELECT category_name FROM menu_categories ORDER BY category_name");
+if ($categoryResult) {
+    while ($category = $categoryResult->fetch_assoc()) {
+        $category_options[] = strtolower(trim($category['category_name']));
+    }
+}
+$category_options = array_values(array_unique(array_filter($category_options)));
+sort($category_options);
 
 $filtered_menu_items = array_filter($menu_items, function ($item) use ($search_query, $selected_category, $selected_status) {
     $matches_search = true;
@@ -255,14 +301,34 @@ $buildMenuUrl = static function (array $overrides = []) use ($queryParams): stri
                       <p>Manage your restaurant menu items, categories and availability.</p>
                   </div>
                   <div class="top-actions">
+                      <a href="../menu.php" class="btn-view" target="_blank">
+                          <span class="material-symbols-sharp btn-icon-sm">language</span>
+                          Root Menu
+                      </a>
                       <a href="../client/menu.php" class="btn-view">
                           <span class="material-symbols-sharp btn-icon-sm">visibility</span>
-                          View Public Menu
+                          Client Menu
                       </a>
                       <button class="btn-add" type="button" onclick="openModal('create')">
                           <span class="material-symbols-sharp btn-icon-sm">add</span>
                           Add New Item
                       </button>
+                  </div>
+              </div>
+
+              <div class="menu-filters menu-filters-padded" style="margin-bottom: 1.25rem;">
+                  <div class="panel-heading"><h3>Category Management</h3><span class="text-muted">Categories are available immediately when adding items.</span></div>
+                  <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:end;">
+                      <form method="post" style="display:flex;gap:.6rem;align-items:end;flex:1;min-width:280px;">
+                          <input type="hidden" name="action" value="add_category">
+                          <div class="filter-group" style="flex:1;"><label for="new_category_name">New category</label><input id="new_category_name" name="category_name" type="text" maxlength="100" placeholder="e.g. Drinks" required></div>
+                          <button class="btn-add" type="submit"><span class="material-symbols-sharp btn-icon-sm">add</span>Add Category</button>
+                      </form>
+                      <form method="post" style="display:flex;gap:.6rem;align-items:end;flex:1;min-width:280px;">
+                          <input type="hidden" name="action" value="delete_category">
+                          <div class="filter-group" style="flex:1;"><label for="delete_category_name">Delete empty category</label><select id="delete_category_name" name="category_name" required><option value="">Select category</option><?php foreach ($category_options as $category): ?><option value="<?php echo htmlspecialchars($category); ?>"><?php echo htmlspecialchars(ucfirst($category)); ?></option><?php endforeach; ?></select></div>
+                          <button class="btn-delete" type="submit" onclick="return confirm('Delete this category? Categories with items cannot be deleted.');"><span class="material-symbols-sharp btn-icon-sm">delete</span>Delete</button>
+                      </form>
                   </div>
               </div>
 
@@ -378,6 +444,9 @@ $buildMenuUrl = static function (array $overrides = []) use ($queryParams): stri
                                   <span>Availability: <?php echo htmlspecialchars($item['menu_status']); ?></span>
                               </div>
                               <div class="menu-actions">
+                                  <?php if ((int)($item['stock_quantity'] ?? 0) === 0): ?>
+                                  <button class="btn-mini edit" type="button" title="Restock" onclick="restockMenuItem(<?php echo $item['menu_id']; ?>)"><span class="material-symbols-sharp btn-icon-sm">inventory</span></button>
+                                  <?php endif; ?>
                                   <button class="btn-mini edit" onclick="openModal('edit', <?php echo $item['menu_id']; ?>)"><span class="material-symbols-sharp btn-icon-sm">edit</span></button>
                                   <button class="btn-mini delete" onclick="deleteMenuItem(<?php echo $item['menu_id']; ?>, '<?php echo addslashes($item['menu_name']); ?>')"><span class="material-symbols-sharp btn-icon-sm">delete</span></button>
                                   <button class="btn-mini more" type="button" onclick="openModal('edit', <?php echo $item['menu_id']; ?>)"><span class="material-symbols-sharp btn-icon-sm">more_horiz</span></button>
@@ -401,7 +470,6 @@ $buildMenuUrl = static function (array $overrides = []) use ($queryParams): stri
               <div class="menu-toolbar mt-1rem">
                   <div class="select-count"><label><input type="checkbox" id="selectAll"> Select All</label><span id="selectedCount">0 item selected</span></div>
                   <div class="filter-actions">
-                      <button type="button" class="btn-secondary" onclick="bulkChangeStatus()">Update Stock</button>
                       <button type="button" class="btn-primary delete-selected" onclick="deleteSelected()">Delete Selected</button>
                   </div>
               </div>
@@ -497,24 +565,14 @@ $buildMenuUrl = static function (array $overrides = []) use ($queryParams): stri
                       
                       <div class="form-group">
                           <label for="menu_category">Category *</label>
-                          <select id="menu_category" name="menu_category" required>
+                          <select id="menu_category" name="menu_category">
                               <option value="">Select Category</option>
-                              <option value="starter">Starter</option>
-                              <option value="breakfast">Breakfast</option>
-                              <option value="lunch">Lunch</option>
-                              <option value="dinner">Dinner</option>
+                              <?php foreach ($category_options as $category): ?>
+                                  <option value="<?php echo htmlspecialchars($category); ?>"><?php echo htmlspecialchars(ucfirst($category)); ?></option>
+                              <?php endforeach; ?>
                           </select>
                       </div>
 
-                      <div class="form-group">
-                          <label for="menu_status">Stock Status *</label>
-                          <select id="menu_status" name="menu_status" required>
-                              <option value="In Stock">In Stock</option>
-                              <option value="Low Stock">Low Stock</option>
-                              <option value="Out of Stock">Out of Stock</option>
-                          </select>
-                      </div>
-                      
                       <div class="form-group">
                           <label for="menu_image">Image (Optional)</label>
                           <input type="file" id="menu_image" name="menu_image" accept="image/*">

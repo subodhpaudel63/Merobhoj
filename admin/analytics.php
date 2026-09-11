@@ -230,7 +230,7 @@ $pageTitle = 'Analytics Dashboard';
       </section>
 
       <section class="insights-card">
-        <h3><span class="material-symbols-sharp" style="color:var(--analytics-accent);">auto_awesome</span> Operational &amp; Management Insights</h3>
+        <h3>Operational &amp; Management Insights</h3>
         <div id="insightsList"></div>
       </section>
 

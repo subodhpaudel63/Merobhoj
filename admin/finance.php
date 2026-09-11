@@ -195,7 +195,10 @@ require_once __DIR__ . '/../includes/db.php';
       <label for="finFiscalYear">Fiscal year</label>
 
       <select id="finFiscalYear" class="fin-select">
-        <option value="2083-84" selected>
+        <option value="" selected>
+          All dates
+        </option>
+        <option value="2083-84">
           2083/84 Â· 2026/27
         </option>
 
@@ -215,8 +218,7 @@ require_once __DIR__ . '/../includes/db.php';
 
       <input type="date"
              id="finStartDate"
-             class="fin-input"
-             value="2026-07-16">
+             class="fin-input">
     </div>
 
 
@@ -225,8 +227,7 @@ require_once __DIR__ . '/../includes/db.php';
 
       <input type="date"
              id="finEndDate"
-             class="fin-input"
-             value="2026-08-31">
+             class="fin-input">
     </div>
 
 
@@ -1272,7 +1273,7 @@ require_once __DIR__ . '/../includes/db.php';
 <!-- Chart.js -->
 <script src="../assets/js/chart.umd.js?v=<?= filemtime(__DIR__ . '/../assets/js/chart.umd.js') ?>"></script>
 <!-- Finance JavaScript -->
-<script src="../assets/js/admin2.js"></script>
+<script src="../assets/js/admin2.js?v=<?= filemtime(__DIR__ . '/../assets/js/admin2.js') ?>"></script>
 <script src="../assets/js/adminscript.js"></script>
 </body>
 </html>

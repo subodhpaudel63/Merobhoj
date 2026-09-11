@@ -81,41 +81,67 @@ require_once __DIR__ . '/../includes/db.php';
     const BASE_ORDER_URL = window.location.origin + '/Merobhoj/order/';
 
     function loadTables() {
-      fetch('api/api_qr_tables.php?action=list')
+      const container = document.getElementById('tablesContainer');
+      container.classList.add('is-refreshing');
+      return fetch('api/api_qr_tables.php?action=list')
         .then(r => r.json())
         .then(data => {
           if (data.success) renderTables(data.tables);
+          else showQrToast(data.message || 'Failed to load tables.', 'error');
         })
-        .catch(() => showQrToast('Failed to load tables.', 'error'));
+        .catch(() => showQrToast('Failed to load tables.', 'error'))
+        .finally(() => container.classList.remove('is-refreshing'));
     }
 
     function renderTables(tables) {
       const container = document.getElementById('tablesContainer');
-      container.innerHTML = '';
+      const fragment = document.createDocumentFragment();
+      const qrQueue = [];
 
       let active = 0, inactive = 0;
       tables.forEach(table => {
         if (table.qr_token) active++; else inactive++;
-        container.appendChild(buildTableCard(table));
-        if (table.qr_token) {
-          // Render QR after DOM insert
-          setTimeout(() => {
-            const el = document.getElementById('qr-canvas-' + table.id);
-            if (el && !el.hasChildNodes()) {
-              new QRCode(el, {
-                text: BASE_ORDER_URL + table.qr_token,
-                width: 140, height: 140,
-                colorDark: '#1e293b', colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.H
-              });
-            }
-          }, 50);
-        }
+        fragment.appendChild(buildTableCard(table));
+        if (table.qr_token) qrQueue.push(table);
       });
+      container.replaceChildren(fragment);
+      renderQrQueue(qrQueue);
 
       document.getElementById('statTotal').textContent = tables.length;
       document.getElementById('statActive').textContent = active;
       document.getElementById('statInactive').textContent = inactive;
+    }
+
+    // QRCode.js is synchronous. Render one code per idle frame so the page
+    // becomes interactive immediately, even with a large table list.
+    function renderQrQueue(queue) {
+      const renderNext = () => {
+        const table = queue.shift();
+        if (!table) return;
+        const el = document.getElementById('qr-canvas-' + table.id);
+        if (el && !el.hasChildNodes()) {
+          new QRCode(el, {
+            text: BASE_ORDER_URL + table.qr_token,
+            width: 140, height: 140,
+            colorDark: '#1e293b', colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.H
+          });
+        }
+        if (queue.length) {
+          if (window.requestIdleCallback) {
+            window.requestIdleCallback(renderNext, { timeout: 120 });
+          } else {
+            window.requestAnimationFrame(renderNext);
+          }
+        }
+      };
+      if (queue.length) {
+        if (window.requestIdleCallback) {
+          window.requestIdleCallback(renderNext, { timeout: 120 });
+        } else {
+          window.requestAnimationFrame(renderNext);
+        }
+      }
     }
 
     function buildTableCard(table) {
@@ -154,9 +180,9 @@ require_once __DIR__ . '/../includes/db.php';
             <button class="qrm-btn qrm-btn-sm qrm-btn-success" onclick="copyLink('${url}', this)">
               <span class="material-symbols-sharp">content_copy</span> Copy
             </button>
-            <a href="${url}" target="_blank" class="qrm-btn qrm-btn-sm qrm-btn-info">
-              <span class="material-symbols-sharp">open_in_new</span> Open
-            </a>
+            <button class="qrm-btn qrm-btn-sm qrm-btn-danger" onclick="printQr(${table.id})">
+              <span class="material-symbols-sharp">print</span> Print
+            </button>
             <button class="qrm-btn qrm-btn-sm qrm-btn-warning" onclick="regenerate(${table.id}, this)">
               <span class="material-symbols-sharp">refresh</span> Regenerate
             </button>
@@ -168,6 +194,22 @@ require_once __DIR__ . '/../includes/db.php';
         </div>
       `;
       return card;
+    }
+
+    function printQr(tableId) {
+      const qr = document.getElementById('qr-canvas-' + tableId);
+      const tableName = document.querySelector('#card-' + tableId + ' .qrm-table-name')?.textContent || 'Table';
+      const image = qr?.querySelector('img')?.src || qr?.querySelector('canvas')?.toDataURL();
+      if (!image) {
+        showQrToast('QR code is still loading.', 'info');
+        return;
+      }
+      const printWindow = window.open('', '_blank', 'width=500,height=600');
+      if (!printWindow) return;
+      printWindow.document.write(`<title>${esc(tableName)} QR Code</title><style>body{font-family:Arial;text-align:center;padding:32px}img{width:280px;height:280px}h1{font-size:24px}</style><h1>${esc(tableName)}</h1><img src="${image}" alt="QR code for ${esc(tableName)}">`);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.onload = () => { printWindow.print(); printWindow.close(); };
     }
 
     function regenerate(tableId, btn) {
@@ -207,9 +249,16 @@ require_once __DIR__ . '/../includes/db.php';
 
     document.getElementById('generateAllBtn').addEventListener('click', () => {
       if (!confirm('Generate QR codes for all tables that don\'t have one yet?')) return;
+      const button = document.getElementById('generateAllBtn');
+      const original = button.innerHTML;
+      button.disabled = true;
+      button.innerHTML = '<span class="material-symbols-sharp qrm-spin">progress_activity</span> Generating...';
       fetch('api/api_qr_tables.php?action=list')
         .then(r => r.json()).then(data => {
-          if (!data.success) return;
+          if (!data.success) {
+            showQrToast(data.message || 'Could not read tables.', 'error');
+            return;
+          }
           const noQr = data.tables.filter(t => !t.qr_token);
           if (!noQr.length) { showQrToast('All tables already have QR codes!', 'info'); return; }
           Promise.all(noQr.map(t =>
@@ -221,7 +270,12 @@ require_once __DIR__ . '/../includes/db.php';
           )).then(() => {
             showQrToast(`Generated QR for ${noQr.length} table(s)!`, 'success');
             loadTables();
-          });
+          }).catch(() => showQrToast('Some QR codes could not be generated.', 'error'));
+        })
+        .catch(() => showQrToast('Network error while generating QR codes.', 'error'))
+        .finally(() => {
+          button.disabled = false;
+          button.innerHTML = original;
         });
     });
 

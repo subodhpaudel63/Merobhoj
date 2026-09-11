@@ -41,6 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 );
                 
                 if ($stmt->execute()) {
+                    $conn->query("UPDATE menu SET menu_status = CASE WHEN stock_quantity = 0 THEN 'Out of Stock' WHEN stock_quantity < 5 THEN 'Low Stock' ELSE 'In Stock' END WHERE menu_id = " . (int)$conn->insert_id);
                     $response['success'] = true;
                     $response['message'] = 'Menu item created successfully!';
                     $response['menu_id'] = $conn->insert_id;
@@ -85,6 +86,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 );
                 
                 if ($stmt->execute()) {
+                    $statusStmt = $conn->prepare("UPDATE menu SET menu_status = CASE WHEN stock_quantity = 0 THEN 'Out of Stock' WHEN stock_quantity < 5 THEN 'Low Stock' ELSE 'In Stock' END WHERE menu_id = ?");
+                    $statusStmt->bind_param('i', $_POST['menu_id']); $statusStmt->execute(); $statusStmt->close();
                     $response['success'] = true;
                     $response['message'] = 'Menu item updated successfully!';
                 } else {
@@ -175,6 +178,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } catch (Exception $e) {
                 $response['message'] = 'Error: ' . $e->getMessage();
             }
+            break;
+
+        case 'restock':
+            $menuId = (int)($_POST['menu_id'] ?? 0);
+            if ($menuId <= 0) { $response['message'] = 'Invalid menu item.'; break; }
+            $stmt = $conn->prepare("UPDATE menu SET stock_quantity = 40, max_order_quantity = 10, menu_status = 'In Stock' WHERE menu_id = ?");
+            $stmt->bind_param('i', $menuId);
+            $response['success'] = $stmt->execute();
+            $response['message'] = $response['success'] ? 'Item restocked and marked In Stock.' : $stmt->error;
+            $stmt->close();
             break;
             
         default:

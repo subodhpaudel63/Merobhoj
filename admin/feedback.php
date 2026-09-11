@@ -113,10 +113,6 @@ foreach ($feedback as $f) {
         <h1>Customer Feedback</h1>
         <p>Monitor customer reviews and improve service quality.</p>
       </div>
-      <button class="add-review-btn" id="openReview">
-        <span class="material-symbols-sharp">add</span>
-        Add Review
-      </button>
     </div>
 
     <div class="dashboard-grid">
@@ -319,43 +315,6 @@ foreach ($feedback as $f) {
   </div>
 </main>
    </div>
-
-<div class="modal" id="reviewModal" hidden>
-  <div class="modal-box">
-    <button class="close" id="closeReview"><span class="material-symbols-sharp">close</span></button>
-    <h2>Add Customer Review</h2>
-    <p>Create a review and watch the dashboard update instantly.</p>
-
-    <form id="reviewForm">
-      <label>Customer Name
-        <input id="customerName" required placeholder="e.g. Sita Sharma">
-      </label>
-
-      <label>Email
-        <input id="customerEmail" type="email" required placeholder="customer@email.com">
-      </label>
-
-      <label>Rating
-        <select id="customerRating">
-          <option value="5">★★★★★ 5 / 5</option>
-          <option value="4">★★★★☆ 4 / 5</option>
-          <option value="3">★★★☆☆ 3 / 5</option>
-          <option value="2">★★☆☆☆ 2 / 5</option>
-          <option value="1">★☆☆☆☆ 1 / 5</option>
-        </select>
-      </label>
-
-      <label>Review
-        <textarea id="customerReview" required placeholder="Write the customer's review..."></textarea>
-      </label>
-
-      <button class="submit-review" type="submit">
-        <span class="material-symbols-sharp">add</span>
-        Add Review
-      </button>
-    </form>
-  </div>
-</div>
 
 <div class="modal" id="viewModal" hidden>
   <div class="modal-box view-box">

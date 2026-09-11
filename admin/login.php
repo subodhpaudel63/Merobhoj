@@ -5,7 +5,6 @@ session_start();
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/role_check.php';
 
-$msg = $_SESSION['msg'] ?? null;
 unset($_SESSION['msg']);
 ?>
 <!DOCTYPE html>
@@ -21,18 +20,33 @@ unset($_SESSION['msg']);
     body { background: #080808; overflow-x: hidden; }
     .page { min-height: 100vh; display: flex; background: #080808; }
     .brand-panel {
-      width: 44%; min-height: 100vh;
-      background-color: #080808;
-      background-image: url("../assets/img/gallery/merobhoj-left-panel\(1\).png");
-      background-position: center;
-      background-size: contain;
-      background-repeat: no-repeat;
-    }
-    .login-panel {
-      width: 56%; min-height: 100vh; background: #fff; border-radius: 18px 0 0 18px;
-      display: flex; justify-content: center; align-items: flex-start; padding: 96px 24px 48px; position: relative; z-index: 2;
-      overflow-y: auto;
-    }
+    flex: 0 0 50%;
+    width: 50%;
+    min-height: 100vh;
+    background-color: #faf7f2;
+    background-image: url("../assets/img/gallery/ChatGPT\ Image\ Sep\ 9\,\ 2026\,\ 07_51_13\ PM.png");
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    position: relative;
+    overflow: hidden;
+}
+
+.login-panel {
+    flex: 0 0 50%;
+    width: 50%;
+    min-height: 100vh;
+    background: #fff;
+    border-radius: 18px 0 0 18px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 96px 60px 48px;
+    position: relative;
+    z-index: 2;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
     .login-wrap { width: min(100%, 400px); }
     .welcome-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 24px; }
     .welcome h1 { font-size: 32px; line-height: 1.05; font-weight: 800; letter-spacing: -1px; color: var(--black); }
@@ -78,9 +92,6 @@ unset($_SESSION['msg']);
     .divider::before, .divider::after { content: ""; height: 1px; background: #e0e2e7; flex: 1; }
     .divider span { width: 38px; height: 38px; border: 1px solid #e0e2e7; border-radius: 50%; display: grid; place-items: center; background: #fff; }
     .account { text-align: center; color: #7c8390; font-size: 15px; }
-    .alert { margin-bottom: 14px; padding: 10px 14px; border-radius: 10px; font-size: 13px; }
-    .alert-error { color: #b42318; background: #fff1f0; border: 1px solid #ffc7c3; }
-    .alert-success { color: #18794e; background: #ecfdf3; border: 1px solid #a7f3d0; }
     @media (max-width: 1100px) {
       .brand-panel { width: 40%; } .login-panel { width: 60%; padding: 72px 24px 40px; }
       .welcome h1 { font-size: 30px; } .welcome p { font-size: 14px; }
@@ -124,12 +135,6 @@ unset($_SESSION['msg']);
           <span>Staff / Rider</span>
         </button>
       </div>
-
-      <?php if (is_array($msg)): ?>
-        <div class="alert alert-<?= htmlspecialchars($msg['type'] === 'success' ? 'success' : 'error', ENT_QUOTES, 'UTF-8') ?>">
-          <?= htmlspecialchars((string)($msg['text'] ?? ''), ENT_QUOTES, 'UTF-8') ?>
-        </div>
-      <?php endif; ?>
 
       <form id="loginForm" action="../includes/panel_login_process.php" method="POST" novalidate>
         <input type="hidden" name="login_source" value="admin">

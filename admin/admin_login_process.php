@@ -66,6 +66,5 @@ setcookie('admin_email',      encrypt($user['email'],      SECRET_KEY), $now + $
 setcookie('admin_type',       encrypt('admin',             SECRET_KEY), $now + $cookieMaxAge, '/', '', false, true);
 setcookie('admin_login_time', encrypt((string) $now,       SECRET_KEY), $now + $cookieMaxAge, '/', '', false, true);
 
-$_SESSION['msg'] = ['type' => 'success', 'text' => 'Admin login successful!'];
 header('Location: /Merobhoj/admin/index.php');
 exit();

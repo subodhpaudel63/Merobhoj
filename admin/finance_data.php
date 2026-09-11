@@ -7,6 +7,7 @@ require_admin();
 require_once __DIR__ . '/../includes/db.php';
 
 header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 
 // Get filter parameters
 $fiscal_year = $_GET['fiscalYear'] ?? '';
@@ -24,9 +25,9 @@ if (!empty($fiscal_year) && (empty($_GET['startDate']) || empty($_GET['endDate']
     }
 }
 
-// Default to last 60 days if no dates provided
+// Show the complete ledger by default so existing orders are not hidden by a rolling window.
 if (empty($start_date)) {
-    $start_date = date('Y-m-d', strtotime('-60 days'));
+    $start_date = '1970-01-01';
 }
 if (empty($end_date)) {
     $end_date = date('Y-m-d');
