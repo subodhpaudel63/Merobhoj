@@ -114,6 +114,9 @@ if ($isPost) {
         // Delivering with NO rider (legacy rows, or a manual "Send Out" from the
         // orders queue) can still be handed to someone, otherwise it could never
         // be tracked or closed with the handover code.
+        if ((string)$delivery['status'] !== 'Ready') {
+            dispatch_json(['success' => false, 'message' => 'Assign riders only after the kitchen marks the order ready.']);
+        }
         if ((string)$delivery['status'] === 'Delivering' && $delivery['rider_id'] !== null) {
             dispatch_json(['success' => false, 'message' => 'This order is already on the way — it cannot be reassigned mid-trip.']);
         }

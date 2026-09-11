@@ -80,6 +80,5 @@ if ($role === 'admin' || $role === 'manager') {
     setcookie('admin_login_time', encrypt((string)$now,   SECRET_KEY), $expiry, '/', '', false, true);
 }
 
-$_SESSION['msg'] = ['type' => 'success', 'text' => 'Welcome back, ' . ($user['name'] ?: ucfirst($role)) . '!'];
 header('Location: ' . panel_home_for_role($role));
 exit();

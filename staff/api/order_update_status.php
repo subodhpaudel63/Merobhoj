@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/_api_guard.php';
 require_once __DIR__ . '/../../includes/order_validation.php';
+require_once __DIR__ . '/../../includes/delivery_helpers.php';
 
 // Staff follows the same forward state machine as the main admin panel.
 const STAFF_ALLOWED_TARGETS = ['Confirmed', 'Preparing', 'Ready', 'Delivering', 'Completed', 'Cancelled'];
@@ -34,13 +35,21 @@ $currentStatus = $currentOrder['status'];
 $orderType = $currentOrder['order_type'];
 
 // State Machine transition check
-$validation = validate_order_transition($orderType, $currentStatus, $targetStatus, true);
+$validation = validate_role_transition('staff', $orderType, $currentStatus, $targetStatus);
 if (!$validation['valid']) {
     echo json_encode([
         'success' => false,
         'message' => $validation['error'] ?? "Cannot transition order from {$currentStatus} to {$targetStatus}"
     ]);
     exit;
+}
+
+if ($orderType === 'Delivery' && $targetStatus === 'Delivering') {
+    $delivery = delivery_find($conn, $orderNumber);
+    if (!$delivery || $delivery['rider_id'] === null) {
+        echo json_encode(['success' => false, 'message' => 'Assign a rider before sending this delivery out.']);
+        exit;
+    }
 }
 
 // Perform update

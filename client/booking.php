@@ -353,6 +353,7 @@ $guestOptions = range(1, 8);
 </main>
 
 
+<?php include_once __DIR__ . '/../includes/cart_drawer.php'; ?>
 <?php include_once __DIR__ . '/../footer.php'; ?>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
@@ -360,5 +361,10 @@ $guestOptions = range(1, 8);
 <script src="<?php echo asset('js/script.js'); ?>"></script>
 <script src="<?php echo asset('js/toast_notifications.js'); ?>"></script>
 <script src="<?php echo asset('js/clientscript.js'); ?>" defer></script>
+<script>
+  document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach(function (toggle) {
+    if (window.bootstrap) bootstrap.Dropdown.getOrCreateInstance(toggle);
+  });
+</script>
 </body>
 </html>

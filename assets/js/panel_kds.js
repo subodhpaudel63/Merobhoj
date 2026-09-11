@@ -35,7 +35,7 @@
 
     // status → column action + label. Ready has no forward chef action.
     const FLOW = {
-        Pending:   { next: 'Confirmed', label: 'Accept',       btn: 'qrm-btn-success', icon: 'check' },
+        Pending:   { next: null,        label: '',              btn: '',                icon: '' },
         Confirmed: { next: 'Preparing', label: 'Start Cooking', btn: 'qrm-btn-primary', icon: 'skillet' },
         Preparing: { next: 'Ready',     label: 'Mark Ready',    btn: 'qrm-btn-success', icon: 'room_service' },
         Ready:     { next: null,        label: '',              btn: '',                icon: '' }
@@ -106,7 +106,7 @@
                        data-order="${esc(o.order_number)}" data-next="${flow.next}">
                    <span class="material-symbols-sharp">${flow.icon}</span>${flow.label}
                </button>`
-            : `<span class="kds-await"><span class="material-symbols-sharp">restaurant</span>Awaiting handoff</span>`;
+            : `<span class="kds-await"><span class="material-symbols-sharp">${o.status === 'Pending' ? 'hourglass_top' : 'restaurant'}</span>${o.status === 'Pending' ? 'Waiting for staff acceptance' : 'Awaiting handoff'}</span>`;
 
         return `<div class="kds-card ${tier} ${highPrio ? 'prio-high' : ''}"
                      data-order="${esc(o.order_number)}"
@@ -213,11 +213,10 @@
                 btn.closest('.kds-card'), btn);
     });
 
-    /* Keyboard workflow shortcuts: 1 = accept, 2 = cooking, 3 = ready. */
+    /* Keyboard workflow shortcuts: 1 = start cooking, 2 = mark ready. */
     const SHORTCUTS = {
-        '1': { column: 'Pending', next: 'Confirmed' },
-        '2': { column: 'Confirmed', next: 'Preparing' },
-        '3': { column: 'Preparing', next: 'Ready' }
+        '1': { column: 'Confirmed', next: 'Preparing' },
+        '2': { column: 'Preparing', next: 'Ready' }
     };
 
     document.addEventListener('keydown', function (e) {

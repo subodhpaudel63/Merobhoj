@@ -140,7 +140,7 @@ function apply_order_status(mysqli $conn, string $orderNumber, string $newStatus
     }
 
     $orderType = (string)($current['order_type'] ?: 'Delivery');
-    $validation = validate_order_transition($orderType, (string)$current['status'], $newStatus, true);
+    $validation = validate_role_transition('rider', $orderType, (string)$current['status'], $newStatus);
     if (!$validation['valid']) {
         return ['success' => false, 'message' => (string)$validation['error']];
     }

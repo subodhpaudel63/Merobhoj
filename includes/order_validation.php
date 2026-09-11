@@ -76,3 +76,49 @@ function validate_order_transition(string $order_type, string $current_status, s
 
     return ['valid' => false, 'error' => "Cannot transition status from '$current_status' to '$new_status'."];
 }
+
+/**
+ * Applies the role-specific workflow guard on top of the shared state machine.
+ * Keeping this in one place prevents a UI button from becoming an API bypass.
+ */
+function validate_role_transition(
+    string $role,
+    string $order_type,
+    string $current_status,
+    string $new_status
+): array {
+    if ($role === 'chef') {
+        if ($current_status === 'Confirmed' && $new_status === 'Preparing') {
+            return ['valid' => true];
+        }
+        if ($current_status === 'Preparing' && $new_status === 'Ready') {
+            return ['valid' => true];
+        }
+        return ['valid' => false, 'error' => 'Chef workflow only allows Start Preparing and Mark Ready.'];
+    }
+
+    if ($role === 'rider') {
+        if ($current_status === 'Ready' && $new_status === 'Delivering') {
+            return ['valid' => true];
+        }
+        if ($current_status === 'Delivering' && $new_status === 'Completed') {
+            return ['valid' => true];
+        }
+        return ['valid' => false, 'error' => 'Riders can only pick up ready orders and mark picked-up orders delivered.'];
+    }
+
+    if ($role === 'staff' && $order_type === 'Delivery') {
+        if ($current_status === 'Pending' && $new_status === 'Confirmed') {
+            return ['valid' => true];
+        }
+        if ($current_status === 'Ready' && $new_status === 'Delivering') {
+            return ['valid' => true];
+        }
+        if ($new_status === 'Cancelled' && in_array($current_status, ['Pending', 'Confirmed', 'Preparing', 'Ready'], true)) {
+            return ['valid' => true];
+        }
+        return ['valid' => false, 'error' => 'Staff delivery workflow only allows Accept, Reject/Cancel, and Send Out.'];
+    }
+
+    return validate_order_transition($order_type, $current_status, $new_status, true);
+}

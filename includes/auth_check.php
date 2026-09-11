@@ -97,5 +97,13 @@ function getUserFromCookie(): ?array
     if (time() - (int) $loginTime > MAX_SESSION_TIME) {
         return null;
     }
-    return ['email' => $email, 'userType' => $userType];
+    // Get user_id from cookie if available (newer logins)
+    $userId = null;
+    if (isset($_COOKIE['user_id'])) {
+        $decUserId = decrypt($_COOKIE['user_id'], SECRET_KEY);
+        if ($decUserId && ctype_digit($decUserId)) {
+            $userId = intval($decUserId);
+        }
+    }
+    return ['email' => $email, 'userType' => $userType, 'id' => $userId];
 }

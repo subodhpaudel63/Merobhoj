@@ -96,14 +96,14 @@ if ($order_type === 'Delivery') {
 
     // Insert into DB using only columns that exist in the orders table
     $order_number = 'ORD-' . date('Ymd') . '-' . sprintf('%04d', rand(1000, 9999));
-    $stock_stmt = $conn->prepare("SELECT menu_status FROM menu WHERE menu_id = ? LIMIT 1");
+    $stock_stmt = $conn->prepare("SELECT menu_status, stock_quantity, max_order_quantity, menu_name, menu_price FROM menu WHERE menu_id = ? LIMIT 1");
     $stock_stmt->bind_param("i", $menu_id);
     $stock_stmt->execute();
     $stock_result = $stock_stmt->get_result();
     $stock_row = $stock_result ? $stock_result->fetch_assoc() : null;
     $stock_stmt->close();
 
-    if (!$stock_row || (($stock_row['menu_status'] ?? 'In Stock') === 'Out of Stock')) {
+    if (!$stock_row || $quantity < 1 || $quantity > min(10, (int)$stock_row['max_order_quantity'], (int)$stock_row['stock_quantity'])) {
         respond_menu_order([
             'success' => false,
             'message' => 'Sorry, this item is currently out of stock.',
@@ -113,11 +113,16 @@ if ($order_type === 'Delivery') {
     $is_esewa = ($payment_method === 'eSewa');
     $payment_status = $is_esewa ? 'Pending' : 'Paid';
 
-    $stmt = $conn->prepare("INSERT INTO orders (order_number, menu_id, menu_name, price, quantity, total_price, email, mobile, address, payment_method, payment_status, status, order_time, order_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW(), CURDATE())");
-    $stmt->bind_param("sisdidsssss", $order_number, $menu_id, $menu_name, $price, $quantity, $total_price, $email, $mobile, $address, $payment_method, $payment_status);
+    $userId = intval($user['id'] ?? 0);
+    $menu_name = $stock_row['menu_name']; $price = (float)$stock_row['menu_price']; $total_price = $price * $quantity;
+    $stmt = $conn->prepare("INSERT INTO orders (order_number, menu_id, menu_name, price, quantity, total_price, email, user_id, mobile, address, payment_method, payment_status, status, order_time, order_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW(), CURDATE())");
+    $stmt->bind_param("sisdidsissss", $order_number, $menu_id, $menu_name, $price, $quantity, $total_price, $email, $userId, $mobile, $address, $payment_method, $payment_status);
 
     if ($stmt->execute()) {
         $insert_id = $stmt->insert_id;
+        $newStock = (int)$stock_row['stock_quantity'] - $quantity;
+        $update = $conn->prepare("UPDATE menu SET stock_quantity = ?, menu_status = CASE WHEN ? = 0 THEN 'Out of Stock' WHEN ? < 5 THEN 'Low Stock' ELSE 'In Stock' END WHERE menu_id = ?");
+        $update->bind_param('iiii', $newStock, $newStock, $newStock, $menu_id); $update->execute(); $update->close();
         
         respond_menu_order([
             'success' => true,

@@ -40,57 +40,6 @@ CREATE TABLE `admin_notifications` (
 --
 
 INSERT INTO `admin_notifications` (`id`, `type`, `resource_id`, `is_read`, `created_at`) VALUES
-(1, 'order', 'ORD-20260829-7676', 1, '2026-08-29 11:57:42'),
-(2, 'order', 'ORD-20260829-8809', 1, '2026-08-29 11:57:01'),
-(3, 'order', 'ORD-20260829-9190', 1, '2026-08-29 11:54:26'),
-(4, 'order', 'ORD-20260829-5489', 1, '2026-08-29 11:54:04'),
-(5, 'order', 'ORD-20260828-5785', 1, '2026-08-28 08:26:16'),
-(6, 'order', 'ORD-20260828-3234', 1, '2026-08-28 05:48:15'),
-(7, 'order', 'ORD-20260826-3563', 1, '2026-08-26 05:40:24'),
-(8, 'order', 'ORD-20260826-5784', 1, '2026-08-26 05:30:29'),
-(9, 'order', 'ORD-20260826-7503', 1, '2026-08-26 05:20:39'),
-(10, 'order', 'ORD-20260826-9597', 1, '2026-08-26 05:18:36'),
-(11, 'order', 'ORD-20260826-6559', 1, '2026-08-26 05:15:11'),
-(12, 'order', 'ORD-20260826-7382', 1, '2026-08-26 05:07:04'),
-(13, 'order', 'ORD-20260826-3596', 1, '2026-08-26 05:06:28'),
-(14, 'order', 'ORD-20260826-4757', 1, '2026-08-26 05:05:24'),
-(15, 'order', 'ORD-20260821-2180', 1, '2026-08-21 11:47:53'),
-(16, 'order', 'ORD-20260808-7105', 1, '2026-08-08 09:05:36'),
-(17, 'order', 'ORD-20260808-7359', 1, '2026-08-08 08:25:15'),
-(18, 'order', 'ORD-20260802-2041', 1, '2026-08-02 11:41:46'),
-(19, 'order', 'ORD-20260802-3099', 1, '2026-08-02 11:39:14'),
-(20, 'order', 'ORD-20260802-4630', 1, '2026-08-02 11:37:08'),
-(21, 'order', 'ORD-0174', 1, '2026-08-02 11:08:22'),
-(22, 'order', 'ORD-0172', 1, '2026-08-02 11:08:22'),
-(23, 'order', 'ORD-0171', 1, '2026-08-02 11:06:26'),
-(24, 'order', 'ORD-0168', 1, '2026-08-01 09:12:04'),
-(25, 'order', 'ORD-0165', 1, '2026-08-01 09:12:04'),
-(26, 'order', 'ORD-0170', 1, '2026-08-01 09:12:04'),
-(27, 'order', 'ORD-0167', 1, '2026-08-01 09:12:04'),
-(28, 'order', 'ORD-0169', 1, '2026-08-01 09:12:04'),
-(29, 'order', 'ORD-0166', 1, '2026-08-01 09:12:04'),
-(30, 'order', 'ORD-0161', 1, '2026-07-26 08:06:37'),
-(31, 'order', 'ORD-0163', 1, '2026-07-26 08:06:37'),
-(32, 'order', 'ORD-0159', 1, '2026-07-26 07:48:42'),
-(33, 'booking', '38', 1, '2026-08-27 15:57:25'),
-(34, 'booking', '37', 1, '2026-08-25 13:24:10'),
-(35, 'booking', '36', 1, '2026-08-25 02:35:03'),
-(36, 'booking', '35', 1, '2026-08-24 14:46:52'),
-(37, 'booking', '34', 1, '2026-08-24 13:32:48'),
-(38, 'booking', '33', 1, '2026-08-24 13:30:17'),
-(39, 'booking', '32', 1, '2026-08-12 11:51:38'),
-(40, 'booking', '31', 1, '2026-08-12 11:44:45'),
-(41, 'booking', '30', 1, '2026-08-12 11:41:13'),
-(42, 'booking', '29', 1, '2026-08-11 07:41:20'),
-(43, 'booking', '28', 1, '2026-07-06 14:30:37'),
-(44, 'feedback', '4', 1, '2026-06-30 07:32:13'),
-(617, 'order', 'ORD-20260829-8479', 1, '2026-08-29 14:11:34'),
-(3137, 'order', 'ORD-20260829-5553', 1, '2026-08-29 14:33:32'),
-(6633, 'order', 'ORD-20260829-1910', 1, '2026-08-29 14:49:33'),
-(18712, 'order', 'ORD-20260830-9400', 1, '2026-08-30 10:07:25'),
-(19228, 'booking', '39', 1, '2026-08-30 10:09:10'),
-(25807, 'order', 'ORD-20260830-5153', 1, '2026-08-30 13:01:23'),
-(26394, 'booking', '40', 1, '2026-08-30 13:03:12');
 
 -- --------------------------------------------------------
 
@@ -120,18 +69,6 @@ CREATE TABLE `bookings` (
 --
 
 INSERT INTO `bookings` (`id`, `name`, `email`, `phone`, `table_id`, `booking_date`, `booking_time`, `start_time`, `end_time`, `people`, `message`, `created_at`, `status`, `grace_end_at`) VALUES
-(28, 'sham', 'p@gmail.com', '9898989898', 0, '2026-07-06', '10:15:00', '10:15:00', '12:15:00', 1, 'buhh', '2026-07-06 14:30:37', 'Cancelled', NULL),
-(29, 'subodh dai', 'htmlc47@gmail.com', '9878787898', 7, '2026-08-11', '17:28:00', '17:28:00', '19:28:00', 8, 'i want this table pls', '2026-08-11 07:41:20', 'Completed', NULL),
-(30, 'subodh', 'subodh@gmail.com', '9878787898', 7, '2026-08-14', '08:27:00', '08:27:00', '10:27:00', 7, 'nbh', '2026-08-12 11:41:13', 'Cancelled', NULL),
-(31, 'hari', 'htmlc47@gmail.com', '9878787898', 7, '2026-08-12', '17:30:00', '17:30:00', '19:30:00', 8, 'xcv', '2026-08-12 11:44:45', 'Completed', NULL),
-(32, 'html css', 'htmlc47@gmail.com', '9878787890', 3, '2026-08-12', '17:38:00', '17:38:00', '19:38:00', 6, 'i wnat a table', '2026-08-12 11:51:38', 'No-show', '2026-08-12 17:58:00'),
-(33, 'hari', 'hari@gmail.com', '9878787898', 7, '2026-08-25', '21:17:00', '21:17:00', '23:17:00', 5, 'i wnat table', '2026-08-24 13:30:17', 'No-show', '2026-08-25 21:37:00'),
-(35, 'sample', 'subodh@gmail.com', '9778787898', 4, '2026-08-27', '20:31:00', '20:31:00', '22:31:00', 6, 'xc', '2026-08-24 14:46:52', 'No-show', '2026-08-27 20:51:00'),
-(36, 'ok sir', 'subodh@gmail.com', '9878787898', 7, '2026-09-01', '10:22:00', '10:22:00', '12:22:00', 7, 'i want a table', '2026-08-25 02:35:03', 'Confirmed', '2026-09-01 10:42:00'),
-(37, 'subodh dxxxx', 'subodh@gmail.com', '9878787898', 3, '2026-09-02', '19:09:00', '19:09:00', '21:09:00', 4, 'i want a table', '2026-08-25 13:24:10', 'Confirmed', '2026-09-02 19:29:00'),
-(38, 'subodh dai', 'htmlc47@gmail.com', '9878787898', 6, '2026-08-28', '07:42:00', '07:42:00', '09:42:00', 3, 'hello', '2026-08-27 15:57:25', 'Completed', NULL),
-(39, 'subodh dai', 'subodh@gmail.com', '9878787898', 4, '2026-08-31', '10:00:00', '10:00:00', '13:30:00', 1, 'hey', '2026-08-30 10:09:10', 'Confirmed', '2026-08-31 10:20:00'),
-(40, 'subodh da', 'subodh@gmail.com', '9878787898', 3, '2026-09-01', '10:00:00', '10:00:00', '15:30:00', 6, 'hi', '2026-08-30 13:03:12', 'Pending', NULL);
 
 -- --------------------------------------------------------
 
@@ -154,9 +91,20 @@ CREATE TABLE `feedback` (
 --
 
 INSERT INTO `feedback` (`feedback_id`, `feedback_name`, `feedback_email`, `feedback_rating`, `feedback_message`, `feedback_category`, `created_at`) VALUES
-(4, 'subodh paudel', 'subodhpaudel0000@gmail.com', 5, 'xefrggggt', 'Service', '2026-06-30 07:32:13');
+
 
 -- --------------------------------------------------------
+
+--
+-- Table structure for table `menu_categories`
+--
+CREATE TABLE `menu_categories` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `category_name` varchar(100) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `category_name` (`category_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Table structure for table `menu`
@@ -169,6 +117,8 @@ CREATE TABLE `menu` (
   `menu_price` int(10) NOT NULL,
   `menu_category` enum('starter','dinner','lunch','breakfast') NOT NULL,
   `menu_status` enum('In Stock','Low Stock','Out of Stock') NOT NULL DEFAULT 'In Stock',
+  `stock_quantity` int NOT NULL DEFAULT 40,
+  `max_order_quantity` int NOT NULL DEFAULT 10,
   `menu_image` varchar(255) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -212,6 +162,7 @@ CREATE TABLE `orders` (
   `order_number` varchar(50) DEFAULT NULL,
   `menu_id` int(11) NOT NULL,
   `email` varchar(255) NOT NULL,
+  `user_id` int(11) DEFAULT NULL,
   `full_name` varchar(255) DEFAULT NULL,
   `order_type` varchar(50) DEFAULT 'Delivery',
   `table_number` varchar(20) DEFAULT NULL,
@@ -238,59 +189,7 @@ CREATE TABLE `orders` (
 -- Dumping data for table `orders`
 --
 
-INSERT INTO `orders` (`order_id`, `order_number`, `menu_id`, `email`, `full_name`, `order_type`, `table_number`, `special_instructions`, `payment_method`, `payment_status`, `transaction_uuid`, `transaction_code`, `menu_name`, `quantity`, `price`, `total_price`, `mobile`, `address`, `status`, `order_time`, `order_date`, `created_at`, `admin_note`) VALUES
-(159, 'ORD-0159', 65, 'op@gmail.com', 'joy', 'Dine In', '24', 'no spicy', 'Pay at Restaurant', 'Pending', NULL, NULL, 'Fry Momo', 1, 399, 399, '9800000123', 'resturent', '', '2026-07-26 07:48:42', '2026-07-26', '2026-07-26 13:33:42', NULL),
-(161, 'ORD-0161', 76, '', 'ram ram ram', 'Delivery', '', 'less spicy', 'Pay at Restaurant', 'Pending', NULL, NULL, 'Newari Khaja Set (Samay Baji)', 1, 250, 250, '9800000123', 'pokhara 20 lakeside', 'Delivering', '2026-07-26 08:06:37', '2026-07-26', '2026-07-26 13:51:37', NULL),
-(163, 'ORD-0163', 78, '', 'ram ram ram', 'Delivery', '', 'less spicy', 'Pay at Restaurant', 'Pending', NULL, NULL, 'Thakali Khana Set', 1, 500, 500, '9800000123', 'pokhara 20 lakeside', '', '2026-07-26 08:06:37', '2026-07-26', '2026-07-26 13:51:37', NULL),
-(165, 'ORD-0165', 61, '', 'subodh paudel', 'Delivery', '', 'dint make food spicy', 'Cash on Delivery', 'Pending', NULL, NULL, 'Pani Puri', 1, 100, 100, '9800000129', 'pokhara 17 tall birauta fistall school rod no 13', '', '2026-08-01 09:12:04', '2026-08-01', '2026-08-01 14:57:04', NULL),
-(166, 'ORD-0166', 82, '', 'subodh paudel', 'Delivery', '', 'dint make food spicy', 'Cash on Delivery', 'Pending', NULL, NULL, 'Choila (Buff / Chicken)', 1, 199, 199, '9800000129', 'pokhara 17 tall birauta fistall school rod no 13', '', '2026-08-01 09:12:04', '2026-08-01', '2026-08-01 14:57:04', NULL),
-(167, 'ORD-0167', 68, '', 'subodh paudel', 'Delivery', '', 'dint make food spicy', 'Cash on Delivery', 'Pending', NULL, NULL, 'Yogurt oats Bowl', 1, 450, 450, '9800000129', 'pokhara 17 tall birauta fistall school rod no 13', '', '2026-08-01 09:12:04', '2026-08-01', '2026-08-01 14:57:04', NULL),
-(168, 'ORD-0168', 76, '', 'subodh paudel', 'Delivery', '', 'dint make food spicy', 'Cash on Delivery', 'Pending', NULL, NULL, 'Newari Khaja Set (Samay Baji)', 1, 250, 250, '9800000129', 'pokhara 17 tall birauta fistall school rod no 13', '', '2026-08-01 09:12:04', '2026-08-01', '2026-08-01 14:57:04', NULL),
-(169, 'ORD-0169', 67, '', 'subodh paudel', 'Delivery', '', 'dint make food spicy', 'Cash on Delivery', 'Pending', NULL, NULL, 'Sandwich with French Fries', 1, 450, 450, '9800000129', 'pokhara 17 tall birauta fistall school rod no 13', '', '2026-08-01 09:12:04', '2026-08-01', '2026-08-01 14:57:04', NULL),
-(170, 'ORD-0170', 65, '', 'subodh paudel', 'Delivery', '', 'dint make food spicy', 'Cash on Delivery', 'Pending', NULL, NULL, 'Fry Momo', 1, 399, 399, '9800000129', 'pokhara 17 tall birauta fistall school rod no 13', '', '2026-08-01 09:12:04', '2026-08-01', '2026-08-01 14:57:04', NULL),
-(171, 'ORD-0171', 64, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Pending', NULL, NULL, 'Momo', 1, 299, 299, '9800000123', 'ugsaq', 'Delivering', '2026-08-02 11:06:26', '2026-08-02', '2026-08-02 16:51:26', NULL),
-(172, 'ORD-0172', 59, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Pending', NULL, NULL, 'Burger', 1, 350, 350, '9800000123', 'ac', 'Delivering', '2026-08-02 11:08:22', '2026-08-02', '2026-08-02 16:53:22', NULL),
-(174, 'ORD-0174', 67, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Pending', NULL, NULL, 'Sandwich with French Fries', 1, 450, 450, '9800000123', 'ac', 'Delivering', '2026-08-02 11:08:22', '2026-08-02', '2026-08-02 16:53:22', NULL),
-(175, 'ORD-20260802-4630', 82, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Pending', NULL, NULL, 'Choila (Buff / Chicken)', 1, 199, 199, '9800000123', 'zas', '', '2026-08-02 11:37:08', '2026-08-02', '2026-08-02 17:22:08', NULL),
-(176, 'ORD-20260802-4630', 61, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Pending', NULL, NULL, 'Pani Puri', 1, 100, 100, '9800000123', 'zas', '', '2026-08-02 11:37:08', '2026-08-02', '2026-08-02 17:22:08', NULL),
-(177, 'ORD-20260802-4630', 60, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Pending', NULL, NULL, 'Berry Cheesecake', 1, 450, 450, '9800000123', 'zas', '', '2026-08-02 11:37:08', '2026-08-02', '2026-08-02 17:22:08', NULL),
-(178, 'ORD-20260802-4630', 84, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Pending', NULL, NULL, 'Wai Wai Sadeko', 1, 199, 199, '9800000123', 'zas', '', '2026-08-02 11:37:08', '2026-08-02', '2026-08-02 17:22:08', NULL),
-(179, 'ORD-20260802-4630', 83, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Pending', NULL, NULL, 'Sekuwa (Grilled Meat)', 1, 299, 299, '9800000123', 'zas', '', '2026-08-02 11:37:08', '2026-08-02', '2026-08-02 17:22:08', NULL),
-(180, 'ORD-20260802-3099', 78, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Pending', NULL, NULL, 'Thakali Khana Set', 32, 500, 16000, '9800000123', 'sdfc', 'Delivering', '2026-08-02 11:39:14', '2026-08-02', '2026-08-02 17:24:14', NULL),
-(181, 'ORD-20260802-2041', 67, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Pending', NULL, NULL, 'Sandwich with French Fries', 1, 450, 450, '9800000123', 'pkr', 'Cancelled', '2026-08-02 11:41:46', '2026-08-02', '2026-08-02 17:26:46', NULL),
-(182, 'ORD-20260802-2041', 59, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Pending', NULL, NULL, 'Burger', 1, 350, 350, '9800000123', 'pkr', 'Cancelled', '2026-08-02 11:41:46', '2026-08-02', '2026-08-02 17:26:46', NULL),
-(183, 'ORD-20260802-2041', 77, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Pending', NULL, NULL, 'Dal Bhat Tarkari Set (National Dish)', 1, 450, 450, '9800000123', 'pkr', 'Cancelled', '2026-08-02 11:41:46', '2026-08-02', '2026-08-02 17:26:46', NULL),
-(184, 'ORD-20260802-2041', 80, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Pending', NULL, NULL, 'Thukpa', 1, 200, 200, '9800000123', 'pkr', 'Cancelled', '2026-08-02 11:41:46', '2026-08-02', '2026-08-02 17:26:46', NULL),
-(185, 'ORD-20260808-7359', 60, 'htmlc47@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Pending', NULL, NULL, 'Berry Cheesecake', 1, 450, 450, '9846613920', 'pokhara17', 'Cancelled', '2026-08-08 08:25:15', '2026-08-08', '2026-08-08 14:10:15', NULL),
-(186, 'ORD-20260808-7359', 83, 'htmlc47@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Pending', NULL, NULL, 'Sekuwa (Grilled Meat)', 1, 299, 299, '9846613920', 'pokhara17', 'Cancelled', '2026-08-08 08:25:15', '2026-08-08', '2026-08-08 14:10:15', NULL),
-(187, 'ORD-20260808-7359', 84, 'htmlc47@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Pending', NULL, NULL, 'Wai Wai Sadeko', 1, 199, 199, '9846613920', 'pokhara17', 'Cancelled', '2026-08-08 08:25:15', '2026-08-08', '2026-08-08 14:10:15', NULL),
-(188, 'ORD-20260808-7105', 60, 'htmlc47@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Pending', NULL, NULL, 'Berry Cheesecake', 1, 450, 450, '9800000123', 'pkr', 'Delivering', '2026-08-08 09:05:36', '2026-08-08', '2026-08-08 14:50:36', NULL),
-(189, 'ORD-20260821-2180', 61, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Pending', NULL, NULL, 'Pani Puri', 1, 100, 100, '9800000123', 'bkl', 'Cancelled', '2026-08-21 11:47:53', '2026-08-21', '2026-08-21 17:32:53', NULL),
-(190, 'ORD-20260826-4757', 61, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Pending', NULL, NULL, 'Pani Puri', 1, 100, 100, '9800000123', 'pke', 'Cancelled', '2026-08-26 05:05:24', '2026-08-26', '2026-08-26 10:50:24', NULL),
-(191, 'ORD-20260826-3596', 61, 'htmlc47@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Pending', NULL, NULL, 'Pani Puri', 3, 100, 300, '9800000123', 'ktms', 'Confirmed', '2026-08-26 05:06:28', '2026-08-26', '2026-08-26 10:51:28', NULL),
-(192, 'ORD-20260826-7382', 82, 'htmlc47@gmail.com', NULL, 'Delivery', NULL, NULL, 'eSewa', 'Failed', NULL, NULL, 'Choila (Buff / Chicken)', 1, 199, 199, '9800000123', 'pkr', 'Confirmed', '2026-08-26 05:07:04', '2026-08-26', '2026-08-26 10:52:04', NULL),
-(193, 'ORD-20260826-7382', 83, 'htmlc47@gmail.com', NULL, 'Delivery', NULL, NULL, 'eSewa', 'Failed', NULL, NULL, 'Sekuwa (Grilled Meat)', 1, 299, 299, '9800000123', 'pkr', 'Confirmed', '2026-08-26 05:07:04', '2026-08-26', '2026-08-26 10:52:04', NULL),
-(194, 'ORD-20260826-6559', 70, 'htmlc47@gmail.com', NULL, 'Delivery', NULL, NULL, 'eSewa', 'Failed', NULL, NULL, 'Fried Egg Toast', 1, 19, 19, '9800000123', '', 'Confirmed', '2026-08-26 05:15:11', '2026-08-26', '2026-08-26 11:00:11', NULL),
-(195, 'ORD-20260826-9597', 70, 'htmlc47@gmail.com', NULL, 'Delivery', NULL, NULL, 'eSewa', 'Paid', 'ORDER-20260826071836-a6af6a15', '000GW6A', 'Fried Egg Toast', 1, 19, 19, '9800000123', '', 'Confirmed', '2026-08-26 05:18:36', '2026-08-26', '2026-08-26 11:03:36', NULL),
-(196, 'ORD-20260826-7503', 70, 'htmlc47@gmail.com', NULL, 'Delivery', NULL, NULL, 'eSewa', 'Paid', 'ORDER-20260826072039-cf4fe9ab', '000GW6D', 'Fried Egg Toast', 1, 19, 19, '9800000128', '', 'Delivering', '2026-08-26 05:20:39', '2026-08-26', '2026-08-26 11:05:39', NULL),
-(197, 'ORD-20260826-5784', 70, 'htmlc47@gmail.com', NULL, 'Delivery', NULL, NULL, 'eSewa', 'Paid', 'ORDER-20260826073030-6ef8e75d', '000GW6N', 'Fried Egg Toast', 1, 19, 19, '9800000149', 'pokhara birauta sir', 'Cancelled', '2026-08-26 05:30:29', '2026-08-26', '2026-08-26 11:15:29', NULL),
-(198, 'ORD-20260826-3563', 61, 'htmlc47@gmail.com', NULL, 'Delivery', NULL, NULL, 'Pay at Restaurant', 'Paid', NULL, NULL, 'Pani Puri', 1, 100, 100, '9800000123', '', 'Completed', '2026-08-26 05:40:24', '2026-08-26', '2026-08-26 11:25:24', NULL),
-(199, 'ORD-20260828-3234', 62, 'htmlc47@gmail.com', NULL, 'Delivery', NULL, NULL, 'eSewa', 'Paid', 'ORDER-20260828074815-a5826317', '000GWPJ', 'Waffles and fruits', 1, 11, 11, '9800000876', '', 'Completed', '2026-08-28 05:48:15', '2026-08-28', '2026-08-28 11:33:15', NULL),
-(200, 'ORD-20260828-5785', 61, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Paid', NULL, NULL, 'Pani Puri', 1, 100, 100, '9800000123', 'pokhara 13', 'Delivering', '2026-08-28 08:26:16', '2026-08-28', '2026-08-28 14:11:16', NULL),
-(201, 'ORD-20260828-5785', 82, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Paid', NULL, NULL, 'Choila (Buff / Chicken)', 1, 199, 199, '9800000123', 'pokhara 13', 'Delivering', '2026-08-28 08:26:16', '2026-08-28', '2026-08-28 14:11:16', NULL),
-(202, 'ORD-20260828-5785', 84, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Paid', NULL, NULL, 'Wai Wai Sadeko', 1, 199, 199, '9800000123', 'pokhara 13', 'Delivering', '2026-08-28 08:26:16', '2026-08-28', '2026-08-28 14:11:16', NULL),
-(203, 'ORD-20260829-5489', 64, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Pay at Restaurant', 'Paid', NULL, NULL, 'Momo', 1, 299, 299, '9800000123', '', 'Pending', '2026-08-29 11:54:04', '2026-08-29', '2026-08-29 17:39:04', NULL),
-(204, 'ORD-20260829-9190', 64, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Pay at Restaurant', 'Paid', NULL, NULL, 'Momo', 1, 299, 299, '9800000123', '', 'Pending', '2026-08-29 11:54:26', '2026-08-29', '2026-08-29 17:39:26', NULL),
-(205, 'ORD-20260829-8809', 64, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Pay at Restaurant', 'Paid', NULL, NULL, 'Momo', 1, 299, 299, '9800000123', '', 'Pending', '2026-08-29 11:57:01', '2026-08-29', '2026-08-29 17:42:01', NULL),
-(206, 'ORD-20260829-7676', 64, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Paid', NULL, NULL, 'Momo', 1, 299, 299, '9800000123', '', 'Pending', '2026-08-29 11:57:42', '2026-08-29', '2026-08-29 17:42:42', NULL),
-(207, 'ORD-20260829-7676', 65, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Paid', NULL, NULL, 'Fry Momo', 1, 399, 399, '9800000123', '', 'Pending', '2026-08-29 11:57:42', '2026-08-29', '2026-08-29 17:42:42', NULL),
-(208, 'ORD-20260829-8479', 61, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Paid', NULL, NULL, 'Pani Puri', 1, 100, 100, '9800000123', 'pokhara', 'Pending', '2026-08-29 14:11:34', '2026-08-29', '2026-08-29 19:56:34', NULL),
-(209, 'ORD-20260829-5553', 61, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Paid', NULL, NULL, 'Pani Puri', 1, 100, 100, '9800000123', 'pokhara', 'Pending', '2026-08-29 14:33:32', '2026-08-29', '2026-08-29 20:18:32', NULL),
-(210, 'ORD-20260829-1910', 84, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Paid', NULL, NULL, 'Wai Wai Sadeko', 1, 199, 199, '9800000123', '', 'Pending', '2026-08-29 14:49:33', '2026-08-29', '2026-08-29 20:34:33', NULL),
-(211, 'ORD-20260830-9400', 59, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Paid', NULL, NULL, 'Burger', 1, 350, 350, '9800000123', '', 'Completed', '2026-08-30 10:07:25', '2026-08-30', '2026-08-30 15:52:25', NULL),
-(212, 'ORD-20260830-5153', 76, 'subodh@gmail.com', NULL, 'Delivery', NULL, NULL, 'Cash on Delivery', 'Paid', NULL, NULL, 'Newari Khaja Set (Samay Baji)', 1, 250, 250, '9800000123', '', 'Pending', '2026-08-30 13:01:23', '2026-08-30', '2026-08-30 18:46:23', NULL);
 
--- --------------------------------------------------------
 
 --
 -- Table structure for table `restaurant_tables`
@@ -400,7 +299,8 @@ ALTER TABLE `menu`
 --
 ALTER TABLE `orders`
   ADD PRIMARY KEY (`order_id`),
-  ADD KEY `idx_order_number` (`order_number`);
+  ADD KEY `idx_order_number` (`order_number`),
+  ADD KEY `idx_orders_user_id` (`user_id`);
 
 --
 -- Indexes for table `restaurant_tables`
@@ -474,6 +374,50 @@ ALTER TABLE `subscribers`
 --
 ALTER TABLE `users`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=59;
+
+CREATE TABLE IF NOT EXISTS `ingredients` (
+  `id` int(11) NOT NULL AUTO_INCREMENT, `name` varchar(120) NOT NULL,
+  `unit` varchar(20) NOT NULL DEFAULT 'unit', `quantity` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `low_threshold` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `status` enum('Available','Low','Out') NOT NULL DEFAULT 'Available',
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS `suppliers` (
+  `id` int(11) NOT NULL AUTO_INCREMENT, `name` varchar(255) NOT NULL,
+  `contact_person` varchar(100) DEFAULT NULL, `phone` varchar(20) NOT NULL,
+  `email` varchar(100) DEFAULT NULL, `address` text DEFAULT NULL,
+  `status` enum('active','inactive') NOT NULL DEFAULT 'active',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(), PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+CREATE TABLE IF NOT EXISTS `purchase_orders` (
+  `id` int(11) NOT NULL AUTO_INCREMENT, `po_number` varchar(50) NOT NULL,
+  `supplier_id` int(11) NOT NULL, `total_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `status` enum('draft','ordered','received','canceled') NOT NULL DEFAULT 'draft',
+  `payment_status` enum('unpaid','partially_paid','paid') NOT NULL DEFAULT 'unpaid',
+  `notes` text DEFAULT NULL, `created_by` int(11) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`), UNIQUE KEY `uniq_po_number` (`po_number`),
+  CONSTRAINT `fk_po_supplier` FOREIGN KEY (`supplier_id`) REFERENCES `suppliers` (`id`),
+  CONSTRAINT `fk_po_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+CREATE TABLE IF NOT EXISTS `purchase_order_items` (
+  `id` int(11) NOT NULL AUTO_INCREMENT, `po_id` int(11) NOT NULL,
+  `ingredient_id` int(11) NOT NULL, `quantity` decimal(10,2) NOT NULL,
+  `unit_cost` decimal(10,2) NOT NULL, `total_cost` decimal(10,2) NOT NULL,
+  PRIMARY KEY (`id`), KEY `idx_poi_po` (`po_id`),
+  CONSTRAINT `fk_poi_po` FOREIGN KEY (`po_id`) REFERENCES `purchase_orders` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_poi_ingredient` FOREIGN KEY (`ingredient_id`) REFERENCES `ingredients` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+CREATE TABLE IF NOT EXISTS `audit_logs` (
+  `id` int(11) NOT NULL AUTO_INCREMENT, `user_id` int(11) NOT NULL,
+  `user_role` varchar(50) NOT NULL, `action` varchar(100) NOT NULL,
+  `target_type` varchar(50) DEFAULT NULL, `target_id` int(11) DEFAULT NULL,
+  `details` text DEFAULT NULL, `ip_address` varchar(45) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(), PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

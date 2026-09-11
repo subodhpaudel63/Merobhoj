@@ -31,7 +31,7 @@ if ($currentUser && isset($_COOKIE['user_img'])) {
 }
 
 // Fetch distinct categories
-$catSql = "SELECT DISTINCT menu_category FROM menu";
+$catSql = "SELECT LOWER(TRIM(category_name)) AS menu_category FROM menu_categories WHERE TRIM(category_name) <> '' UNION SELECT DISTINCT LOWER(TRIM(menu_category)) FROM menu WHERE menu_category IS NOT NULL AND TRIM(menu_category) <> '' ORDER BY menu_category";
 $catResult = $pdo->query($catSql);
 $categories = [];
 if ($catResult) {
@@ -193,7 +193,7 @@ if ($catResult) {
       </div>
     </div>
 
-    <?php $wantedCats = ['starter','breakfast','lunch','dinner']; ?>
+    <?php $wantedCats = $categories ?: ['starter','breakfast','lunch','dinner']; ?>
     <div class="menu-tabs-wrapper">
     <ul class="nav nav-tabs" id="menuTab" role="tablist">
         <?php foreach ($wantedCats as $index => $cat): ?>
@@ -221,7 +221,7 @@ if ($catResult) {
                 <div class="container">
                     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
                         <?php
-                        $stmt = $pdo->prepare("SELECT menu_id, menu_name, menu_description, menu_price, menu_image FROM menu WHERE menu_category = ?");
+                        $stmt = $pdo->prepare("SELECT menu_id, menu_name, menu_description, menu_price, menu_image, menu_status, stock_quantity FROM menu WHERE LOWER(TRIM(menu_category)) = ?");
                         $stmt->execute([$cat]);
                         $itemsResult = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         if (!empty($itemsResult)):
@@ -239,6 +239,7 @@ if ($catResult) {
                                         <h5 class="card-title mb-0"><?= htmlspecialchars($item['menu_name']) ?></h5>
                                         <button class="wishlist-btn ms-2 flex-shrink-0" title="Wishlist" data-id="<?= intval($item['menu_id']) ?>"><i class="fa fa-heart"></i></button>
                                     </div>
+                                    <?php $soldOut = ($item['menu_status'] ?? 'In Stock') === 'Out of Stock' || (int)($item['stock_quantity'] ?? 1) === 0; ?>
                                     <p class="card-text flex-grow-1"><?= htmlspecialchars($item['menu_description']) ?></p>
                                     <div class="d-flex justify-content-between align-items-center mt-1">
                                         <span class="price">रु<?= number_format((float)$item['menu_price'], 2) ?></span>
@@ -251,19 +252,19 @@ if ($catResult) {
                                             <input type="hidden" name="menu_name" value="<?= htmlspecialchars($item['menu_name']) ?>">
                                             <input type="hidden" name="price" value="<?= htmlspecialchars($item['menu_price']) ?>">
                                             <input type="hidden" name="image" value="<?= htmlspecialchars($img) ?>">
-                                            <button type="submit" class="btn btn-orange w-100">Add to Cart</button>
+                                            <button type="submit" class="btn btn-orange w-100" <?= $soldOut ? 'disabled' : '' ?>><?= $soldOut ? 'Out of Stock' : 'Add to Cart' ?></button>
                                         </form>
                                         <button type="button"
                                             style="flex:1;min-width:0;"
                                             class="btn btn-orange"
-                                            data-bs-toggle="modal"
+                                            data-bs-toggle="<?= $soldOut ? '' : 'modal' ?>"
                                             data-bs-target="#buyModal"
                                             data-id="<?= intval($item['menu_id']) ?>"
                                             data-name="<?= htmlspecialchars($item['menu_name']) ?>"
                                             data-description="<?= htmlspecialchars($item['menu_description']) ?>"
                                             data-price="<?= htmlspecialchars($item['menu_price']) ?>"
-                                            data-image="<?= htmlspecialchars($img) ?>">
-                                            Buy Now
+                                            data-image="<?= htmlspecialchars($img) ?>" <?= $soldOut ? 'disabled' : '' ?>>
+                                            <?= $soldOut ? 'Out of Stock' : 'Buy Now' ?>
                                         </button>
                                         <?php else: ?>
                                         <!-- GUEST: plain buttons, no form, no modal — only show login modal -->

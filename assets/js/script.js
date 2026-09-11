@@ -1089,7 +1089,7 @@ function handleGoogleCredentialResponse(response) {
     })
     .then(function (data) {
       if (data.success) {
-        window.location.href = data.redirect || '/Merobhoj/client/index.php';
+      window.location.replace(data.redirect || '/Merobhoj/client/index.php');
       } else {
         alert(data.message || 'Google sign-in failed');
       }

@@ -752,6 +752,126 @@ table.panel-table .qrm-btn + .qrm-btn { margin-left: 0.3rem; }
     .rider-nav-layout { grid-template-columns: 1fr; }
     .rider-nav-side .rider-job-card { position: static; }
 }
+
+/* ---- Shared interaction polish --------------------------------
+   Keep panel pages calm and responsive while preserving their existing
+   information architecture. */
+.admin-page-main {
+    animation: panelPageIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.panel-page-header h1,
+.qrm-page-header h1 {
+    letter-spacing: -0.02em;
+}
+
+.kds-stat,
+.panel-stat-card,
+.panel-card,
+.panel-table-wrap,
+.rider-job-card,
+.kds-col,
+.dashboard-summary-card,
+.dashboard-panel {
+    transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
+}
+
+.kds-stat:hover,
+.panel-stat-card:hover,
+.panel-card:hover,
+.dashboard-summary-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+}
+
+.rider-job-card:hover,
+.kds-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.1);
+}
+
+.kds-card,
+.rider-job-card {
+    transition: transform 0.24s ease, box-shadow 0.24s ease, opacity 0.24s ease;
+}
+
+.qrm-btn,
+.rider-big-btn,
+.rider-small-btn,
+.avail-seg button,
+.panel-voice-toggle,
+.panel-bell-btn,
+.rider-gps-pill {
+    transition: transform 0.18s ease, background-color 0.18s ease,
+        border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.qrm-btn:hover:not(:disabled),
+.rider-big-btn:hover:not(:disabled),
+.rider-small-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.qrm-btn:active:not(:disabled),
+.rider-big-btn:active:not(:disabled),
+.rider-small-btn:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+}
+
+.qrm-btn:focus-visible,
+.rider-big-btn:focus-visible,
+.rider-small-btn:focus-visible,
+.rider-gps-pill:focus-visible,
+.panel-voice-toggle:focus-visible,
+.panel-bell-btn:focus-visible {
+    outline: 3px solid rgba(240, 90, 34, 0.28);
+    outline-offset: 2px;
+}
+
+.kds-col-body,
+.rider-job-list {
+    min-height: 4rem;
+}
+
+.kds-col-empty,
+.rider-empty {
+    animation: panelSoftIn 0.35s ease both;
+}
+
+@keyframes panelPageIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes panelSoftIn {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .admin-page-main,
+    .kds-card,
+    .kds-col-empty,
+    .rider-empty,
+    .panel-live-dot,
+    .rider-gps-pill.is-live .material-symbols-sharp {
+        animation: none;
+    }
+
+    .kds-stat,
+    .panel-stat-card,
+    .panel-card,
+    .panel-table-wrap,
+    .rider-job-card,
+    .kds-col,
+    .dashboard-summary-card,
+    .dashboard-panel,
+    .qrm-btn,
+    .rider-big-btn,
+    .rider-small-btn {
+        transition: none;
+    }
+}
 @media screen and (max-width: 768px) {
     .kds-board { grid-template-columns: 1fr; }
     .kds-stats { grid-template-columns: 1fr; }

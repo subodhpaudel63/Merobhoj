@@ -35,6 +35,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         if ($req) {
             $orderCode = 'ORD-' . date('Ymd') . '-' . rand(1000, 9999);
             $items = json_decode($req['items_json'], true);
+            if (!is_array($items) || !$items) {
+                echo json_encode(['success' => false, 'message' => 'This QR order has no valid items.']);
+                exit;
+            }
             
             $conn->begin_transaction();
             try {
@@ -50,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 foreach ($items as $item) {
                     $total = $item['price'] * $item['quantity'];
                     $tableId = $req['table_id'];
-                    $stmtInsert->bind_param("sissssssidds", 
+                    $stmtInsert->bind_param("sisssssidds", 
                         $orderCode, 
                         $item['id'], 
                         $req['customer_name'], 

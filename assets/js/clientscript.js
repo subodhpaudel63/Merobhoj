@@ -269,7 +269,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
     const recalc = () => {
       const price = parseFloat(modalPrice.textContent) || 0;
-      const qty = Math.max(1, parseInt(quantityInput.value) || 1);
+      const qty = Math.min(10, Math.max(1, parseInt(quantityInput.value) || 1));
       quantityInput.value = qty;
       const total = (price * qty).toFixed(2);
       modalTotal.textContent = total;
@@ -300,7 +300,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     };
     document.getElementById('qty-minus')?.addEventListener('click', () => { quantityInput.value = Math.max(1, (parseInt(quantityInput.value) || 1) - 1); recalc(); });
-    document.getElementById('qty-plus')?.addEventListener('click', () => { quantityInput.value = (parseInt(quantityInput.value) || 1) + 1; recalc(); });
+    document.getElementById('qty-plus')?.addEventListener('click', () => { quantityInput.value = Math.min(10, (parseInt(quantityInput.value) || 1) + 1); recalc(); });
     quantityInput?.addEventListener('input', recalc);
     buyModal.addEventListener('show.bs.modal', e => {
       const btn = e.relatedTarget;
@@ -483,6 +483,7 @@ function myorderMapOrder(g) {
   return {
     id: '#' + (g.order_number || ('ORD-' + String(g.order_id || '').padStart(4, '0'))),
     orderNumber: g.order_number || ('ORD-' + String(g.order_id || '').padStart(4, '0')),
+    orderId: Number(g.order_id) || 0,
     orderType: g.order_type || 'Delivery',
     name: 'Merobhoj',
     addr: address || 'No delivery address recorded',
@@ -527,10 +528,10 @@ function myorderBuildConfig(o) {
 /* ---- Pick which order the tracking page shows: ?order= param, else the
         most recent non-cancelled one, else the newest order ---- */
 function myorderPickTracked() {
-  const requested = (new URLSearchParams(window.location.search).get('order') || '').trim();
-  const safe = /^[A-Za-z0-9-]{1,50}$/.test(requested) ? requested : '';
+  const requested = (new URLSearchParams(window.location.search).get('order_id') || '').trim();
+  const safe = /^\d{1,12}$/.test(requested) ? Number(requested) : 0;
   if (safe) {
-    const match = orders.find((o) => o.orderNumber === safe || o.id === '#' + safe);
+    const match = orders.find((o) => o.orderId === safe);
     if (match) return match;
   }
   // Keep showing the order the user explicitly chose to track
@@ -713,7 +714,7 @@ function showPage(name) {
 function openTrackPage(o) {
   if (!o || !o.orderNumber) return;
   myorderSelectedOrderNumber = o.orderNumber;
-  window.location.href = 'track_order.php?order=' + encodeURIComponent(o.orderNumber);
+  window.location.href = 'track_order.php?order_id=' + encodeURIComponent(o.orderId);
 }
 
 /* ---------------- TRACKING STATE ----------------
@@ -1062,7 +1063,7 @@ const DELIVERY_FEED_MS = 8000;
 const RIDER_SPEED_KMH  = 18;     // city scooter average, used for the ETA
 
 let deliveryTimer = null;        // feed interval handle
-let deliveryFeedOrder = null;    // order the feed is currently following
+let deliveryFeedOrder = null;    // order_id the feed is currently following
 let deliveryInFlight = false;
 
 function hideDeliveryCards() {
@@ -1078,7 +1079,7 @@ function hideDeliveryCards() {
 function syncDeliveryFeed(cfg) {
   const o = cfg && cfg.ORDER;
   const live = o && o.orderNumber && (o.rawStatus === 'Ready' || o.rawStatus === 'Delivering');
-  const wanted = live ? o.orderNumber : null;
+  const wanted = live ? o.orderId : null;
   if (wanted === deliveryFeedOrder) return;
 
   if (deliveryTimer) { clearInterval(deliveryTimer); deliveryTimer = null; }
@@ -1093,7 +1094,7 @@ async function pollDeliveryInfo() {
   if (deliveryInFlight || document.hidden || !deliveryFeedOrder) return;
   deliveryInFlight = true;
   try {
-    const res = await fetch('../includes/delivery_track.php?order=' + encodeURIComponent(deliveryFeedOrder), {
+    const res = await fetch('../includes/delivery_track.php?order_id=' + encodeURIComponent(deliveryFeedOrder), {
       credentials: 'same-origin'
     });
     const data = await res.json();

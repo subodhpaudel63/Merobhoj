@@ -36,7 +36,7 @@ if (isset($_COOKIE['user_img'])) {
 }
 
 // Fetch distinct categories
-$catSql = "SELECT DISTINCT menu_category FROM menu";
+$catSql = "SELECT LOWER(TRIM(category_name)) AS menu_category FROM menu_categories WHERE TRIM(category_name) <> '' UNION SELECT DISTINCT LOWER(TRIM(menu_category)) FROM menu WHERE menu_category IS NOT NULL AND TRIM(menu_category) <> '' ORDER BY menu_category";
 $catResult = $pdo->query($catSql);
 $categories = [];
 if ($catResult) {
@@ -230,7 +230,7 @@ if ($catResult) {
 
     <?php
     // Ensure we have exactly these categories in order
-    $wantedCats = ['starter','breakfast','lunch','dinner'];
+    $wantedCats = $categories ?: ['starter','breakfast','lunch','dinner'];
     ?>
     <div class="menu-tabs-wrapper">
     <ul class="nav nav-tabs" id="menuTab" role="tablist">
@@ -250,7 +250,7 @@ if ($catResult) {
                 <div class="container">
                     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
                         <?php
-                        $stmt = $pdo->prepare("SELECT menu_id, menu_name, menu_description, menu_price, menu_image, menu_status FROM menu WHERE menu_category = ?");
+                        $stmt = $pdo->prepare("SELECT menu_id, menu_name, menu_description, menu_price, menu_image, menu_status, stock_quantity, max_order_quantity FROM menu WHERE LOWER(TRIM(menu_category)) = ?");
                         $stmt->execute([$cat]);
                         $itemsResult = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         if (!empty($itemsResult)):
@@ -269,8 +269,9 @@ if ($catResult) {
                                         <h5 class="card-title mb-0"><?= htmlspecialchars($item['menu_name']) ?></h5>
                                         <button class="wishlist-btn ms-2 flex-shrink-0" title="Wishlist" data-id="<?= intval($item['menu_id']) ?>"><i class="fa fa-heart"></i></button>
                                     </div>
-                                    <span class="mkj-stock-badge mkj-stock-<?php echo strtolower(str_replace(' ', '-', $item['menu_status'] ?? 'In Stock')); ?>">
-                                        <?= htmlspecialchars($item['menu_status'] ?? 'In Stock') ?>
+                                    <?php $displayStatus = ((int)$item['stock_quantity'] === 0) ? 'Out of Stock' : ((int)$item['stock_quantity'] < 5 ? 'Low Stock' : 'In Stock'); ?>
+                                    <span class="mkj-stock-badge mkj-stock-<?php echo strtolower(str_replace(' ', '-', $displayStatus)); ?>">
+                                        <?= htmlspecialchars($displayStatus) ?>
                                     </span>
                                     <p class="card-text flex-grow-1"><?= htmlspecialchars($item['menu_description']) ?></p>
                                     <div class="d-flex justify-content-between align-items-center mt-1">
@@ -343,7 +344,7 @@ if ($catResult) {
                             <label class="mkj-order-label">Quantity</label>
                             <div class="mkj-stepper">
                                 <button type="button" id="qty-minus" class="mkj-stepper-btn">−</button>
-                                <input type="number" id="quantity" name="quantity" min="1" value="1" required class="mkj-stepper-input">
+                                <input type="number" id="quantity" name="quantity" min="1" max="10" value="1" required class="mkj-stepper-input">
                                 <button type="button" id="qty-plus" class="mkj-stepper-btn">+</button>
                             </div>
                             <div class="invalid-feedback">Please enter valid quantity</div>

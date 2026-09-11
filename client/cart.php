@@ -46,7 +46,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
                 $index = intval($_POST['index']);
                 $quantity = intval($_POST['quantity']);
                 
-                if (isset($_SESSION['cart'][$index]) && $quantity > 0) {
+                $menuId = (int)($_SESSION['cart'][$index]['menu_id'] ?? 0);
+                $stockStmt = $conn->prepare("SELECT stock_quantity, max_order_quantity FROM menu WHERE menu_id = ?");
+                $stockStmt->bind_param('i', $menuId); $stockStmt->execute(); $stock = $stockStmt->get_result()->fetch_assoc(); $stockStmt->close();
+                if (isset($_SESSION['cart'][$index]) && $quantity > 0 && $stock && $quantity <= min(10, (int)$stock['max_order_quantity'], (int)$stock['stock_quantity'])) {
                     $_SESSION['cart'][$index]['quantity'] = $quantity;
                     $_SESSION['cart'][$index]['total'] = $_SESSION['cart'][$index]['price'] * $quantity;
                     $response['success'] = true;
@@ -139,9 +142,10 @@ if ($order_type === 'Delivery') {
                 $error_occurred = false;
                 $last_insert_id = 0;
                 
+                $userId = intval($user['id'] ?? 0);
                 $stmt = $conn->prepare(
-                    "INSERT INTO orders (order_number, menu_id, email, menu_name, quantity, price, total_price, mobile, address, payment_method, payment_status, status, order_time, order_date, status_updated_at) "
-                    . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW(), CURDATE(), NOW())"
+                    "INSERT INTO orders (order_number, menu_id, email, user_id, menu_name, quantity, price, total_price, mobile, address, payment_method, payment_status, status, order_time, order_date, status_updated_at) "
+                    . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW(), CURDATE(), NOW())"
                 );
                 
                 if (!$stmt) {
@@ -157,11 +161,21 @@ if ($order_type === 'Delivery') {
                         error_log('Invalid item data in cart: ' . print_r($item, true));
                         continue;
                     }
+
+                    $stockCheck = $conn->prepare("SELECT stock_quantity, max_order_quantity, menu_name, menu_price FROM menu WHERE menu_id = ? FOR UPDATE");
+                    $stockCheck->bind_param('i', $item['menu_id']); $stockCheck->execute();
+                    $stockRow = $stockCheck->get_result()->fetch_assoc(); $stockCheck->close();
+                    $qty = (int)$item['quantity'];
+                    if (!$stockRow || $qty < 1 || $qty > min(10, (int)$stockRow['max_order_quantity']) || $qty > (int)$stockRow['stock_quantity']) {
+                        $error_occurred = true; $response['message'] = 'A cart item exceeds its current stock or quantity limit.'; break;
+                    }
+                    $item['name'] = $stockRow['menu_name']; $item['price'] = (float)$stockRow['menu_price']; $item['total'] = $item['price'] * $qty;
                     
-                    $result = $stmt->bind_param("sissidsssss", 
+                    $result = $stmt->bind_param("sisisiddssss",
                         $order_number,
                         $item['menu_id'],
                         $email,
+                        $userId,
                         $item['name'],
                         $item['quantity'],
                         $item['price'],
@@ -180,6 +194,9 @@ if ($order_type === 'Delivery') {
                     
                     if ($stmt->execute()) {
                         $success_count++;
+                        $newStock = (int)$stockRow['stock_quantity'] - $qty;
+                        $updateStock = $conn->prepare("UPDATE menu SET stock_quantity = ?, menu_status = CASE WHEN ? = 0 THEN 'Out of Stock' WHEN ? < 5 THEN 'Low Stock' ELSE 'In Stock' END WHERE menu_id = ?");
+                        $updateStock->bind_param('iiii', $newStock, $newStock, $newStock, $item['menu_id']); $updateStock->execute(); $updateStock->close();
                         if ($last_insert_id === 0) {
                             $last_insert_id = $conn->insert_id;
                         }

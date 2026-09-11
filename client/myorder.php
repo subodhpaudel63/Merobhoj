@@ -414,6 +414,7 @@ if (isset($_COOKIE['user_img'])) {
       </div>
     </section>
     
+<?php include_once __DIR__ . '/../includes/cart_drawer.php'; ?>
 <?php include_once __DIR__ . '/../footer.php'; ?>
 
 
@@ -427,5 +428,10 @@ if (isset($_COOKIE['user_img'])) {
     <script src="<?php echo asset('js/script.js'); ?>"></script>
     <script src="<?php echo asset('js/toast_notifications.js'); ?>"></script>
     <script src="<?php echo asset('js/clientscript.js'); ?>"></script>
+    <script>
+      document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach(function (toggle) {
+        if (window.bootstrap) bootstrap.Dropdown.getOrCreateInstance(toggle);
+      });
+    </script>
 </body>
 </html>

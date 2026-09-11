@@ -214,6 +214,17 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     };
 
+    window.restockMenuItem = function (menuId) {
+      fetch('menu_ajax.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' },
+        body: new URLSearchParams({ action: 'restock', menu_id: menuId })
+      }).then(r => r.json()).then(res => {
+        if (res.success) location.reload();
+        else toast(res.message || 'Unable to restock item.', 'error');
+      }).catch(() => toast('Unable to restock item.', 'error'));
+    };
+
     window.selectedIds = function () {
       const checked = document.querySelectorAll('.item-checkbox:checked');
       return Array.from(checked).map(cb => cb.value);
@@ -457,7 +468,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const params = new URLSearchParams({
       fiscalYear: filters.fiscalYear || '',
       startDate: filters.startDate || '',
-      endDate: filters.endDate || ''
+      endDate: filters.endDate || '',
+      _: Date.now()
     });
     return fetch('finance_data.php?' + params.toString(), {
       headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -667,7 +679,7 @@ document.addEventListener('DOMContentLoaded', function () {
               maxBarThickness: 42
             }]
           },
-          options: baseChartOptions({ currency: true })
+          options: baseChartOptions({ currency: true, stepSize: 500 })
         });
       }
     }
@@ -749,7 +761,7 @@ document.addEventListener('DOMContentLoaded', function () {
       scales: {
         y: {
           beginAtZero: true,
-          ticks: opts.currency ? { callback: (v) => "रु " + v } : undefined,
+          ticks: opts.currency ? { stepSize: opts.stepSize || undefined, callback: (v) => "रु " + v } : undefined,
           grid: { color: "#eef0f3" }
         },
         x: { grid: { display: false } }
@@ -1243,6 +1255,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initTabs();
     initFilters();
     refreshAll(getFilters()).catch(() => {});
+    startLiveUpdates(5000);
   }
 
   if (document.readyState === "loading") {

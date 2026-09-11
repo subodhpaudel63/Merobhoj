@@ -60,8 +60,6 @@ if (isset($_COOKIE['user_img'])) {
     <link rel="stylesheet" href="<?php echo asset('css/clientstyle.css'); ?>" />
     
     
-    <!-- Include toast styles -->
-    <link rel="stylesheet" href="<?php echo asset('css/toast_styles.css'); ?>" />
   </head>
   <body class="home-page">
     
@@ -872,8 +870,5 @@ Want to explore that next?
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="<?php echo asset('js/script.js'); ?>"></script>
     <script src="./script.js"></script>
-    <!-- Include toast notifications JS -->
-    <script src="<?php echo asset('js/toast_notifications.js'); ?>"></script>
-    
   </body>
 </html>

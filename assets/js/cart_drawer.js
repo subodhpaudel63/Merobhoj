@@ -171,7 +171,6 @@
     quantity = Math.max(1, parseInt(quantity, 10) || 1);
     return postCart({ ajax_action: 'update_quantity', index, quantity }).then(data => {
       if (data.success) {
-        showSuccess('Quantity updated successfully.', 'Cart updated');
         return refreshCart();
       }
       showError(data.message || 'Could not update quantity.', 'Update failed');
@@ -264,23 +263,44 @@
     }
   });
 
-  document.addEventListener('submit', function (event) {
+  document.addEventListener('submit', async function (event) {
     const addForm = event.target.closest('form[action*="includes/cart.php?action=add"]');
     if (!addForm) return;
 
     event.preventDefault();
-    fetch(addForm.action, {
-      method: 'POST',
-      body: new FormData(addForm)
-    }).then(response => {
+    const addUrl = new URL(addForm.action, window.location.href);
+    addUrl.searchParams.set('ajax', '1');
+
+    try {
+      const response = await fetch(addUrl.toString(), {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin',
+        body: new FormData(addForm)
+      });
+
       if (response.redirected && response.url.includes('login.php')) {
         showWarning('Please login to add items to your cart.', 'Login required');
         window.location.href = response.url;
         return;
       }
+
+      const data = await response.json();
+      if (!data.success) {
+        showError(data.message || 'Could not add item to cart.', 'Add failed');
+        return;
+      }
+
+      cartItems = Array.isArray(data.data) ? data.data : cartItems;
+      renderCart();
       showSuccess('Item added to your cart.', 'Added to cart');
       openDrawer();
-    }).catch(() => showError('Could not add item to cart.', 'Add failed'));
+    } catch (error) {
+      showError('Could not add item to cart.', 'Add failed');
+    }
   });
 
   closeBtn?.addEventListener('click', closeDrawer);
@@ -298,12 +318,10 @@
     event.preventDefault();
     if (!checkoutForm.checkValidity()) {
       checkoutForm.reportValidity();
-      showWarning('Please enter a valid 10-digit mobile number and delivery address.', 'Checkout details needed');
       return;
     }
 
     if (!cartItems.length) {
-      showWarning('Your cart is empty. Add an item before checkout.', 'Cart is empty');
       return;
     }
 
@@ -312,7 +330,6 @@
     const originalText = checkoutBtn.textContent;
     checkoutBtn.textContent = 'Processing...';
     checkoutBtn.disabled = true;
-    showInfo('We are placing your order now.', 'Processing order');
 
     fetch(cartEndpoint, { method: 'POST', body: formData })
       .then(response => response.json())
@@ -320,7 +337,6 @@
         if (data.success) {
           // eSewa payment: redirect via hidden POST form to esewa/pay.php
           if (data.payment_method === 'eSewa' && data.order_id) {
-            showInfo('Redirecting to eSewa for secure payment...', 'eSewa Payment');
             const esewaForm = document.createElement('form');
             esewaForm.method = 'POST';
             esewaForm.action = '../esewa/pay.php';
@@ -343,17 +359,15 @@
           }
 
           // Normal order (cash / pay at restaurant)
-          showSuccess(data.message || 'Order placed successfully!', 'Order confirmed');
           cartItems = [];
           renderCart();
           setTimeout(() => {
             window.location.href = data.redirect || '/Merobhoj/client/myorder.php';
           }, 1200);
         } else {
-          showError(data.message || 'Could not place order.', 'Checkout failed');
         }
       })
-      .catch(error => showError('Error processing order: ' + error.message, 'Checkout error'))
+      .catch(() => {})
       .finally(() => {
         checkoutBtn.textContent = originalText;
         checkoutBtn.disabled = false;

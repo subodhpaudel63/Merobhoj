@@ -107,14 +107,23 @@ document.addEventListener('DOMContentLoaded', () => {
             btns.push(`<button class="qrm-btn qrm-btn-success" onclick="updateStatus('${o.order_number}', 'Confirmed')">Accept</button>`);
             btns.push(`<button class="qrm-btn qrm-btn-danger" onclick="updateStatus('${o.order_number}', 'Cancelled')">Cancel</button>`);
         }
-        // Confirmed -> Preparing, Preparing -> Ready, and cancellation
+        // Delivery orders are owned by the chef after acceptance. Staff only
+        // sends them out once the kitchen marks them ready.
         else if (status === 'Confirmed') {
-            btns.push(`<button class="qrm-btn qrm-btn-primary" onclick="updateStatus('${o.order_number}', 'Preparing')">Send to Kitchen</button>`);
-            btns.push(`<button class="qrm-btn qrm-btn-danger" onclick="updateStatus('${o.order_number}', 'Cancelled')">Cancel</button>`);
+            if (type !== 'Delivery') {
+                btns.push(`<button class="qrm-btn qrm-btn-primary" onclick="updateStatus('${o.order_number}', 'Preparing')">Send to Kitchen</button>`);
+                btns.push(`<button class="qrm-btn qrm-btn-danger" onclick="updateStatus('${o.order_number}', 'Cancelled')">Cancel</button>`);
+            } else {
+                btns.push('<span class="panel-status st-confirmed">Waiting for kitchen</span>');
+            }
         }
         else if (status === 'Preparing') {
-            btns.push(`<button class="qrm-btn qrm-btn-primary" onclick="updateStatus('${o.order_number}', 'Ready')">Mark Ready</button>`);
-            btns.push(`<button class="qrm-btn qrm-btn-danger" onclick="updateStatus('${o.order_number}', 'Cancelled')">Cancel</button>`);
+            if (type !== 'Delivery') {
+                btns.push(`<button class="qrm-btn qrm-btn-primary" onclick="updateStatus('${o.order_number}', 'Ready')">Mark Ready</button>`);
+                btns.push(`<button class="qrm-btn qrm-btn-danger" onclick="updateStatus('${o.order_number}', 'Cancelled')">Cancel</button>`);
+            } else {
+                btns.push('<span class="panel-status st-preparing">Kitchen preparing</span>');
+            }
         }
         // Ready -> Dine In / Takeaway [Serve] / Delivery [Send out], + [Cancel]
         else if (status === 'Ready') {
@@ -127,8 +136,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // Delivering -> [Complete] / [Cancel]
         else if (status === 'Delivering') {
-            btns.push(`<button class="qrm-btn qrm-btn-success" onclick="updateStatus('${o.order_number}', 'Completed')">Complete</button>`);
-            btns.push(`<button class="qrm-btn qrm-btn-danger" onclick="updateStatus('${o.order_number}', 'Cancelled')">Cancel</button>`);
+            if (type !== 'Delivery') {
+                btns.push(`<button class="qrm-btn qrm-btn-success" onclick="updateStatus('${o.order_number}', 'Completed')">Complete</button>`);
+            } else {
+                btns.push('<span class="panel-status st-delivering">Rider completing</span>');
+            }
         }
 
         // Add Settle / Pay button for active unpaid orders
@@ -141,8 +153,16 @@ document.addEventListener('DOMContentLoaded', () => {
         var doUpdate = function() {
             fetch('api/order_update_status.php', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ order_number: orderNumber, status: targetStatus })
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-Token': window.PANEL_CSRF || ''
+                },
+                body: JSON.stringify({
+                    order_number: orderNumber,
+                    status: targetStatus,
+                    csrf: window.PANEL_CSRF || ''
+                })
             })
             .then(res => res.json())
             .then(data => {
@@ -151,7 +171,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     alert(data.message || 'Status update failed');
                 }
-            });
+            })
+            .catch(() => alert('Could not update the order. Please try again.'));
         };
 
         if (typeof window.openDeleteConfirm === 'function') {

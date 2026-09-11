@@ -22,8 +22,9 @@ if ($order_number === '') {
 }
 
 // 1. Check order exists and verify owner
-$stmt = $conn->prepare("SELECT email, status, order_type FROM orders WHERE order_number = ? LIMIT 1");
-$stmt->bind_param("s", $order_number);
+$userId = intval($user['id'] ?? 0);
+$stmt = $conn->prepare("SELECT user_id, status, order_type FROM orders WHERE order_number = ? AND user_id = ? LIMIT 1");
+$stmt->bind_param("si", $order_number, $userId);
 $stmt->execute();
 $res = $stmt->get_result();
 $order = $res->fetch_assoc();
@@ -31,11 +32,6 @@ $stmt->close();
 
 if (!$order) {
     echo json_encode(['success' => false, 'message' => 'Order not found.']);
-    exit;
-}
-
-if ($order['email'] !== $user['email']) {
-    echo json_encode(['success' => false, 'message' => 'Unauthorized action. You do not own this order.']);
     exit;
 }
 

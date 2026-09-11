@@ -23,7 +23,12 @@ $pageTitle = 'Floor Plan';
   <link rel="stylesheet" href="../assets/css/admin2.css?v=<?= filemtime(__DIR__ . '/../assets/css/admin2.css') ?>">
   <link rel="stylesheet" href="../assets/css/panel.css?v=<?= filemtime(__DIR__ . '/../assets/css/panel.css') ?>">
 </head>
-<body class="admin-page">
+<body class="admin-page floor-plan-page"
+      data-fp-api-url="../staff/api/floor.php"
+      data-fp-table-api-url="../staff/api/table_details.php"
+      data-fp-settle-api-url="../staff/api/settle_bill.php"
+      data-fp-book-api-url="../staff/api/booking_create.php"
+      data-fp-is-admin="false">
   <?php include __DIR__ . '/topbar.php'; ?>
   <div class="container">
     <?php include __DIR__ . '/sidebar.php'; ?>
@@ -249,13 +254,5 @@ $pageTitle = 'Floor Plan';
   <script src="../assets/js/admin2.js?v=<?= time() ?>"></script>
   <script src="../assets/js/panel_notifications.js?v=<?= time() ?>"></script>
   <script src="../assets/js/floor_plan.js?v=<?= time() ?>"></script>
-  <script>
-    window.FP_API_URL        = '../staff/api/floor.php';
-    window.FP_TABLE_API_URL  = '../staff/api/table_details.php';
-    window.FP_SETTLE_API_URL = '../staff/api/settle_bill.php';
-    window.FP_BOOK_API_URL   = '../staff/api/booking_create.php';
-    window.FP_IS_ADMIN       = false;
-    loadFloorPlan();
-  </script>
 </body>
 </html>

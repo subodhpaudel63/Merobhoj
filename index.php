@@ -68,17 +68,6 @@ if (isset($_GET['action'])) {
   </head>
   <body class="home-page">
     
-    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:2000;">
-      <?php if (isset($_SESSION['msg'])): $m=$_SESSION['msg']; unset($_SESSION['msg']); ?>
-        <div class="toast show align-items-center border-0 <?php echo $m['type']==='success'?'toast-success':'toast-error'; ?>" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
-          <div class="d-flex">
-            <div class="toast-body small fw-semibold"><?php echo htmlspecialchars($m['text']); ?></div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-          </div>
-        </div>
-      <?php endif; ?>
-    </div>
-
     <div class="loader">
       <i class="fas fa-utensils loader-icone"></i>
       <p>Mero Bhoj</p>
@@ -932,6 +921,5 @@ Want to explore that next?
     
     <?php include_once __DIR__ . '/footer.php'; ?>
 
-    <div id="toast-container"></div>
   </body>
 </html>

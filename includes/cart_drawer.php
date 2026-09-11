@@ -791,7 +791,6 @@ syncOrderTypeFields();
 
     function setLocation(lat, lng, label) {
       if (!window.L) {
-        alert('The map is still loading. Please try again.');
         return;
       }
       latitude.value = Number(lat).toFixed(7);

@@ -46,27 +46,6 @@ if (isset($_GET['session_expired']) && $_GET['session_expired'] == 1) {
 
 
   <!-- ══════════════════════════════════════════
-       TOAST NOTIFICATIONS — animated
-  ══════════════════════════════════════════ -->
-  <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999;">
-    <?php if (isset($_SESSION['msg'])): $m = $_SESSION['msg']; unset($_SESSION['msg']); ?>
-      <div class="toast show align-items-center <?php echo $m['type']==='success' ? 'toast-success' : 'toast-error'; ?>"
-           role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="d-flex align-items-center px-3 py-2 gap-2" style="position:relative;">
-          <span class="toast-icon">
-            <?php echo $m['type']==='success' ? '<i class="bi bi-check-circle-fill"></i>' : '<i class="bi bi-x-circle-fill"></i>'; ?>
-          </span>
-          <div class="toast-body small fw-semibold flex-grow-1 px-0">
-            <?php echo htmlspecialchars($m['text']); ?>
-          </div>
-          <button type="button" class="btn-close ms-2 flex-shrink-0" data-bs-dismiss="toast" aria-label="Close"></button>
-          <div class="toast-progress"></div>
-        </div>
-      </div>
-    <?php endif; ?>
-  </div>
-
-  <!-- ══════════════════════════════════════════
        MAIN CONTENT
   ══════════════════════════════════════════ -->
   <div class="auth-section">
@@ -142,10 +121,10 @@ if (isset($_GET['session_expired']) && $_GET['session_expired'] == 1) {
                   <div class="field-animate mb-3" style="display:flex;justify-content:center;width:100%;">
                     <div id="g_id_onload"
                          data-client_id="<?php echo GOOGLE_CLIENT_ID; ?>"
+                         data-callback="handleGoogleCredentialResponse"
                          data-context="signin"
                          data-ux_mode="popup"
-                         data-auto_prompt="false"
-                         style="display:flex;justify-content:center;width:100%;max-width:300px;">
+                         data-auto_prompt="false">
                     </div>
                     <div class="g_id_signin"
                          data-type="standard"
@@ -154,8 +133,7 @@ if (isset($_GET['session_expired']) && $_GET['session_expired'] == 1) {
                          data-text="continue_with"
                          data-size="large"
                          data-logo_alignment="left"
-                         data-locale="en"
-                         style="display:flex;justify-content:center;width:100%;max-width:300px;">
+                         data-locale="en">
                     </div>
                   </div>
                  
@@ -192,7 +170,7 @@ if (isset($_GET['session_expired']) && $_GET['session_expired'] == 1) {
   <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
   <?php if (!GOOGLE_USE_FALLBACK): ?>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://accounts.google.com/gsi/client" async defer onload="renderGoogleButton()"></script>
   <?php endif; ?>
 
   <script type="application/json" id="gisConfig"><?php $gcfg = array(); $gcfg['useFallback'] = GOOGLE_USE_FALLBACK; $gcfg['clientId'] = GOOGLE_CLIENT_ID; echo json_encode($gcfg); ?></script>

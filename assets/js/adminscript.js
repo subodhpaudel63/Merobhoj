@@ -643,69 +643,6 @@ function closeAddressModal() {
         $("resetBtn").click();
     });
 
-    /* Add review modal */
-    $("openReview").addEventListener("click", () => {
-        $("reviewModal").hidden = false;
-        $("customerName").focus();
-    });
-
-    $("closeReview").addEventListener("click", () => {
-        $("reviewModal").hidden = true;
-    });
-
-    $("reviewModal").addEventListener("click", e => {
-        if (e.target === $("reviewModal")) $("reviewModal").hidden = true;
-    });
-
-    /* Add review â€” saved through the existing feedback form endpoint */
-    $("reviewForm").addEventListener("submit", e => {
-        e.preventDefault();
-
-        const submitBtn = e.target.querySelector(".submit-review");
-        if (submitBtn) submitBtn.disabled = true;
-
-        const payload = new FormData();
-        payload.append("name", $("customerName").value.trim());
-        payload.append("email", $("customerEmail").value.trim());
-        payload.append("rating", $("customerRating").value);
-        payload.append("comments", $("customerReview").value.trim());
-
-        fetch("../includes/feedback_form.php", { method: "POST", body: payload })
-            .then(res => res.json())
-            .then(result => {
-                if (!result || result.status !== "success") {
-                    alert((result && result.message) || "Unable to save the review.");
-                    return;
-                }
-
-                const now = new Date();
-                const iso = now.toISOString().slice(0, 10);
-
-                reviews.push({
-                    id: now.getTime(), // temporary id until the page is reloaded
-                    name: $("customerName").value.trim(),
-                    email: $("customerEmail").value.trim(),
-                    rating: Number($("customerRating").value),
-                    review: $("customerReview").value.trim(),
-                    isoDate: iso,
-                    date: formatDate(iso),
-                    time: now.toLocaleTimeString("en-US", {
-                        hour: "2-digit",
-                        minute: "2-digit"
-                    }),
-                    responded: false
-                });
-
-                $("reviewForm").reset();
-                $("reviewModal").hidden = true;
-                render();
-            })
-            .catch(() => alert("Unable to save the review right now."))
-            .finally(() => {
-                if (submitBtn) submitBtn.disabled = false;
-            });
-    });
-
     /* View modal */
     function openView(id) {
         const review = reviews.find(r => r.id === id);
@@ -853,7 +790,6 @@ function closeAddressModal() {
         if (e.key !== "Escape") return;
 
         $("datePopover").hidden = true;
-        $("reviewModal").hidden = true;
         $("viewModal").hidden = true;
         $("responseModal").hidden = true;
     });

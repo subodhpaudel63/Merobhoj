@@ -134,34 +134,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.approveRequest = function(id) {
-        var doApprove = function() {
-            fetch('api/qr_requests.php', {
+        if (!confirm('Approve this QR order and send it to the kitchen?')) return;
+        fetch('api/qr_requests.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'approve', request_id: id })
             })
-            .then(res => res.json())
+            .then(res => res.json().then(data => ({ ok: res.ok, data })))
             .then(data => {
-                if (data.success) {
+                if (data.ok && data.data.success) {
                     loadQRRequests();
                 } else {
-                    alert(data.message || 'Approval failed');
+                    alert(data.data.message || 'Approval failed');
                 }
-            });
-        };
-
-        if (typeof window.openDeleteConfirm === 'function') {
-            openDeleteConfirm({
-                title: 'Approve QR Order?',
-                message: 'Approve this QR self-order and send it to the kitchen?',
-                confirmText: 'Approve & Send',
-                type: 'success',
-                onConfirm: doApprove
-            });
-            return;
-        }
-        if (!confirm('Approve this QR order and send to kitchen?')) return;
-        doApprove();
+            })
+            .catch(() => alert('Approval failed. Please try again.'));
     };
 
     window.rejectRequest = function(id) {
@@ -196,4 +183,3 @@ document.addEventListener('DOMContentLoaded', () => {
   <script src="../assets/js/panel_notifications.js?v=<?= filemtime(__DIR__ . '/../assets/js/panel_notifications.js') ?>"></script>
 </body>
 </html>
-

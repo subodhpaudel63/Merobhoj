@@ -48,6 +48,7 @@ $cookieMaxAge = 86400; // 24 h
 
 setcookie('email',      encrypt($user['email'],     SECRET_KEY), $now + $cookieMaxAge, '/', '', false, true);
 setcookie('user_type',  encrypt($user['user_type'], SECRET_KEY), $now + $cookieMaxAge, '/', '', false, true);
+setcookie('user_id',    encrypt((string) $user['id'], SECRET_KEY), $now + $cookieMaxAge, '/', '', false, true);
 setcookie('login_time', encrypt((string) $now,      SECRET_KEY), $now + $cookieMaxAge, '/', '', false, true);
 setcookie('user_img',   encrypt($user['user_img'] ?? '', SECRET_KEY), $now + $cookieMaxAge, '/', '', false, true);
 

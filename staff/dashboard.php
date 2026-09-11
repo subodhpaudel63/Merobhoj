@@ -65,7 +65,7 @@ if ($rOrd) {
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><?= htmlspecialchars($pageTitle) ?> · Mero Bhoj</title>
+  <title><?= htmlspecialchars($pageTitle) ?> · Mero Bhoj staff </title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -162,8 +162,8 @@ if ($rOrd) {
                 <?php foreach ($recentOrders as $ord): ?>
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 0; border-bottom: 1px solid var(--clr-border);">
                     <div>
-                        <strong><?= htmlspecialchars($ord['order_number']) ?></strong> (<?= htmlspecialchars($ord['order_type']) ?>)
-                        <div class="text-muted" style="font-size: 0.8rem;"><?= date('h:i A', strtotime($ord['created_at'])) ?> <?= $ord['order_type'] === 'Dine In' ? '· Table ' . htmlspecialchars($ord['table_number']) : '' ?></div>
+                        <strong><?= htmlspecialchars((string)($ord['order_number'] ?? '')) ?></strong> (<?= htmlspecialchars((string)($ord['order_type'] ?? '')) ?>)
+                        <div class="text-muted" style="font-size: 0.8rem;"><?= date('h:i A', strtotime($ord['created_at'])) ?> <?= ($ord['order_type'] ?? '') === 'Dine In' ? '· Table ' . htmlspecialchars((string)($ord['table_number'] ?? '')) : '' ?></div>
                     </div>
                     <div>
                         <span class="panel-status st-<?= strtolower(str_replace(' ', '', $ord['status'])) ?>"><?= htmlspecialchars($ord['status']) ?></span>

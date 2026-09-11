@@ -2112,22 +2112,6 @@ MEDIA QUERY PHONE
   margin: 0 0 30px 4px;
 }
 
-.page .add-review-btn {
-  height: 42px;
-  border: 0;
-  background: #ff5b16;
-  color: #fff;
-  border-radius: 9px;
-  padding: 0 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 700;
-  box-shadow: 0 6px 18px rgba(255, 91, 22, .15);
-}
-
-.page .add-review-btn svg { width: 17px; height: 17px; }
-
 /* --- layout --- */
 .page .dashboard-grid {
   display: grid;
@@ -3197,6 +3181,12 @@ MEDIA QUERY PHONE
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
   gap: 1.5rem;
+  transition: opacity 0.12s ease;
+}
+
+.qrm-grid.is-refreshing {
+  opacity: 0.58;
+  pointer-events: none;
 }
 
 /* Table Card */
@@ -3207,22 +3197,21 @@ MEDIA QUERY PHONE
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-  border-top: 4px solid var(--clr-border);
-  animation: slideUp 0.35s ease both;
+  transition: transform 0.18s ease-out, box-shadow 0.18s ease-out;
+  border: 1px solid var(--clr-border);
+  animation: qrmCardIn 0.18s ease-out both;
+  will-change: transform, opacity;
+  contain: layout paint;
 }
 
-.qrm-card.has-qr {
-  border-top-color: var(--clr-success);
-}
-
-.qrm-card.no-qr {
-  border-top-color: var(--clr-warnig);
+@keyframes qrmCardIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .qrm-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px -8px rgba(0,0,0,0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px -8px rgba(0,0,0,0.12);
 }
 
 .qrm-card-header {
@@ -3290,9 +3279,15 @@ MEDIA QUERY PHONE
   background: white;
   border-radius: var(--border-radius-2);
   padding: 10px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.1);
   display: inline-block;
   margin-bottom: 0.8rem;
+  transition: transform 0.18s ease-out, box-shadow 0.18s ease-out;
+}
+
+.qrm-card:hover .qrm-qr-wrapper {
+  transform: scale(1.015);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
 }
 
 .qrm-qr-canvas img, .qrm-qr-canvas canvas {
@@ -3349,9 +3344,23 @@ MEDIA QUERY PHONE
   font-family: inherit;
   font-size: 0.85rem;
   font-weight: 600;
-  transition: all 0.2s ease;
+  transition: transform 0.22s cubic-bezier(.22,1,.36,1), background-color 0.22s ease,
+    color 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
   white-space: nowrap;
   text-decoration: none;
+}
+
+.qrm-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.qrm-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.qrm-btn:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .qrm-btn .material-symbols-sharp {
@@ -3368,6 +3377,14 @@ MEDIA QUERY PHONE
 .qrm-btn-primary {
   background: var(--clr-primary);
   color: white;
+}
+
+.qrm-page-header .qrm-btn-primary {
+  box-shadow: 0 10px 22px rgba(240, 24, 29, .16);
+}
+
+.qrm-page-header .qrm-btn-primary:hover {
+  box-shadow: 0 14px 28px rgba(240, 24, 29, .22);
 }
 .qrm-btn-primary:hover { background: var(--clr-primary-dark); }
 
@@ -3420,6 +3437,19 @@ MEDIA QUERY PHONE
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qrm-card,
+  .qrm-spinner,
+  .qrm-spin {
+    animation: none;
+  }
+
+  .qrm-btn,
+  .qrm-qr-wrapper {
+    transition: none;
+  }
 }
 
 /* ===========================================================
@@ -4245,4 +4275,4 @@ table.staff-table tbody tr:hover {
   font-size: 0.95rem;
   font-weight: 800;
   color: #0f172a;
-}
+}
