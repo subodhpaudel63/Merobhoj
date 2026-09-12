@@ -33,6 +33,7 @@ html {
 body { background: #f8f8f6; }
 
 .section-title h2 { position: relative; display: inline-block; }
+.stacked-section-title { display: flex; flex-direction: column; align-items: center; }
 .section-title h2::after {
   content: '';
   position: absolute;

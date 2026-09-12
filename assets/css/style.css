@@ -3495,6 +3495,13 @@ body.menu-page .card-body .d-flex.gap-2.mt-3 > .btn { justify-content: center; a
   opacity: 1 !important;
   transform: none !important;
 }
+.auth-page .google-signin-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
 .auth-page .g_id_signin > div,
 .auth-page .g_id_signin iframe,
 .auth-page #g_id_onload > div {

@@ -48,6 +48,29 @@ document.addEventListener('DOMContentLoaded', function () {
       ? '../includes/get_available_tables.php'
       : (currentPath.includes('/Merobhoj/') ? './includes/get_available_tables.php' : '/Merobhoj/includes/get_available_tables.php');
 
+    const today = new Date();
+    const todayValue = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    if (dateInput) {
+      dateInput.min = todayValue;
+      if (dateInput.value && dateInput.value < todayValue) dateInput.value = '';
+    }
+    if (startTimeInput?.tagName === 'INPUT') {
+      startTimeInput.min = '07:00';
+      startTimeInput.max = '22:30';
+      startTimeInput.step = '1800';
+    }
+    if (endTimeInput?.tagName === 'INPUT') {
+      endTimeInput.min = '07:30';
+      endTimeInput.max = '23:00';
+      endTimeInput.step = '1800';
+    }
+    const syncEndTimeMin = () => {
+      if (endTimeInput?.tagName === 'INPUT') {
+        endTimeInput.min = startTimeInput?.value || '07:30';
+        if (endTimeInput.value && endTimeInput.value <= endTimeInput.min) endTimeInput.value = '';
+      }
+    };
+
     const getAllTimeSlots = () => {
       const slots = [];
       for (let hour = 7; hour <= 23; hour++) {
@@ -160,11 +183,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (startTimeInput && endTimeInput) {
       startTimeInput.addEventListener('change', () => {
+        syncEndTimeMin();
         applyTimeSelectOptions();
         requestAnimationFrame(updateTables);
       });
       endTimeInput.addEventListener('change', () => requestAnimationFrame(updateTables));
       startTimeInput.addEventListener('input', () => {
+        syncEndTimeMin();
         applyTimeSelectOptions();
         requestAnimationFrame(updateTables);
       });
@@ -191,12 +216,29 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
+      if (!dateInput?.value || dateInput.value < todayValue) {
+        e.preventDefault();
+        alert('Please choose today or a future booking date.');
+        return;
+      }
+
+      if (dateInput.value === todayValue) {
+        const now = new Date();
+        const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        if (startTimeInput?.value <= currentTime) {
+          e.preventDefault();
+          alert('Please choose a future start time.');
+          return;
+        }
+      }
+
       if (peopleInput && parseInt(peopleInput.value, 10) > 8) {
         e.preventDefault(); alert('The maximum capacity for a single table is 8 people.');
       }
     });
 
     applyTimeSelectOptions();
+    syncEndTimeMin();
     requestAnimationFrame(updateTables);
   };
 
@@ -336,7 +378,7 @@ document.addEventListener('DOMContentLoaded', function () {
           const orderRef = o.order_number || ('ORD-' + String(o.order_id).padStart(4, '0'));
           const previousStatus = previousOrders[orderRef];
           const statusChanged = previousStatus && previousStatus !== o.status;
-          const itemsHtml = o.items.map(it => `<div class="d-flex justify-content-between align-items-center py-1" style="border-bottom: 1px dashed #eee;"><span>${it.menu_name} <span class="text-muted">Ã— ${it.quantity}</span></span><span class="text-muted" style="font-size:0.85rem;">Rs. ${Number(it.total_price).toFixed(2)}</span></div>`).join('');
+          const itemsHtml = o.items.map(it => `<div class="d-flex justify-content-between align-items-center py-1" style="border-bottom: 1px dashed #eee;"><span>${myorderEscape(it.menu_name)} <span class="text-muted">Ã— ${it.quantity}</span></span><span class="text-muted" style="font-size:0.85rem;">Rs. ${Number(it.total_price).toFixed(2)}</span></div>`).join('');
           let actionHtml = '';
           if (o.status === 'Delivered' || o.status === 'Completed') actionHtml = `<small class="text-success mt-1 fw-semibold" style="font-size:0.78rem; display:block;">Order delivered successfully.</small>`;
           else if (o.status === 'Preparing' || o.status === 'Out for delivery') actionHtml = `<small class="text-danger mt-1 fw-semibold" style="font-size:0.78rem; display:block;">Your order is already on the way and can no longer be cancelled.</small>`;
@@ -1593,6 +1635,14 @@ function bkFillViewModal(b) {
     document.getElementById('viewTable').textContent = b.table_name || '—';
     document.getElementById('viewAmount').textContent = 'Pay at restaurant';
     document.getElementById('viewBooked').textContent = b.created_at || '—';
+    const cancel = document.getElementById('viewCancelBtn');
+    if (cancel) {
+        const allowed = b.status === 'Pending';
+        cancel.disabled = !allowed;
+        cancel.textContent = allowed ? 'Cancel Booking' : 'Cannot Cancel';
+        cancel.style.opacity = allowed ? '' : '.55';
+        cancel.style.cursor = allowed ? 'pointer' : 'not-allowed';
+    }
 }
 
 function bkFillEditModal(b) {
@@ -1682,6 +1732,7 @@ document.addEventListener('click', function (e) {
     const cancel = e.target.closest('.bk-cancel');
     const close = e.target.closest('[data-close]');
     const edit = e.target.closest('#viewEditBtn');
+    const viewCancel = e.target.closest('#viewCancelBtn');
     const save = e.target.closest('#saveEdit');
 
     if (view) {
@@ -1691,6 +1742,12 @@ document.addEventListener('click', function (e) {
         bkLastViewedRow = row;
         bkFillViewModal(row._booking);
         openModal(viewModal);
+        return;
+    }
+
+    if (viewCancel) {
+        e.preventDefault();
+        if (bkLastViewedRow && bkLastViewedRow._booking) bkCancelBooking(bkLastViewedRow, viewCancel);
         return;
     }
 
