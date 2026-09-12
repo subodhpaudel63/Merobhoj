@@ -135,7 +135,7 @@ if ($catResult) {
           </a>
           <?php if ($currentUser): ?>
             <div class="dropdown">
-              <a class="d-flex align-items-center text-decoration-none dropdown-toggle" href="#" role="button" id="profileMenu" data-bs-toggle="dropdown" aria-expanded="false">
+              <a class="d-flex align-items-center text-decoration-none dropdown-toggle" href="#" role="button" id="profileMenu" data-bs-toggle="dropdown" aria-expanded="false" onclick="event.preventDefault(); this.nextElementSibling.classList.toggle('show');">
                 <img src="<?php echo url($profileImg); ?>" alt="profile" class="rounded-circle" style="width:36px;height:36px;object-fit:cover;">
               </a>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileMenu">

@@ -110,11 +110,6 @@ if ($catResult) {
         </div>
         <div class="icons d-flex align-items-center">
           <a class="text-decoration-none" id="searchBtn" href="#"><i class="fa fa-search me-3"></i></a>
-          <a class="text-decoration-none <?php echo !$currentUser ? 'require-login' : ''; ?>"
-             id="shoppingbutton"
-             href="<?php echo $currentUser ? './cart.php' : '#'; ?>">
-            <i class="fa fa-shopping-bag me-3"></i>
-          </a>
           
           <a href="./login.php" class="nav-button">Login</a>
           <a href="./register.php" class="nav-button-outline">Sign Up</a>
@@ -138,11 +133,6 @@ if ($catResult) {
           <div class="icons">
             <a class="text-decoration-none" id="searchBtnMobile" href="#">
               <i class="fa fa-search me-3 text-dark"></i>
-            </a>
-            <a class="text-decoration-none <?php echo !$currentUser ? 'require-login' : ''; ?>"
-               id="shoppingbuttonMobile"
-               href="<?php echo $currentUser ? './cart.php' : '#'; ?>">
-              <i class="fa fa-shopping-bag me-3 text-dark"></i>
             </a>
           </div>
         </div>

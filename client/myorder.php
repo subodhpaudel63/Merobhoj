@@ -110,7 +110,7 @@ if (isset($_COOKIE['user_img'])) {
           <a class="text-decoration-none" id="shoppingbutton" href="./cart.php"><i class="fa fa-shopping-bag me-3"></i></a>
           <?php if ($currentUser): ?>
             <div class="dropdown">
-              <a class="d-flex align-items-center text-decoration-none dropdown-toggle" href="#" role="button" id="profileMenu" data-bs-toggle="dropdown" aria-expanded="false">
+              <a class="d-flex align-items-center text-decoration-none dropdown-toggle" href="#" role="button" id="profileMenu" data-bs-toggle="dropdown" aria-expanded="false" onclick="event.preventDefault(); this.nextElementSibling.classList.toggle('show');">
                 <img src="<?php echo url($profileImg); ?>" alt="profile" class="rounded-circle" style="width:36px;height:36px;object-fit:cover;">
               </a>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileMenu">
@@ -240,7 +240,7 @@ if (isset($_COOKIE['user_img'])) {
     <div class="modal-head">
       <div>
         <h2>Order Details</h2>
-        <div class="modal-sub" id="mOrderMeta">#ORD-1048 &nbsp;|&nbsp; May 30, 2025</div>
+        <div class="modal-sub" id="mOrderMeta">Loading order time…</div>
       </div>
       <button class="modal-close" onclick="closeOrderDetails()">✕</button>
     </div>
@@ -295,7 +295,7 @@ if (isset($_COOKIE['user_img'])) {
         </div>
         <div class="head-right">
           <div class="oid">Order ID: <span id="cfgOrderId">#ORD-1048</span></div>
-          <div class="placed">Placed on: <span id="cfgPlacedDate">May 30, 2025</span> &nbsp;|&nbsp; <span id="cfgPlacedTime">10:20 AM</span></div>
+          <div class="placed">Placed on: <span id="cfgPlacedDate">—</span> &nbsp;|&nbsp; <span id="cfgPlacedTime">—</span></div>
         </div>
         <div class="cancel-col">
           <button class="cancel-btn"><svg class="ic" style="width:15px;height:15px"><use href="#ic-trash"/></svg> Cancel Order</button>
@@ -312,7 +312,7 @@ if (isset($_COOKIE['user_img'])) {
           <div class="stepline-seg pending"></div>
         </div>
         <div class="stepper">
-          <div class="step done"><div class="dot"><svg class="ic" style="width:22px;height:22px"><use href="#ic-clipboard"/></svg></div><div class="slabel">Order Placed</div><div class="stime">10:20 AM</div></div>
+          <div class="step done"><div class="dot"><svg class="ic" style="width:22px;height:22px"><use href="#ic-clipboard"/></svg></div><div class="slabel">Order Placed</div><div class="stime">—</div></div>
           <div class="step done"><div class="dot"><svg class="ic" style="width:22px;height:22px"><use href="#ic-clipboard"/></svg></div><div class="slabel">Confirmed</div><div class="stime">10:21 AM</div></div>
           <div class="step done"><div class="dot"><svg class="ic" style="width:22px;height:22px"><use href="#ic-pot"/></svg></div><div class="slabel">Preparing</div><div class="stime">10:35 AM</div></div>
           <div class="step done"><div class="dot"><svg class="ic" style="width:22px;height:22px"><use href="#ic-bag"/></svg></div><div class="slabel">Ready</div><div class="stime">11:05 AM</div></div>
@@ -333,7 +333,7 @@ if (isset($_COOKIE['user_img'])) {
           <div class="card">
             <div class="eta-block">
               <div class="label">Estimated Delivery</div>
-              <div class="big" id="etaMin">15 min</div>
+            <div class="big" id="etaMin">Calculating…</div>
               <div class="range">(11:43 AM - 11:48 AM)</div>
             </div>
             <div class="meta-row">
@@ -343,7 +343,7 @@ if (isset($_COOKIE['user_img'])) {
               </div>
               <div class="meta-item">
                 <div class="meta-icon"><svg class="ic" style="width:16px;height:16px"><use href="#ic-clock"/></svg></div>
-                <div><span class="mval" id="etaVal">20 min</span><span class="mlabel">ETA</span></div>
+                <div><span class="mval" id="etaVal">Calculating…</span><span class="mlabel">ETA</span></div>
               </div>
             </div>
           </div>
@@ -381,7 +381,7 @@ if (isset($_COOKIE['user_img'])) {
           <div class="card order-details">
             <h3>Order Details</h3>
             <div class="od-row"><span>Order ID</span><span id="cfgOrderIdRepeat">#ORD-1048</span></div>
-            <div class="od-row"><span>Order Time</span><span id="cfgOrderTime">May 30, 2025 | 10:20 AM</span></div>
+            <div class="od-row"><span>Order Time</span><span id="cfgOrderTime">—</span></div>
             <div class="od-row"><span>Payment Method</span><span id="cfgPaymentMethod">Online Payment</span></div>
             <div class="od-row total"><span>Total Amount</span><span id="cfgTotalAmount">NPR 780.00</span></div>
             <button class="view-bill-btn" onclick="openOrderDetails(CONFIG.ORDER.id)">View Bill / Order Details</button>
@@ -396,7 +396,7 @@ if (isset($_COOKIE['user_img'])) {
             <div class="map-footer">
               <div class="mf-item"><div class="mf-icon"><svg class="ic" style="width:18px;height:18px"><use href="#ic-bike"/></svg></div><div><div class="mf-title">Rider is on the way</div><div class="mf-sub">Arriving soon</div></div></div>
               <div class="mf-item"><div class="mf-icon"><svg class="ic" style="width:18px;height:18px"><use href="#ic-pin"/></svg></div><div><div class="mf-title" id="mfDist">3.4 km away</div><div class="mf-sub">from your location</div></div></div>
-              <div class="mf-item"><div class="mf-icon"><svg class="ic" style="width:18px;height:18px"><use href="#ic-clock"/></svg></div><div><div class="mf-title" id="mfEta">20 min</div><div class="mf-sub">estimated time</div></div></div>
+              <div class="mf-item"><div class="mf-icon"><svg class="ic" style="width:18px;height:18px"><use href="#ic-clock"/></svg></div><div><div class="mf-title" id="mfEta">Calculating…</div><div class="mf-sub">estimated time</div></div></div>
             </div>
           </div>
 

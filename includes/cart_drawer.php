@@ -706,7 +706,7 @@ $drawerCount = count($drawerCart);
               <i class="fa-regular fa-clock"></i>
               <div>
                 <strong>Estimated Delivery Time</strong>
-                <div>30 - 40 mins</div>
+                                <div id="cartDeliveryEstimate">30 - 40 mins</div>
               </div>
             </div>
             <div class="mkj-summary-note mkj-note-amber">

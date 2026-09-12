@@ -102,9 +102,6 @@ if (!$user) {
           <a class="text-decoration-none" id="searchBtn" href="#">
             <i class="fa fa-search me-3 text-dark"></i>
           </a>
-          <a class="text-decoration-none" id="shoppingbutton" href="#">
-            <i class="fa fa-shopping-bag me-3 text-dark"></i>
-          </a>
           
           <div class="d-flex align-items-center">
             <a href="./login.php" class="nav-button">Login</a>
@@ -129,9 +126,6 @@ if (!$user) {
           <div class="icons">
             <a class="text-decoration-none" id="searchBtnMobile" href="#">
               <i class="fa fa-search me-3 text-dark"></i>
-            </a>
-            <a class="text-decoration-none" id="shoppingbuttonMobile" href="">
-              <i class="fa fa-shopping-bag me-3 text-dark"></i>
             </a>
           </div>
         </div>

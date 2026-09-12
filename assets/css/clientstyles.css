@@ -226,11 +226,12 @@ body { background: #f8f8f6; }
   .eta-block .label{font-size:13px;color:var(--text);font-weight:700;margin-bottom:6px;}
   .eta-block .big{font-size:30px;font-weight:800;color:var(--green);}
   .eta-block .range{font-size:12.5px;color:var(--muted-2);margin-top:2px;}
-  .meta-row{display:flex;gap:22px;margin-bottom:4px;}
-  .meta-item{display:flex;align-items:center;gap:8px;font-size:13px;}
+  .meta-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:4px;}
+  .meta-item{display:flex;align-items:center;gap:8px;min-width:0;font-size:13px;}
   .meta-item .mval{font-weight:700;font-size:14px;display:block;}
   .meta-item .mlabel{color:var(--muted);font-size:11.5px;}
   .meta-icon{width:30px;height:30px;border-radius:8px;background:var(--green-light);display:flex;align-items:center;justify-content:center;color:var(--green);flex-shrink:0;}
+  .meta-item > div:last-child{min-width:0;}
 
   .rider-card h3{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--text);font-weight:700;margin:0 0 14px;}
   .rider-row{display:flex;align-items:center;gap:12px;margin-bottom:16px;}

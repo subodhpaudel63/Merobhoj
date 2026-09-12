@@ -107,7 +107,7 @@ if (isset($_COOKIE['user_img'])) {
           <a class="text-decoration-none" id="shoppingbutton" href="./cart.php"><i class="fa fa-shopping-bag me-3"></i></a>
           <?php if ($currentUser): ?>
             <div class="dropdown">
-              <a class="d-flex align-items-center text-decoration-none dropdown-toggle" href="#" role="button" id="profileMenu" data-bs-toggle="dropdown" aria-expanded="false">
+              <a class="d-flex align-items-center text-decoration-none dropdown-toggle" href="#" role="button" id="profileMenu" data-bs-toggle="dropdown" aria-expanded="false" onclick="event.preventDefault(); this.nextElementSibling.classList.toggle('show');">
                 <img src="<?php echo url($profileImg); ?>" alt="profile" class="rounded-circle" style="width:36px;height:36px;object-fit:cover;">
               </a>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileMenu">
@@ -165,7 +165,6 @@ if (isset($_COOKIE['user_img'])) {
       <symbol id="ic-pin" viewBox="0 0 24 24"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="9.5" r="2.4" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
       <symbol id="ic-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3.5 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="ic-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V7M6.5 7l1 12.5A1.5 1.5 0 0 0 9 21h6a1.5 1.5 0 0 0 1.5-1.5L17.5 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
-      <symbol id="ic-chat" viewBox="0 0 24 24"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-5 4V6a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
       <symbol id="ic-headset" viewBox="0 0 24 24"><path d="M4 13v-1a8 8 0 0 1 16 0v1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="3" y="13" width="4" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="17" y="13" width="4" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M19 19v1a3 3 0 0 1-3 3h-2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
       <symbol id="ic-phone" viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25c1.1.35 2.3.55 3.6.55a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.6 21 3 13.4 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.55 3.6a1 1 0 0 1-.25 1L6.6 10.8z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
       <symbol id="ic-filter" viewBox="0 0 24 24"><path d="M4 5h16l-6 7.5V19l-4 2v-8.5L4 5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
@@ -192,7 +191,7 @@ if (isset($_COOKIE['user_img'])) {
               <div class="head-right">
                 <a href="./myorder.php" class="btn btn-outline-secondary mb-2" style="font-size:13px;font-weight:600;">← Back to My Orders</a>
                 <div class="oid">Order ID: <span id="cfgOrderId">#ORD-1048</span></div>
-                <div class="placed">Placed on: <span id="cfgPlacedDate">May 30, 2025</span> &nbsp;|&nbsp; <span id="cfgPlacedTime">10:20 AM</span></div>
+                <div class="placed">Placed on: <span id="cfgPlacedDate">—</span> &nbsp;|&nbsp; <span id="cfgPlacedTime">—</span></div>
               </div>
               <div class="cancel-col">
                 <button class="cancel-btn"><svg class="ic" style="width:15px;height:15px"><use href="#ic-trash"/></svg> Cancel Order</button>
@@ -210,7 +209,7 @@ if (isset($_COOKIE['user_img'])) {
               <div class="stepline-seg pending"></div>
             </div>
             <div class="stepper">
-              <div class="step done"><div class="dot"><svg class="ic" style="width:22px;height:22px"><use href="#ic-clipboard"/></svg></div><div class="slabel">Order Placed</div><div class="stime">10:20 AM</div></div>
+              <div class="step done"><div class="dot"><svg class="ic" style="width:22px;height:22px"><use href="#ic-clipboard"/></svg></div><div class="slabel">Order Placed</div><div class="stime">—</div></div>
               <div class="step done"><div class="dot"><svg class="ic" style="width:22px;height:22px"><use href="#ic-clipboard"/></svg></div><div class="slabel">Confirmed</div><div class="stime">10:21 AM</div></div>
               <div class="step done"><div class="dot"><svg class="ic" style="width:22px;height:22px"><use href="#ic-pot"/></svg></div><div class="slabel">Preparing</div><div class="stime">10:35 AM</div></div>
               <div class="step done"><div class="dot"><svg class="ic" style="width:22px;height:22px"><use href="#ic-bag"/></svg></div><div class="slabel">Ready</div><div class="stime">11:05 AM</div></div>
@@ -231,7 +230,7 @@ if (isset($_COOKIE['user_img'])) {
               <div class="card">
                 <div class="eta-block">
                   <div class="label">Estimated Delivery</div>
-                  <div class="big" id="etaMin">15 min</div>
+                  <div class="big" id="etaMin">Calculating…</div>
                   <div class="range">(11:43 AM - 11:48 AM)</div>
                 </div>
                 <div class="meta-row">
@@ -241,7 +240,7 @@ if (isset($_COOKIE['user_img'])) {
                   </div>
                   <div class="meta-item">
                     <div class="meta-icon"><svg class="ic" style="width:16px;height:16px"><use href="#ic-clock"/></svg></div>
-                    <div><span class="mval" id="etaVal">20 min</span><span class="mlabel">ETA</span></div>
+                    <div><span class="mval" id="etaVal">Calculating…</span><span class="mlabel">ETA</span></div>
                   </div>
                 </div>
               </div>
@@ -279,7 +278,7 @@ if (isset($_COOKIE['user_img'])) {
               <div class="card order-details">
                 <h3>Order Details</h3>
                 <div class="od-row"><span>Order ID</span><span id="cfgOrderIdRepeat">#ORD-1048</span></div>
-                <div class="od-row"><span>Order Time</span><span id="cfgOrderTime">May 30, 2025 | 10:20 AM</span></div>
+                <div class="od-row"><span>Order Time</span><span id="cfgOrderTime">—</span></div>
                 <div class="od-row"><span>Payment Method</span><span id="cfgPaymentMethod">Online Payment</span></div>
                 <div class="od-row total"><span>Total Amount</span><span id="cfgTotalAmount">NPR 780.00</span></div>
                                 <button class="view-bill-btn" onclick="openOrderDetails(CONFIG.ORDER.id)">View Bill / Order Details</button>
@@ -294,7 +293,7 @@ if (isset($_COOKIE['user_img'])) {
                 <div class="map-footer">
                   <div class="mf-item"><div class="mf-icon"><svg class="ic" style="width:18px;height:18px"><use href="#ic-bike"/></svg></div><div><div class="mf-title">Rider is on the way</div><div class="mf-sub">Arriving soon</div></div></div>
                   <div class="mf-item"><div class="mf-icon"><svg class="ic" style="width:18px;height:18px"><use href="#ic-pin"/></svg></div><div><div class="mf-title" id="mfDist">3.4 km away</div><div class="mf-sub">from your location</div></div></div>
-                  <div class="mf-item"><div class="mf-icon"><svg class="ic" style="width:18px;height:18px"><use href="#ic-clock"/></svg></div><div><div class="mf-title" id="mfEta">20 min</div><div class="mf-sub">estimated time</div></div></div>
+              <div class="mf-item"><div class="mf-icon"><svg class="ic" style="width:18px;height:18px"><use href="#ic-clock"/></svg></div><div><div class="mf-title" id="mfEta">Calculating…</div><div class="mf-sub">estimated time</div></div></div>
                 </div>
               </div>
 
@@ -305,7 +304,6 @@ if (isset($_COOKIE['user_img'])) {
                 </div>
                 <div class="help-actions">
                   <a class="help-btn outline" href="tel:+9779748759699" title="Call customer support: +977 9748759699"><svg class="ic" style="width:15px;height:15px"><use href="#ic-phone"/></svg> Call Support</a>
-                  <button class="help-btn solid"><svg class="ic" style="width:15px;height:15px"><use href="#ic-chat"/></svg> Live Chat</button>
                 </div>
               </div>
             </div>
@@ -323,7 +321,7 @@ if (isset($_COOKIE['user_img'])) {
         <div class="modal-head">
           <div>
             <h2>Order Details</h2>
-            <div class="modal-sub" id="mOrderMeta">#ORD-1048 &nbsp;|&nbsp; May 30, 2025</div>
+            <div class="modal-sub" id="mOrderMeta">Loading order time…</div>
           </div>
           <button class="modal-close" onclick="closeOrderDetails()">✕</button>
         </div>

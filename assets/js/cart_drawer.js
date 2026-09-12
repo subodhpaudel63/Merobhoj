@@ -35,6 +35,13 @@
     return cartItems.reduce((sum, item) => sum + itemTotal(item), 0);
   }
 
+  function updateDeliveryEstimate() {
+    const totalQty = cartItems.reduce((sum, item) => sum + (parseInt(item.quantity, 10) || 0), 0);
+    const extra = Math.max(0, Math.floor(Math.max(0, totalQty - 1) / 3)) * 5;
+    const estimate = document.getElementById('cartDeliveryEstimate');
+    if (estimate) estimate.textContent = `${30 + extra} - ${40 + extra} mins`;
+  }
+
   function ensureBadge(link) {
     let badge = link.querySelector('.cart-drawer-count');
     if (!badge) {
@@ -63,6 +70,7 @@
     document.getElementById('cartDrawerSubtotal').textContent = money(subtotal);
     document.getElementById('cartDrawerTotal').textContent = money(subtotal);
     if (checkoutTotal) checkoutTotal.textContent = money(subtotal);
+    updateDeliveryEstimate();
     const subtotalLabel = document.getElementById('cartDrawerSubtotalLabel');
     const totalLabel = document.getElementById('cartDrawerTotalLabel');
     if (subtotalLabel) subtotalLabel.textContent = money(subtotal);

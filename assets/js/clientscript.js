@@ -474,6 +474,7 @@ function myorderMapOrder(g) {
   const doneCount = status === 'Cancelled' ? 1 : stepIdx + 1;
   const stepTimes = MYORDER_STEP_LABELS.map((_, i) => {
     const histTime = history[MYORDER_STEP_DB_STATUS[i]];
+    if (i === stepIdx && statusTime) return statusTime;
     if (histTime) return myorderFormatTime(histTime);
     if (i === 0) return time;
     if (i === doneCount - 1) return statusTime || time;
@@ -545,6 +546,11 @@ function myorderPickTracked() {
 /* ---- Fill every static field on the tracking page from CONFIG ---- */
 function renderTrackPage(cfg) {
   const o = cfg.ORDER;
+  const prepMinutes = Math.max(20, 25 + (o.itemsList || []).reduce((sum, item) => sum + Math.max(0, item.qty - 1) * 3, 0));
+  ['etaMin', 'etaVal', 'mfEta'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = prepMinutes + ' min';
+  });
   const thumb = document.getElementById('cfgRestaurantThumb');
   if (thumb) { thumb.src = o.img; thumb.alt = o.name; }
   const crumb = document.getElementById('cfgOrderCrumb');
@@ -606,8 +612,7 @@ function renderTrackStatus(cfg) {
       banner.style.display = '';
       const msg = banner.querySelector('.lb-left span:nth-of-type(2)');
       if (msg) msg.textContent = o.statusSub;
-      const lu = document.getElementById('lastUpdated');
-      if (lu) lu.textContent = o.statusUpdatedAt || new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      touchTrackerClock();
     } else {
       banner.style.display = 'none';
     }
@@ -1008,7 +1013,25 @@ async function initMap() {
     map.setView(restaurantPos, 14);
   }
 
-  updateEtaUI();
+  if (homePos) {
+    try {
+      const route = await fetchRoute(
+        { lat: restaurantPos[0], lng: restaurantPos[1] },
+        { lat: homePos[0], lng: homePos[1] }
+      );
+      distanceKm = route.distanceKm;
+      const prepMinutes = Math.max(20, 25 + (CONFIG.ORDER.itemsList || []).reduce((sum, item) => sum + Math.max(0, item.qty - 1) * 3, 0));
+      etaMinutes = Math.max(1, Math.ceil(route.durationMin) + prepMinutes);
+    } catch (err) {
+      distanceKm = haversine(restaurantPos, homePos);
+      etaMinutes = Math.max(1, Math.ceil((distanceKm / RIDER_SPEED_KMH) * 60) + 25);
+    }
+    updateEtaUI();
+  } else {
+    const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+    set('distVal', 'Calculating…');
+    set('mfDist', 'Calculating…');
+  }
 }
 
 function haversine(a, b) {
@@ -1066,6 +1089,11 @@ let deliveryTimer = null;        // feed interval handle
 let deliveryFeedOrder = null;    // order_id the feed is currently following
 let deliveryInFlight = false;
 
+function touchTrackerClock() {
+  const el = document.getElementById('lastUpdated');
+  if (el) el.textContent = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+
 function hideDeliveryCards() {
   const rc = document.getElementById('riderCard');
   if (rc) rc.style.display = 'none';
@@ -1095,10 +1123,13 @@ async function pollDeliveryInfo() {
   deliveryInFlight = true;
   try {
     const res = await fetch('../includes/delivery_track.php?order_id=' + encodeURIComponent(deliveryFeedOrder), {
-      credentials: 'same-origin'
+      credentials: 'same-origin', cache: 'no-store'
     });
     const data = await res.json();
-    if (data && data.ok) applyDeliveryInfo(data);
+    if (data && data.ok) {
+      applyDeliveryInfo(data);
+      touchTrackerClock();
+    }
   } catch (err) {
     /* transient — keep the last known rider and code on screen */
   } finally {
@@ -1195,9 +1226,10 @@ function myorderRenderEmpty(errorMessage) {
 }
 
 async function myorderFetchData() {
-  const res = await fetch('../includes/orders_fetch.php', { credentials: 'same-origin' });
+  const res = await fetch('../includes/orders_fetch.php', { credentials: 'same-origin', cache: 'no-store' });
   const data = await res.json();
   if (!data.ok) throw new Error(data.error || 'Not logged in');
+  touchTrackerClock();
   return data.orders || [];
 }
 

@@ -67,14 +67,6 @@
           <a class="text-decoration-none" id="searchBtn" href="#">
             <i class="fa fa-search me-3 text-dark"></i>
           </a>
-          <a class="text-decoration-none" id="shoppingbutton" href="./client/cart.php">
-            <i class="fa fa-shopping-bag me-3 text-dark"></i>
-            <?php if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])): ?>
-              <span class="position-absolute translate-middle badge rounded-pill bg-danger" style="top: 10px; right: 10px; font-size: 0.7rem; padding: 0.25rem 0.5rem;">
-                <?php echo count($_SESSION['cart']); ?>
-              </span>
-            <?php endif; ?>
-          </a>
           <!-- Login and Signup buttons -->
           <div class="d-flex align-items-center">
             <a href="./login.php" class="nav-button">Login</a>
@@ -104,14 +96,6 @@
           <div class="icons">
             <a class="text-decoration-none" id="searchBtnMobile" href="#">
               <i class="fa fa-search me-3 text-dark"></i>
-            </a>
-            <a class="text-decoration-none" id="shoppingbuttonMobile" href="./client/cart.php">
-              <i class="fa fa-shopping-bag me-3 text-dark"></i>
-              <?php if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])): ?>
-                <span class="position-absolute translate-middle badge rounded-pill bg-danger" style="top: 10px; right: 10px; font-size: 0.7rem; padding: 0.25rem 0.5rem;">
-                  <?php echo count($_SESSION['cart']); ?>
-                </span>
-              <?php endif; ?>
             </a>
           </div>
         </div>

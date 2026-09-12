@@ -120,10 +120,6 @@ if (isset($_GET['action'])) {
           <a class="text-decoration-none" id="searchBtn" href="#">
             <i class="fa fa-search me-3"></i>
           </a>
-          <a class="text-decoration-none" id="shoppingbutton" href="./includes/cart.php">
-            <i class="fa fa-shopping-bag me-3"></i>
-          </a>
-          
           <div class="d-flex">
             <a href="./login.php" class="nav-button">Login</a>
             <a href="./register.php" class="nav-button-outline">Sign Up</a>
@@ -149,9 +145,6 @@ if (isset($_GET['action'])) {
           <div class="icons">
             <a class="text-decoration-none" id="searchBtnMobile" href="#">
               <i class="fa fa-search me-3 text-white"></i>
-            </a>
-            <a class="text-decoration-none" id="shoppingbuttonMobile" href="../includes/cart.php">
-              <i class="fa fa-shopping-bag me-3 text-white"></i>
             </a>
           </div>
           <div class="d-flex align-items-center">

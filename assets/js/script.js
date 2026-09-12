@@ -1066,6 +1066,24 @@ var GIS_CONFIG = (function () {
   try { return JSON.parse(el.textContent); } catch (e) { return null; }
 })();
 
+// Keep the client profile menu usable even when Bootstrap's dropdown plugin is unavailable.
+document.addEventListener('click', function (event) {
+  var profile = document.getElementById('profileMenu');
+  var menu = profile ? document.querySelector('[aria-labelledby="profileMenu"]') : null;
+  if (!profile || !menu) return;
+  if (profile.contains(event.target)) {
+    event.preventDefault();
+    event.stopPropagation();
+    var open = menu.classList.toggle('show');
+    menu.style.display = open ? 'block' : '';
+    profile.setAttribute('aria-expanded', open ? 'true' : 'false');
+  } else if (!menu.contains(event.target)) {
+    menu.classList.remove('show');
+    menu.style.display = '';
+    profile.setAttribute('aria-expanded', 'false');
+  }
+}, true);
+
 function handleGoogleCredentialResponse(response) {
   if (!response || !response.credential) {
     alert('Google sign-in was cancelled or failed. Please try again.');
