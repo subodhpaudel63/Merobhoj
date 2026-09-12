@@ -14,14 +14,6 @@ if (!$currentUser) {
     exit;
 }
 
-try {
-  $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $password, [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-  ]);
-} catch (PDOException $e) {
-  die("Database connection failed: " . $e->getMessage());
-}
-
 // Logged-in user and profile image (from secure cookies)
 $profileImg = 'assets/images/profile.jpg';
 if (isset($_COOKIE['user_img'])) {
@@ -57,7 +49,7 @@ if (isset($_COOKIE['user_img'])) {
     <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css"/>
     <?php require_once __DIR__ . '/../config/bootstrap.php'; ?>
     <link rel="stylesheet" href="<?php echo asset('css/style.css'); ?>" />
-    <link rel="stylesheet" href="<?php echo asset('css/clientstyle.css'); ?>" />
+    <link rel="stylesheet" href="<?php echo asset('css/clientstyles.css'); ?>" />
     
     
   </head>
@@ -148,28 +140,6 @@ if (isset($_COOKIE['user_img'])) {
                 <li><a class="dropdown-item" href="<?php echo url('includes/logout.php'); ?>"><i class="fa fa-right-from-bracket me-2"></i>Logout</a></li>
               </ul>
             </div>
-            <div class="dropdown">
-    
-
-    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileMenu">
-      <li>
-        <h6 class="dropdown-header">
-          <?php echo htmlspecialchars($currentUser['email'] ?? ''); ?>
-        </h6>
-      </li>
-
-      <li><hr class="dropdown-divider"></li>
-
-      
-
-      <li>
-        <a class="dropdown-item" href="<?php echo url('includes/logout.php'); ?>">
-          <i class="fa fa-right-from-bracket me-2"></i>Logout
-        </a>
-      </li>
-
-    </ul>
-  </div>
 <?php endif; ?>
          
         </div>
@@ -413,7 +383,7 @@ Want to explore that next?
       <section class="testimonials py-5 my-5">
         <div class="container py-5">
           <div class="row" data-aos="fade-right">
-            <div class="section-title text-center">
+            <div class="section-title stacked-section-title text-center">
               <h5>Testimonial</h5>
               <h2 class="display-5 fw-bold">Our Customer Says</h2>
             </div>
@@ -482,7 +452,7 @@ Want to explore that next?
       <section class="our-chefs py-5">
         <div class="container">
           <div class="row" data-aos="fade-right">
-            <div class="section-title text-center">
+            <div class="section-title stacked-section-title text-center">
               <h5>Meet Our</h5>
               <h2 class="display-6 fw-bold">Awesome Master Chefs</h2>
             </div>
@@ -640,47 +610,19 @@ Want to explore that next?
     <div class="col-12 col-lg-4 mb-3">
         <div class="input d-flex align-items-center bg-dark rounded">
             <i class="fa fa-calendar py-2 px-3 text-white-50"></i>
-            <input class="form-control bg-transparent border-0 text-white shadow-none" type="date" name="date" required>
+            <input class="form-control bg-transparent border-0 text-white shadow-none" type="date" id="reservationDate" name="date" min="<?php echo htmlspecialchars((new DateTime('now', new DateTimeZone(RESTAURANT_TIMEZONE)))->format('Y-m-d')); ?>" required>
         </div>
     </div>
     <div class="col-12 col-lg-4 mb-3">
         <div class="input d-flex align-items-center bg-dark rounded">
             <i class="fa fa-clock py-2 px-3 text-white-50"></i>
-            <select class="form-control booking-time-select bg-transparent border-0 text-white shadow-none" name="start_time" required>
-                <option value="" class="booking-time-option">Select Start Time</option>
-                <?php
-                    $startTimes = [];
-                    for ($hour = 7; $hour <= 22; $hour++) {
-                        foreach ([0, 30] as $minute) {
-                            if ($hour === 23 && $minute > 0) continue;
-                            $startTimes[] = sprintf('%02d:%02d', $hour, $minute);
-                        }
-                    }
-                    foreach ($startTimes as $time) {
-                        echo '<option value="' . htmlspecialchars($time) . '" class="booking-time-option">' . htmlspecialchars(date('g:i A', strtotime($time))) . '</option>';
-                    }
-                ?>
-            </select>
+            <input class="form-control bg-transparent border-0 text-white shadow-none" type="time" name="start_time" placeholder="Select start time" title="Select start time" min="07:00" max="22:30" step="1800" required>
         </div>
     </div>
     <div class="col-12 col-lg-4 mb-3">
         <div class="input d-flex align-items-center bg-dark rounded">
             <i class="fa fa-clock py-2 px-3 text-white-50"></i>
-            <select class="form-control booking-time-select bg-transparent border-0 text-white shadow-none" name="end_time" required>
-                <option value="" class="booking-time-option">Select End Time</option>
-                <?php
-                    $endTimes = [];
-                    for ($hour = 8; $hour <= 23; $hour++) {
-                        foreach ([0, 30] as $minute) {
-                            if ($hour === 23 && $minute > 0) continue;
-                            $endTimes[] = sprintf('%02d:%02d', $hour, $minute);
-                        }
-                    }
-                    foreach ($endTimes as $time) {
-                        echo '<option value="' . htmlspecialchars($time) . '" class="booking-time-option">' . htmlspecialchars(date('g:i A', strtotime($time))) . '</option>';
-                    }
-                ?>
-            </select>
+            <input class="form-control bg-transparent border-0 text-white shadow-none" type="time" name="end_time" placeholder="Select end time" title="Select end time" min="07:30" max="23:00" step="1800" required>
         </div>
     </div>
 </div>
@@ -726,7 +668,7 @@ Want to explore that next?
       <section class="our-services py-5 my-5">
         <div class="container">
           <div class="row">
-            <div class="section-title text-center" data-aos="fade-right">
+            <div class="section-title stacked-section-title text-center" data-aos="fade-right">
               <h5>Our Service</h5>
               <h2 class="display-6 fw-bold">What We Focus On</h2>
             </div>
@@ -772,7 +714,7 @@ Want to explore that next?
       <section class="our-gallery pt-5">
         <div class="container-fluid pt-5">
           <div class="row">
-            <div class="section-title text-center" data-aos="fade-right">
+            <div class="section-title stacked-section-title text-center" data-aos="fade-right">
               <h5>Our Gallery</h5>
               <h2 class="text-white display-6 fw-bold">Fooday Hot Dishes</h2>
             </div>
@@ -867,8 +809,6 @@ Want to explore that next?
     ></script>
     <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
     <?php require_once __DIR__ . '/../config/bootstrap.php'; ?>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="<?php echo asset('js/script.js'); ?>"></script>
-    <script src="./script.js"></script>
   </body>
 </html>

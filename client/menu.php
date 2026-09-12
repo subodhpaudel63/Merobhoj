@@ -16,11 +16,13 @@ if (!$currentUser) {
 }
 
 try {
-  $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $password, [
+  $pdo = new PDO("mysql:host=$host;dbname=$db_name;charset=utf8mb4", $db_user, $db_pass, [
     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
   ]);
 } catch (PDOException $e) {
-  die("Database connection failed: " . $e->getMessage());
+  error_log('Menu PDO connection failed: ' . $e->getMessage());
+  http_response_code(500);
+  die('Service temporarily unavailable. Please try again later.');
 }
 
 // Logged-in user and profile image (from secure cookies)
@@ -49,7 +51,6 @@ if ($catResult) {
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Mero Bhoj | Menu</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
@@ -63,7 +64,6 @@ if ($catResult) {
     <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css"/>
     <?php require_once __DIR__ . '/../config/bootstrap.php'; ?>
     <link rel="stylesheet" href="<?php echo asset('css/style.css'); ?>" />
-    <link rel="stylesheet" href="<?php echo asset('css/order_ui.css'); ?>" />
     <link rel="stylesheet" href="../assets/css/clientstyles.css" />
     <!-- Include toast styles -->
     <link rel="stylesheet" href="<?php echo asset('css/toast_styles.css'); ?>" />
@@ -262,7 +262,7 @@ if ($catResult) {
                         <div class="col">
                             <div class="card h-100 p-2">
                                 <div class="card-img-wrapper">
-                                    <img src="<?= htmlspecialchars($img) ?>" class="card-img-top" alt="<?= htmlspecialchars($item['menu_name']) ?>">
+                                    <img src="<?= htmlspecialchars($img) ?>" class="card-img-top" alt="<?= htmlspecialchars($item['menu_name']) ?>" loading="lazy" decoding="async">
                                 </div>
                                 <div class="card-body d-flex flex-column">
                                     <div class="d-flex justify-content-between align-items-start mb-1">

@@ -14,14 +14,6 @@ if (!$currentUser) {
     exit;
 }
 
-try {
-  $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $password, [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-  ]);
-} catch (PDOException $e) {
-  die("Database connection failed: " . $e->getMessage());
-}
-
 // Logged-in user and profile image (from secure cookies)
 $profileImg = 'assets/images/profile.jpg';
 if (isset($_COOKIE['user_img'])) {
@@ -60,7 +52,6 @@ if (isset($_COOKIE['user_img'])) {
    <link rel="stylesheet" href="../assets/css/clientstyles.css" />
     <!-- Include toast styles -->
     <link rel="stylesheet" href="<?php echo asset('css/toast_styles.css'); ?>" />
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   </head>
   <body>
 

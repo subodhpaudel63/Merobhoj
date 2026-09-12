@@ -14,14 +14,6 @@ if (!$currentUser) {
     exit;
 }
 
-try {
-  $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $password, [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-  ]);
-} catch (PDOException $e) {
-  die("Database connection failed: " . $e->getMessage());
-}
-
 // Logged-in user and profile image (from secure cookies)
 $profileImg = 'assets/images/profile.jpg';
 if (isset($_COOKIE['user_img'])) {

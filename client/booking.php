@@ -278,6 +278,7 @@ $guestOptions = range(1, 8);
         </div>
         <div class="bk-modal-foot">
             <button class="bk-modal-btn" data-close="viewModal" type="button">Close</button>
+            <button class="bk-modal-btn bk-cancel" id="viewCancelBtn" type="button">Cancel Booking</button>
             <button class="bk-modal-btn bk-primary" id="viewEditBtn" type="button">Edit Booking</button>
         </div>
     </div>
